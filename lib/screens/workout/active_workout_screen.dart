@@ -251,6 +251,8 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _buildHeroImage(),
+          const SizedBox(height: 16),
           if (workout == null) _buildStartCard(templates),
           if (workout != null) ...[
             _buildWorkoutHeader(workout),
@@ -330,6 +332,47 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeroImage() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        alignment: Alignment.bottomLeft,
+        children: [
+          Image.asset(
+            'assets/images/gym_banner.png',
+            height: 170,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          ),
+          Container(
+            height: 170,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.black.withOpacity(0.55),
+                  Colors.black.withOpacity(0.05),
+                ],
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+              ),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'Active Workout',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -27,6 +27,8 @@ class DashboardScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _buildHeroImage(),
+              const SizedBox(height: 16),
               _buildWelcomeCard(context),
               const SizedBox(height: 16),
               Text(
@@ -73,6 +75,47 @@ class DashboardScreen extends StatelessWidget {
       },
     );
   }
+}
+
+Widget _buildHeroImage() {
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(18),
+    child: Stack(
+      alignment: Alignment.bottomLeft,
+      children: [
+        Image.asset(
+          'assets/images/gym_banner.png',
+          height: 160,
+          width: double.infinity,
+          fit: BoxFit.cover,
+        ),
+        Container(
+          height: 160,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.black.withValues(alpha: 0.55),
+                Colors.black.withValues(alpha: 0.08),
+              ],
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+            ),
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.all(16),
+          child: Text(
+            'Gym Focus',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 Widget _buildWelcomeCard(BuildContext context) {

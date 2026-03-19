@@ -299,6 +299,8 @@ class _TemplateScreenState extends State<TemplateScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _buildHeroImage(),
+          const SizedBox(height: 16),
           if (templates.isEmpty)
             const Card(
               child: Padding(
@@ -386,6 +388,47 @@ class _TemplateScreenState extends State<TemplateScreen> {
               ),
             ),
           const SizedBox(height: 80),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroImage() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        alignment: Alignment.bottomLeft,
+        children: [
+          Image.asset(
+            'assets/images/gym_banner.png',
+            height: 150,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          ),
+          Container(
+            height: 150,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.black.withOpacity(0.5),
+                  Colors.black.withOpacity(0.05),
+                ],
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+              ),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'Workout Templates',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ],
       ),
     );
