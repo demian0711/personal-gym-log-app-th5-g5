@@ -14,6 +14,13 @@ class WorkoutProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateTemplate(Workout template) {
+    final index = _templates.indexWhere((item) => item.id == template.id);
+    if (index == -1) return;
+    _templates[index] = template;
+    notifyListeners();
+  }
+
   void removeTemplate(String id) {
     _templates.removeWhere((template) => template.id == id);
     notifyListeners();
