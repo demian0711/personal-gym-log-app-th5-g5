@@ -1,23 +1,36 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../models/exercise.dart';
 import '../models/exercise_set.dart';
+import '../models/user_workout_data.dart';
 import '../models/workout.dart';
+import '../services/local_storage_service.dart';
 
 class WorkoutProvider extends ChangeNotifier {
-  final List<Workout> _templates = [];
-  final List<Workout> _history = [];
+  final LocalStorageService _storage;
+  List<Workout> _templates = [];
+  List<Workout> _history = [];
+  String? _userId;
+  bool _isLoading = false;
 
-  WorkoutProvider() {
-    _seedTemplates();
-  }
+  WorkoutProvider(this._storage);
 
   List<Workout> get templates => List.unmodifiable(_templates);
   List<Workout> get history => List.unmodifiable(_history);
+  bool get isLoading => _isLoading;
+
+  void bindUser(String? userId) {
+    if (_userId == userId) return;
+    _userId = userId;
+    unawaited(_loadForUser(userId));
+  }
 
   void addTemplate(Workout template) {
     _templates.add(template);
     notifyListeners();
+    unawaited(_persist());
   }
 
   void updateTemplate(Workout template) {
@@ -25,22 +38,61 @@ class WorkoutProvider extends ChangeNotifier {
     if (index == -1) return;
     _templates[index] = template;
     notifyListeners();
+    unawaited(_persist());
   }
 
   void removeTemplate(String id) {
     _templates.removeWhere((template) => template.id == id);
     notifyListeners();
+    unawaited(_persist());
   }
 
   void addWorkoutLog(Workout workout) {
     _history.insert(0, workout);
     notifyListeners();
+    unawaited(_persist());
   }
 
   void clearAll() {
     _templates.clear();
     _history.clear();
     notifyListeners();
+    final userId = _userId;
+    if (userId != null) {
+      unawaited(_storage.clearWorkoutData(userId));
+    }
+  }
+
+  Future<void> _loadForUser(String? userId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    _templates = [];
+    _history = [];
+
+    if (userId != null) {
+      final data = await _storage.getWorkoutData(userId);
+      if (data != null) {
+        _templates = data.templates;
+        _history = data.history;
+      } else {
+        _seedTemplates();
+        await _persist();
+      }
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> _persist() async {
+    final userId = _userId;
+    if (userId == null) return;
+    final data = UserWorkoutData(
+      templates: _templates,
+      history: _history,
+    );
+    await _storage.saveWorkoutData(userId, data);
   }
 
   void _seedTemplates() {

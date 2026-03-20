@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'app.dart';
 
-void main() {
+import 'app.dart';
+import 'services/local_storage_service.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const PersonalGymLogApp());
+  final storage = LocalStorageService();
+  await storage.init();
+  runApp(PersonalGymLogApp(storageService: storage));
 }

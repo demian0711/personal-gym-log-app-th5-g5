@@ -1,0 +1,9 @@
+﻿{
+  "name": "Personal Gym Log",
+  "short_name": "Gym Log",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F7F3EF",
+  "theme_color": "#0F6B6E",
+  "description": "Personal Gym Log"
+}

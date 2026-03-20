@@ -7,14 +7,22 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:personal_gym_log_app_th5_g5/app.dart';
+import 'package:personal_gym_log_app_th5_g5/services/local_storage_service.dart';
 
 void main() {
-  testWidgets('App shell renders', (WidgetTester tester) async {
-    await tester.pumpWidget(const PersonalGymLogApp());
+  testWidgets('Auth gate shows login screen when signed out',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final storage = LocalStorageService();
+    await storage.init();
 
-    expect(find.text('TH5 - Personal Gym Log'), findsOneWidget);
-    expect(find.byType(NavigationBar), findsOneWidget);
+    await tester.pumpWidget(PersonalGymLogApp(storageService: storage));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Đăng nhập'), findsOneWidget);
+    expect(find.byType(NavigationBar), findsNothing);
   });
 }
