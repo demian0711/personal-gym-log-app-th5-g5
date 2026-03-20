@@ -3,15 +3,19 @@ import '../models/exercise.dart';
 import '../models/exercise_set.dart';
 import '../models/workout.dart';
 import '../services/local_storage_service.dart';
+import '../services/firebase_service.dart';
 
 class WorkoutProvider extends ChangeNotifier {
   final LocalStorageService _storage = LocalStorageService();
+  final FirebaseService _firebase = FirebaseService();
 
   List<Workout> _templates = [];
   List<Workout> _history = [];
+  bool _isSyncing = false;
 
   List<Workout> get templates => List.unmodifiable(_templates);
   List<Workout> get history => List.unmodifiable(_history);
+  bool get isSyncing => _isSyncing;
 
   WorkoutProvider();
 
@@ -31,7 +35,14 @@ class WorkoutProvider extends ChangeNotifier {
 
   Future<void> addTemplate(Workout template) async {
     _templates.add(template);
+    // Save locally
     await _storage.saveTemplate(template);
+    // Try to sync to Firebase
+    try {
+      await _firebase.uploadTemplate(template);
+    } catch (e) {
+      print('Error uploading template to Firebase: $e');
+    }
     notifyListeners();
   }
 
@@ -39,19 +50,40 @@ class WorkoutProvider extends ChangeNotifier {
     final index = _templates.indexWhere((item) => item.id == template.id);
     if (index == -1) return;
     _templates[index] = template;
+    // Save locally
     await _storage.saveTemplate(template);
+    // Try to sync to Firebase
+    try {
+      await _firebase.uploadTemplate(template);
+    } catch (e) {
+      print('Error updating template in Firebase: $e');
+    }
     notifyListeners();
   }
 
   Future<void> removeTemplate(String id) async {
     _templates.removeWhere((template) => template.id == id);
+    // Delete locally
     await _storage.deleteTemplate(id);
+    // Try to delete from Firebase
+    try {
+      await _firebase.deleteTemplate(id);
+    } catch (e) {
+      print('Error deleting template from Firebase: $e');
+    }
     notifyListeners();
   }
 
   Future<void> addWorkoutLog(Workout workout) async {
     _history.insert(0, workout);
+    // Save locally
     await _storage.saveWorkoutLog(workout);
+    // Try to sync to Firebase
+    try {
+      await _firebase.uploadWorkoutLog(workout);
+    } catch (e) {
+      print('Error uploading workout log to Firebase: $e');
+    }
     notifyListeners();
   }
 
@@ -65,6 +97,45 @@ class WorkoutProvider extends ChangeNotifier {
     _templates.clear();
     _history.clear();
     notifyListeners();
+  }
+
+  /// Sync all data from Firebase to local storage
+  Future<void> syncFromFirebase() async {
+    _isSyncing = true;
+    notifyListeners();
+
+    try {
+      // Download templates from Firebase
+      final firebaseTemplates = await _firebase.downloadTemplates();
+      _templates = firebaseTemplates;
+
+      // Download workout logs from Firebase
+      final firebaseLogs = await _firebase.downloadWorkoutLogs();
+      _history = firebaseLogs;
+
+      print('Successfully synced data from Firebase');
+    } catch (e) {
+      print('Error syncing from Firebase: $e');
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
+    }
+  }
+
+  /// Sync all local data to Firebase
+  Future<void> syncToFirebase() async {
+    _isSyncing = true;
+    notifyListeners();
+
+    try {
+      await _firebase.syncAllToFirebase(_templates, _history);
+      print('Successfully synced data to Firebase');
+    } catch (e) {
+      print('Error syncing to Firebase: $e');
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
+    }
   }
 
   void _seedTemplates() {

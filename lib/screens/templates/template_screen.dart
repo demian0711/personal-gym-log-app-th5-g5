@@ -5,6 +5,7 @@ import '../../models/exercise.dart';
 import '../../models/exercise_set.dart';
 import '../../models/workout.dart';
 import '../../providers/workout_provider.dart';
+import 'muscle_groups_screen.dart';
 
 class TemplateScreen extends StatefulWidget {
   const TemplateScreen({super.key});
@@ -13,8 +14,22 @@ class TemplateScreen extends StatefulWidget {
   State<TemplateScreen> createState() => _TemplateScreenState();
 }
 
-class _TemplateScreenState extends State<TemplateScreen> {
+class _TemplateScreenState extends State<TemplateScreen>
+    with SingleTickerProviderStateMixin {
   String _searchQuery = '';
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   void _showTemplateDialog({Workout? template}) {
     final formKey = GlobalKey<FormState>();
@@ -314,6 +329,25 @@ class _TemplateScreenState extends State<TemplateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Templates'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'My Templates'),
+            Tab(text: 'Training Guide'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [_buildTemplatesTab(), const MuscleGroupsScreen()],
+      ),
+    );
+  }
+
+  Widget _buildTemplatesTab() {
     final templates = context.watch<WorkoutProvider>().templates;
     final filteredTemplates = templates.where((template) {
       if (_searchQuery.trim().isEmpty) return true;
@@ -322,154 +356,164 @@ class _TemplateScreenState extends State<TemplateScreen> {
       );
     }).toList();
 
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showTemplateDialog(),
-        icon: const Icon(Icons.add),
-        label: const Text('New Template'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildHeroImage(),
-          const SizedBox(height: 16),
-          SearchBar(
-            hintText: 'Search templates by name...',
-            leading: const Icon(Icons.search),
-            trailing: _searchQuery.isNotEmpty
-                ? [
-                    IconButton(
-                      tooltip: 'Clear search',
-                      onPressed: () {
-                        setState(() {
-                          _searchQuery = '';
-                        });
-                      },
-                      icon: const Icon(Icons.close),
-                    ),
-                  ]
-                : null,
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
-          ),
-          const SizedBox(height: 14),
-          if (templates.isEmpty)
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Text('No templates yet. Create one to start workouts.'),
-              ),
+    return Stack(
+      children: [
+        ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildHeroImage(),
+            const SizedBox(height: 16),
+            SearchBar(
+              hintText: 'Search templates by name...',
+              leading: const Icon(Icons.search),
+              trailing: _searchQuery.isNotEmpty
+                  ? [
+                      IconButton(
+                        tooltip: 'Clear search',
+                        onPressed: () {
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                        icon: const Icon(Icons.close),
+                      ),
+                    ]
+                  : null,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
             ),
-          if (templates.isNotEmpty && filteredTemplates.isEmpty)
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Text('No templates match your search keyword.'),
-              ),
-            ),
-          for (final template in filteredTemplates)
-            Dismissible(
-              key: ValueKey('template_${template.id}'),
-              direction: DismissDirection.endToStart,
-              confirmDismiss: (_) => _confirmDeleteTemplate(template),
-              onDismissed: (_) => _deleteTemplate(template),
-              background: Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade400,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                alignment: Alignment.centerRight,
-                child: const Icon(Icons.delete, color: Colors.white),
-              ),
-              child: Card(
-                margin: const EdgeInsets.only(bottom: 16),
+            const SizedBox(height: 14),
+            if (templates.isEmpty)
+              const Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              template.title,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: 'Edit',
-                            onPressed: () =>
-                                _showTemplateDialog(template: template),
-                            icon: const Icon(Icons.edit),
-                          ),
-                          IconButton(
-                            tooltip: 'Delete',
-                            onPressed: () async {
-                              final confirmed = await _confirmDeleteTemplate(
-                                template,
-                              );
-                              if (!confirmed) return;
-                              await _deleteTemplate(template);
-                            },
-                            icon: const Icon(Icons.delete_outline),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text('Exercises: ${template.exercises.length}'),
-                      const SizedBox(height: 12),
-                      if (template.exercises.isEmpty)
-                        const Text('No exercises yet. Add one below.'),
-                      for (final exercise in template.exercises)
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(exercise.name),
-                          subtitle: Text(
-                            '${exercise.muscleGroup} • ${exercise.sets.length} sets',
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                tooltip: 'Edit',
-                                onPressed: () =>
-                                    _showEditExerciseDialog(template, exercise),
-                                icon: const Icon(Icons.edit),
-                              ),
-                              IconButton(
-                                tooltip: 'Remove',
-                                onPressed: () =>
-                                    _removeExercise(template, exercise),
-                                icon: const Icon(Icons.close),
-                              ),
-                            ],
-                          ),
-                        ),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: OutlinedButton.icon(
-                          onPressed: () => _showExerciseDialog(template),
-                          icon: const Icon(Icons.fitness_center),
-                          label: const Text('Add Exercise'),
-                        ),
-                      ),
-                    ],
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    'No templates yet. Create one to start workouts.',
                   ),
                 ),
               ),
-            ),
-          const SizedBox(height: 80),
-        ],
-      ),
+            if (templates.isNotEmpty && filteredTemplates.isEmpty)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text('No templates match your search keyword.'),
+                ),
+              ),
+            for (final template in filteredTemplates)
+              Dismissible(
+                key: ValueKey('template_${template.id}'),
+                direction: DismissDirection.endToStart,
+                confirmDismiss: (_) => _confirmDeleteTemplate(template),
+                onDismissed: (_) => _deleteTemplate(template),
+                background: Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade400,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.centerRight,
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                child: Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                template.title,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Edit',
+                              onPressed: () =>
+                                  _showTemplateDialog(template: template),
+                              icon: const Icon(Icons.edit),
+                            ),
+                            IconButton(
+                              tooltip: 'Delete',
+                              onPressed: () async {
+                                final confirmed = await _confirmDeleteTemplate(
+                                  template,
+                                );
+                                if (!confirmed) return;
+                                await _deleteTemplate(template);
+                              },
+                              icon: const Icon(Icons.delete_outline),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text('Exercises: ${template.exercises.length}'),
+                        const SizedBox(height: 12),
+                        if (template.exercises.isEmpty)
+                          const Text('No exercises yet. Add one below.'),
+                        for (final exercise in template.exercises)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(exercise.name),
+                            subtitle: Text(
+                              '${exercise.muscleGroup} • ${exercise.sets.length} sets',
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: 'Edit',
+                                  onPressed: () => _showEditExerciseDialog(
+                                    template,
+                                    exercise,
+                                  ),
+                                  icon: const Icon(Icons.edit),
+                                ),
+                                IconButton(
+                                  tooltip: 'Remove',
+                                  onPressed: () =>
+                                      _removeExercise(template, exercise),
+                                  icon: const Icon(Icons.close),
+                                ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: OutlinedButton.icon(
+                            onPressed: () => _showExerciseDialog(template),
+                            icon: const Icon(Icons.fitness_center),
+                            label: const Text('Add Exercise'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 80),
+          ],
+        ),
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: FloatingActionButton.extended(
+            onPressed: () => _showTemplateDialog(),
+            icon: const Icon(Icons.add),
+            label: const Text('New Template'),
+          ),
+        ),
+      ],
     );
   }
 
