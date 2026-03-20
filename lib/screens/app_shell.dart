@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/auth_provider.dart';
 import '../providers/utilities_provider.dart';
 import '../widgets/app_bottom_nav.dart';
 import 'dashboard/dashboard_screen.dart';
@@ -43,9 +44,22 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final userName = context.watch<AuthProvider>().currentUser?.name;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('TH5 - Nhóm 5 - Personal Gym Log')),
+      appBar: AppBar(
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('TH5 - Personal Gym Log'),
+            if (userName != null && userName.isNotEmpty)
+              Text(
+                'Xin chào, $userName',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              ),
+          ],
+        ),
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../providers/auth_provider.dart';
 import '../../providers/utilities_provider.dart';
+import '../../providers/workout_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -34,11 +36,76 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final workout = context.watch<WorkoutProvider>();
+    final user = auth.currentUser;
+
     return Consumer<UtilitiesProvider>(
       builder: (context, utilities, _) {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            Card(
+              child: ListTile(
+                leading: const CircleAvatar(child: Icon(Icons.person)),
+                title: Text(user?.name ?? 'Account'),
+                subtitle: Text(user?.email ?? 'No email'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.bar_chart),
+                title: const Text('Personal Data'),
+                subtitle: Text(
+                  'Templates: ${workout.templates.length} • History: ${workout.history.length}',
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) {
+                    return AlertDialog(
+                      title: const Text('Delete data'),
+                      content: const Text(
+                        'Delete all templates and workout history for this account?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(true),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+
+                if (confirm == true) {
+                  await workout.clearAll();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Data deleted.')),
+                    );
+                  }
+                }
+              },
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Delete personal data'),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () => auth.logout(),
+              icon: const Icon(Icons.logout),
+              label: const Text('Logout'),
+            ),
+            const SizedBox(height: 16),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -56,7 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Auto Rest Timer'),
-                      subtitle: Text(
+                      subtitle: const Text(
                         'Start timer automatically when a set is checked.',
                       ),
                       value: utilities.autoRestTimerEnabled,

@@ -1,29 +1,26 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:firebase_core_platform_interface/firebase_core_platform_interface.dart';
+import 'package:flutter/material.dart';
+
 import 'app.dart';
+import 'firebase_options.dart';
 import 'services/local_storage_service.dart';
-import 'services/firebase_service.dart';
+import 'services/notification_service.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await LocalStorageService().init();
 
-  // Initialize Firebase
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    print('Firebase initialized successfully');
-  } catch (e) {
-    print('Error initializing Firebase: $e');
+  } on FirebaseException catch (error) {
+    if (error.code != 'duplicate-app') {
+      rethrow;
+    }
   }
 
-  // Initialize local storage
-  await LocalStorageService().init();
-
-  // Set a default user ID (you can replace this with actual auth later)
-  const defaultUserId = 'default_user';
-  FirebaseService().setUserId(defaultUserId);
-
+  await NotificationService.instance.initialize();
   runApp(const PersonalGymLogApp());
 }

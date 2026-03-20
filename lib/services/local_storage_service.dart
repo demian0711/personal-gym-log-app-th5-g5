@@ -1,4 +1,10 @@
+import 'dart:convert';
+
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/app_user.dart';
+import '../models/user_workout_data.dart';
 import '../models/workout.dart';
 
 class LocalStorageService {
@@ -10,52 +16,53 @@ class LocalStorageService {
   static const String _templatesBoxName = 'templates';
   static const String _settingsBoxName = 'settings';
 
+  static const String _usersKey = 'auth_users';
+  static const String _activeUserKey = 'auth_active_user_id';
+  static const String _unitKey = 'unit_preference';
+  static const String _workoutPrefix = 'workout_data_';
+
+  SharedPreferences? _prefs;
+
   Future<void> init() async {
     await Hive.initFlutter();
     await Hive.openBox(_workoutsBoxName);
     await Hive.openBox(_templatesBoxName);
     await Hive.openBox(_settingsBoxName);
+    _prefs = await SharedPreferences.getInstance();
   }
 
-  // ==========================================
-  // --- WORKOUT LOGS ---
-  // ==========================================
+  SharedPreferences get _prefsInstance {
+    final prefs = _prefs;
+    if (prefs == null) {
+      throw StateError('LocalStorageService has not been initialized.');
+    }
+    return prefs;
+  }
 
-  /// Add or update a workout log (CREATE / UPDATE)
   Future<void> saveWorkoutLog(Workout workout) async {
     final box = Hive.box(_workoutsBoxName);
     await box.put(workout.id, workout.toMap());
   }
 
-  /// Read all workout logs (READ)
   Future<List<Workout>> getAllWorkoutLogs() async {
     final box = Hive.box(_workoutsBoxName);
-    final List<Workout> logs = box.values
+    final logs = box.values
         .map((map) => Workout.fromMap(Map<String, dynamic>.from(map)))
         .toList();
-
-    // Sort: newest workouts first
     logs.sort((a, b) => b.date.compareTo(a.date));
     return logs;
   }
 
-  /// Delete a workout log (DELETE)
   Future<void> deleteWorkoutLog(String id) async {
     final box = Hive.box(_workoutsBoxName);
     await box.delete(id);
   }
 
-  // ==========================================
-  // --- WORKOUT TEMPLATES ---
-  // ==========================================
-
-  /// Add or update a workout template (CREATE / UPDATE)
   Future<void> saveTemplate(Workout template) async {
     final box = Hive.box(_templatesBoxName);
     await box.put(template.id, template.toMap());
   }
 
-  /// Read all workout templates (READ)
   Future<List<Workout>> getAllTemplates() async {
     final box = Hive.box(_templatesBoxName);
     return box.values
@@ -63,25 +70,67 @@ class LocalStorageService {
         .toList();
   }
 
-  /// Delete a workout template (DELETE)
   Future<void> deleteTemplate(String id) async {
     final box = Hive.box(_templatesBoxName);
     await box.delete(id);
   }
 
-  // ==========================================
-  // --- SYSTEM SETTINGS ---
-  // ==========================================
-
-  /// Save weight unit (kg/lbs)
   Future<void> saveUnit(String unit) async {
-    final box = Hive.box(_settingsBoxName);
-    await box.put('unit', unit);
+    final settingsBox = Hive.box(_settingsBoxName);
+    await settingsBox.put('unit', unit);
+    await _prefsInstance.setString(_unitKey, unit);
   }
 
-  /// Read weight unit
   Future<String> getUnit() async {
-    final box = Hive.box(_settingsBoxName);
-    return box.get('unit', defaultValue: 'kg') as String;
+    final settingsBox = Hive.box(_settingsBoxName);
+    final fromHive = settingsBox.get('unit');
+    if (fromHive is String && fromHive.isNotEmpty) {
+      return fromHive;
+    }
+    return _prefsInstance.getString(_unitKey) ?? 'kg';
+  }
+
+  Future<List<AppUser>> getUsers() async {
+    final raw = _prefsInstance.getString(_usersKey);
+    if (raw == null || raw.isEmpty) return [];
+
+    final decoded = jsonDecode(raw) as List<dynamic>;
+    return decoded
+        .cast<Map<String, dynamic>>()
+        .map(AppUser.fromMap)
+        .toList();
+  }
+
+  Future<void> saveUsers(List<AppUser> users) async {
+    final payload = jsonEncode(users.map((user) => user.toMap()).toList());
+    await _prefsInstance.setString(_usersKey, payload);
+  }
+
+  Future<String?> getActiveUserId() async {
+    return _prefsInstance.getString(_activeUserKey);
+  }
+
+  Future<void> setActiveUserId(String? userId) async {
+    if (userId == null) {
+      await _prefsInstance.remove(_activeUserKey);
+      return;
+    }
+    await _prefsInstance.setString(_activeUserKey, userId);
+  }
+
+  Future<UserWorkoutData?> getWorkoutData(String userId) async {
+    final raw = _prefsInstance.getString('$_workoutPrefix$userId');
+    if (raw == null || raw.isEmpty) return null;
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    return UserWorkoutData.fromMap(decoded);
+  }
+
+  Future<void> saveWorkoutData(String userId, UserWorkoutData data) async {
+    final payload = jsonEncode(data.toMap());
+    await _prefsInstance.setString('$_workoutPrefix$userId', payload);
+  }
+
+  Future<void> clearWorkoutData(String userId) async {
+    await _prefsInstance.remove('$_workoutPrefix$userId');
   }
 }

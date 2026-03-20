@@ -1,141 +1,159 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+
 import '../models/exercise.dart';
 import '../models/exercise_set.dart';
+import '../models/user_workout_data.dart';
 import '../models/workout.dart';
-import '../services/local_storage_service.dart';
 import '../services/firebase_service.dart';
+import '../services/local_storage_service.dart';
 
 class WorkoutProvider extends ChangeNotifier {
-  final LocalStorageService _storage = LocalStorageService();
+  final LocalStorageService _storage;
   final FirebaseService _firebase = FirebaseService();
 
   List<Workout> _templates = [];
   List<Workout> _history = [];
+  String? _userId;
+  bool _isLoading = false;
   bool _isSyncing = false;
+
+  WorkoutProvider(this._storage);
 
   List<Workout> get templates => List.unmodifiable(_templates);
   List<Workout> get history => List.unmodifiable(_history);
+  bool get isLoading => _isLoading;
   bool get isSyncing => _isSyncing;
 
-  WorkoutProvider();
-
-  Future<void> loadData() async {
-    _templates = await _storage.getAllTemplates();
-    _history = await _storage.getAllWorkoutLogs();
-
-    if (_templates.isEmpty) {
-      _seedTemplates();
-      for (final template in _templates) {
-        await _storage.saveTemplate(template);
-      }
+  void bindUser(String? userId) {
+    if (_userId == userId) return;
+    _userId = userId;
+    if (userId != null) {
+      _firebase.setUserId(userId);
     }
-
-    notifyListeners();
+    unawaited(_loadForUser(userId));
   }
 
   Future<void> addTemplate(Workout template) async {
     _templates.add(template);
-    // Save locally
     await _storage.saveTemplate(template);
-    // Try to sync to Firebase
     try {
       await _firebase.uploadTemplate(template);
-    } catch (e) {
-      print('Error uploading template to Firebase: $e');
-    }
+    } catch (_) {}
     notifyListeners();
+    unawaited(_persist());
   }
 
   Future<void> updateTemplate(Workout template) async {
     final index = _templates.indexWhere((item) => item.id == template.id);
     if (index == -1) return;
     _templates[index] = template;
-    // Save locally
     await _storage.saveTemplate(template);
-    // Try to sync to Firebase
     try {
       await _firebase.uploadTemplate(template);
-    } catch (e) {
-      print('Error updating template in Firebase: $e');
-    }
+    } catch (_) {}
     notifyListeners();
+    unawaited(_persist());
   }
 
   Future<void> removeTemplate(String id) async {
     _templates.removeWhere((template) => template.id == id);
-    // Delete locally
     await _storage.deleteTemplate(id);
-    // Try to delete from Firebase
     try {
       await _firebase.deleteTemplate(id);
-    } catch (e) {
-      print('Error deleting template from Firebase: $e');
-    }
+    } catch (_) {}
     notifyListeners();
+    unawaited(_persist());
   }
 
   Future<void> addWorkoutLog(Workout workout) async {
     _history.insert(0, workout);
-    // Save locally
     await _storage.saveWorkoutLog(workout);
-    // Try to sync to Firebase
     try {
       await _firebase.uploadWorkoutLog(workout);
-    } catch (e) {
-      print('Error uploading workout log to Firebase: $e');
-    }
+    } catch (_) {}
     notifyListeners();
+    unawaited(_persist());
   }
 
   Future<void> clearAll() async {
-    for (var t in _templates) {
-      await _storage.deleteTemplate(t.id);
+    for (final template in _templates) {
+      await _storage.deleteTemplate(template.id);
     }
-    for (var h in _history) {
-      await _storage.deleteWorkoutLog(h.id);
+    for (final workout in _history) {
+      await _storage.deleteWorkoutLog(workout.id);
     }
     _templates.clear();
     _history.clear();
     notifyListeners();
+
+    final userId = _userId;
+    if (userId != null) {
+      await _storage.clearWorkoutData(userId);
+    }
   }
 
-  /// Sync all data from Firebase to local storage
   Future<void> syncFromFirebase() async {
+    if (_userId == null) return;
     _isSyncing = true;
     notifyListeners();
 
     try {
-      // Download templates from Firebase
-      final firebaseTemplates = await _firebase.downloadTemplates();
-      _templates = firebaseTemplates;
-
-      // Download workout logs from Firebase
-      final firebaseLogs = await _firebase.downloadWorkoutLogs();
-      _history = firebaseLogs;
-
-      print('Successfully synced data from Firebase');
-    } catch (e) {
-      print('Error syncing from Firebase: $e');
+      _templates = await _firebase.downloadTemplates();
+      _history = await _firebase.downloadWorkoutLogs();
+      await _persist();
+    } catch (_) {
     } finally {
       _isSyncing = false;
       notifyListeners();
     }
   }
 
-  /// Sync all local data to Firebase
   Future<void> syncToFirebase() async {
+    if (_userId == null) return;
     _isSyncing = true;
     notifyListeners();
 
     try {
       await _firebase.syncAllToFirebase(_templates, _history);
-      print('Successfully synced data to Firebase');
-    } catch (e) {
-      print('Error syncing to Firebase: $e');
+    } catch (_) {
     } finally {
       _isSyncing = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _loadForUser(String? userId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    _templates = [];
+    _history = [];
+
+    if (userId != null) {
+      final data = await _storage.getWorkoutData(userId);
+      if (data != null) {
+        _templates = data.templates;
+        _history = data.history;
+      } else {
+        _seedTemplates();
+        await _persist();
+      }
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> _persist() async {
+    final userId = _userId;
+    if (userId == null) return;
+    final data = UserWorkoutData(
+      templates: _templates,
+      history: _history,
+    );
+    await _storage.saveWorkoutData(userId, data);
   }
 
   void _seedTemplates() {
