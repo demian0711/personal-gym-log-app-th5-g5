@@ -30,14 +30,11 @@ class _AppShellState extends State<AppShell> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('TH5 - Personal Gym Log')),
+      appBar: AppBar(title: const Text('TH5 - Nhóm 5 - Personal Gym Log')),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              colorScheme.background,
-              colorScheme.surface,
-            ],
+            colors: [colorScheme.surface, colorScheme.surfaceContainerLowest],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),

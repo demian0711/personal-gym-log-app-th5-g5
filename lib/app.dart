@@ -11,7 +11,11 @@ class PersonalGymLogApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => WorkoutProvider())],
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => WorkoutProvider()..loadData(),
+        ),
+      ],
       child: MaterialApp(
         title: 'Personal Gym Log',
         debugShowCheckedModeBanner: false,
