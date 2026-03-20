@@ -18,44 +18,44 @@ class LocalStorageService {
   }
 
   // ==========================================
-  // --- NHẬT KÝ TẬP LUYỆN (WORKOUT LOGS) ---
+  // --- WORKOUT LOGS ---
   // ==========================================
 
-  /// Thêm hoặc cập nhật nhật ký tập luyện (CREATE / UPDATE)
+  /// Add or update a workout log (CREATE / UPDATE)
   Future<void> saveWorkoutLog(Workout workout) async {
     final box = Hive.box(_workoutsBoxName);
     await box.put(workout.id, workout.toMap());
   }
 
-  /// Đọc toàn bộ nhật ký tập luyện (READ)
+  /// Read all workout logs (READ)
   Future<List<Workout>> getAllWorkoutLogs() async {
     final box = Hive.box(_workoutsBoxName);
     final List<Workout> logs = box.values
         .map((map) => Workout.fromMap(Map<String, dynamic>.from(map)))
         .toList();
-    
-    // Sắp xếp: Buổi tập mới nhất lên đầu
+
+    // Sort: newest workouts first
     logs.sort((a, b) => b.date.compareTo(a.date));
     return logs;
   }
 
-  /// Xóa nhật ký tập luyện (DELETE)
+  /// Delete a workout log (DELETE)
   Future<void> deleteWorkoutLog(String id) async {
     final box = Hive.box(_workoutsBoxName);
     await box.delete(id);
   }
 
   // ==========================================
-  // --- LỊCH TẬP MẪU (TEMPLATES) ---
+  // --- WORKOUT TEMPLATES ---
   // ==========================================
 
-  /// Thêm hoặc cập nhật lịch tập mẫu (CREATE / UPDATE)
+  /// Add or update a workout template (CREATE / UPDATE)
   Future<void> saveTemplate(Workout template) async {
     final box = Hive.box(_templatesBoxName);
     await box.put(template.id, template.toMap());
   }
 
-  /// Đọc toàn bộ danh sách lịch tập mẫu (READ)
+  /// Read all workout templates (READ)
   Future<List<Workout>> getAllTemplates() async {
     final box = Hive.box(_templatesBoxName);
     return box.values
@@ -63,23 +63,23 @@ class LocalStorageService {
         .toList();
   }
 
-  /// Xóa lịch tập mẫu (DELETE)
+  /// Delete a workout template (DELETE)
   Future<void> deleteTemplate(String id) async {
     final box = Hive.box(_templatesBoxName);
     await box.delete(id);
   }
 
   // ==========================================
-  // --- CÀI ĐẶT HỆ THỐNG (SETTINGS) ---
+  // --- SYSTEM SETTINGS ---
   // ==========================================
 
-  /// Lưu đơn vị cân nặng (kg/lbs)
+  /// Save weight unit (kg/lbs)
   Future<void> saveUnit(String unit) async {
     final box = Hive.box(_settingsBoxName);
     await box.put('unit', unit);
   }
 
-  /// Đọc đơn vị cân nặng
+  /// Read weight unit
   Future<String> getUnit() async {
     final box = Hive.box(_settingsBoxName);
     return box.get('unit', defaultValue: 'kg') as String;
