@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/utilities_provider.dart';
 import '../widgets/app_bottom_nav.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'history/workout_history_screen.dart';
@@ -18,6 +19,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
+  late final UtilitiesProvider _utilitiesProvider;
 
   static const List<Widget> _screens = [
     DashboardScreen(),
@@ -26,6 +28,18 @@ class _AppShellState extends State<AppShell> {
     WorkoutHistoryScreen(),
     SettingsScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _utilitiesProvider = UtilitiesProvider();
+  }
+
+  @override
+  void dispose() {
+    _utilitiesProvider.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,15 +63,15 @@ class _AppShellState extends State<AppShell> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              colorScheme.background,
-              colorScheme.surface,
-            ],
+            colors: [colorScheme.surface, colorScheme.surfaceContainerLowest],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
-        child: SafeArea(child: _screens[_currentIndex]),
+        child: ChangeNotifierProvider<UtilitiesProvider>.value(
+          value: _utilitiesProvider,
+          child: SafeArea(child: _screens[_currentIndex]),
+        ),
       ),
       bottomNavigationBar: AppBottomNav(
         selectedIndex: _currentIndex,

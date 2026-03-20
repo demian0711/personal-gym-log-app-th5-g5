@@ -1,63 +1,50 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color _primary = Color(0xFF0F6B6E);
-  static const Color _secondary = Color(0xFFF2A365);
-  static const Color _surface = Color(0xFFFFFFFF);
-  static const Color _background = Color(0xFFF7F3EF);
-  static const Color _onPrimary = Color(0xFFFFFFFF);
-  static const Color _onSecondary = Color(0xFF2E1F14);
-  static const Color _onSurface = Color(0xFF1B1B1F);
+  static const Color _seedColor = Color(0xFF0F6B6E);
 
   static ThemeData get lightTheme {
-    final colorScheme = ColorScheme.light(
-      primary: _primary,
-      secondary: _secondary,
-      surface: _surface,
-      background: _background,
-      onPrimary: _onPrimary,
-      onSecondary: _onSecondary,
-      onSurface: _onSurface,
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: _seedColor,
+      brightness: Brightness.light,
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: _background,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: _primary,
-        foregroundColor: _onPrimary,
+      scaffoldBackgroundColor: colorScheme.surface,
+      appBarTheme: AppBarTheme(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
         elevation: 0,
         centerTitle: true,
       ),
       cardTheme: CardThemeData(
-        color: _surface,
-        elevation: 1.5,
-        shadowColor: _primary.withOpacity(0.15),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        color: colorScheme.surfaceContainerLow,
+        elevation: 0,
+        shadowColor: colorScheme.shadow.withValues(alpha: 0.06),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: _surface,
+        fillColor: colorScheme.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _primary.withOpacity(0.2)),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _primary.withOpacity(0.2)),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _primary, width: 1.5),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: _primary,
-          foregroundColor: _onPrimary,
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -66,35 +53,45 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: _primary,
-          side: const BorderSide(color: _primary),
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.outline),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         ),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: _secondary,
-        foregroundColor: _onSecondary,
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: colorScheme.secondaryContainer,
+        foregroundColor: colorScheme.onSecondaryContainer,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: _surface,
-        indicatorColor: _secondary.withOpacity(0.25),
-        labelTextStyle: MaterialStateProperty.resolveWith(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.secondaryContainer,
+        labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
-            color: states.contains(MaterialState.selected)
-                ? _primary
-                : _onSurface.withOpacity(0.7),
+            color: states.contains(WidgetState.selected)
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w600,
           ),
         ),
-        iconTheme: MaterialStateProperty.resolveWith(
+        iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
-            color: states.contains(MaterialState.selected)
-                ? _primary
-                : _onSurface.withOpacity(0.7),
+            color: states.contains(WidgetState.selected)
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
           ),
+        ),
+      ),
+      searchBarTheme: SearchBarThemeData(
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      ),
+      dropdownMenuTheme: const DropdownMenuThemeData(
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(),
         ),
       ),
     );
