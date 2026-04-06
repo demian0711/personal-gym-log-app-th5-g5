@@ -38,18 +38,26 @@ class PersonalGymLogApp extends StatelessWidget {
           },
         ),
         ChangeNotifierProxyProvider<AuthProvider, ProfileProvider>(
-          create: (_) =>
-              ProfileProvider(ProfileRepositoryImpl(ProfileFirestoreService())),
+          create: (_) => ProfileProvider(
+            ProfileRepositoryImpl(
+              ProfileFirestoreService(),
+              CloudinaryService(),
+            ),
+          ),
           update: (_, auth, profile) {
             final provider =
                 profile ??
                 ProfileProvider(
-                  ProfileRepositoryImpl(ProfileFirestoreService()),
+                  ProfileRepositoryImpl(
+                    ProfileFirestoreService(),
+                    CloudinaryService(),
+                  ),
                 );
             provider.bindUser(
               userId: auth.currentUser?.id,
               email: auth.currentUser?.email ?? '',
               fallbackDisplayName: auth.currentUser?.name ?? '',
+              photoUrl: auth.currentUser?.photoUrl,
             );
             return provider;
           },

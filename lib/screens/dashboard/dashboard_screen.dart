@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 
+import '../../features/profile/presentation/providers/profile_provider.dart';
 import '../../models/workout.dart';
 import '../../providers/workout_provider.dart';
 
@@ -11,6 +12,8 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final profileProvider = context.watch<ProfileProvider>();
+    final weeklyTarget = profileProvider.profile?.weeklyTarget ?? 3;
 
     return Consumer<WorkoutProvider>(
       builder: (context, provider, _) {
@@ -34,6 +37,8 @@ class DashboardScreen extends StatelessWidget {
               _buildHeroImage(),
               const SizedBox(height: 16),
               _buildWelcomeCard(context),
+              const SizedBox(height: 16),
+              _buildWeeklyProgress(context, weeklyCount, weeklyTarget),
               const SizedBox(height: 16),
               Text(
                 'Quick Overview',
@@ -118,6 +123,60 @@ Widget _buildHeroImage() {
           ),
         ),
       ],
+    ),
+  );
+}
+
+Widget _buildWeeklyProgress(BuildContext context, int current, int target) {
+  final colorScheme = Theme.of(context).colorScheme;
+  final textTheme = Theme.of(context).textTheme;
+  final progress = (current / target).clamp(0.0, 1.0);
+
+  return Card(
+    elevation: 0,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Weekly Goal Progress',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                '$current / $target sessions',
+                style: textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 10,
+              backgroundColor: colorScheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            progress >= 1.0
+                ? 'Goal achieved! Amazing work this week.'
+                : 'You are ${target - current} sessions away from your weekly goal.',
+            style: textTheme.bodySmall,
+          ),
+        ],
+      ),
     ),
   );
 }

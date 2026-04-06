@@ -148,4 +148,22 @@ class ProfileProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> updateProfilePhoto(String imagePath) async {
+    final userId = _boundUserId;
+    if (userId == null) return;
+
+    _isSaving = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _profile = await _repository.updateProfilePhoto(userId, imagePath);
+    } catch (_) {
+      _errorMessage = 'Không thể cập nhật ảnh hồ sơ.';
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
 }
