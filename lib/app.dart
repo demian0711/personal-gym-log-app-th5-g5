@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/analytics/domain/services/analytics_service.dart';
 import 'features/analytics/presentation/providers/analytics_provider.dart';
+import 'features/progress_photos/data/repositories/progress_photo_repository_impl.dart';
+import 'features/progress_photos/data/services/cloudinary_service.dart';
+import 'features/progress_photos/presentation/providers/progress_photos_provider.dart';
 import 'features/profile/data/repositories/profile_repository_impl.dart';
 import 'features/profile/data/services/profile_firestore_service.dart';
 import 'features/profile/presentation/providers/profile_provider.dart';
@@ -52,6 +55,22 @@ class PersonalGymLogApp extends StatelessWidget {
           create: (_) => AnalyticsProvider(AnalyticsService()),
           update: (_, auth, analytics) {
             final provider = analytics ?? AnalyticsProvider(AnalyticsService());
+            provider.bindUser(auth.currentUser?.id);
+            return provider;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, ProgressPhotosProvider>(
+          create: (_) => ProgressPhotosProvider(
+            ProgressPhotoRepositoryImpl(cloudinaryService: CloudinaryService()),
+          ),
+          update: (_, auth, progressPhotos) {
+            final provider =
+                progressPhotos ??
+                ProgressPhotosProvider(
+                  ProgressPhotoRepositoryImpl(
+                    cloudinaryService: CloudinaryService(),
+                  ),
+                );
             provider.bindUser(auth.currentUser?.id);
             return provider;
           },

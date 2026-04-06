@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../features/analytics/presentation/screens/analytics_screen.dart';
+import '../../features/progress_photos/presentation/screens/progress_photos_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/utilities_provider.dart';
@@ -83,6 +84,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => const AnalyticsScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.photo_camera_back_outlined),
+                title: const Text('Progress Photos'),
+                subtitle: const Text('Timeline ảnh theo ngày'),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ProgressPhotosScreen(),
                     ),
                   );
                 },
