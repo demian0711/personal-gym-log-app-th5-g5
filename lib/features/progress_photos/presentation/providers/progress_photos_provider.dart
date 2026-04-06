@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,6 +11,7 @@ class ProgressPhotosProvider extends ChangeNotifier {
   final ImagePicker _imagePicker;
 
   String? _userId;
+  StreamSubscription<List<ProgressPhotoModel>>? _photosSubscription;
   List<ProgressPhotoModel> _photos = [];
   bool _isLoading = false;
   bool _isUploading = false;
@@ -31,6 +31,7 @@ class ProgressPhotosProvider extends ChangeNotifier {
       return;
     }
 
+    _photosSubscription?.cancel();
     _userId = userId;
     _photos = [];
     _errorMessage = null;
@@ -51,15 +52,23 @@ class ProgressPhotosProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    try {
-      _photos = await _repository.fetchProgressPhotos(userId);
-    } catch (_) {
-      _errorMessage = 'Không thể tải Progress Photos.';
-      _photos = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+    await _photosSubscription?.cancel();
+    _photosSubscription = _repository
+        .streamUserPhotos(userId)
+        .listen(
+          (photos) {
+            _photos = photos;
+            _isLoading = false;
+            _errorMessage = null;
+            notifyListeners();
+          },
+          onError: (_) {
+            _isLoading = false;
+            _errorMessage = 'Không thể tải Progress Photos.';
+            _photos = [];
+            notifyListeners();
+          },
+        );
   }
 
   Future<void> addPhoto(ImageSource source) async {
@@ -86,17 +95,22 @@ class ProgressPhotosProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
-      final photo = await _repository.uploadAndSavePhoto(
+      await _repository.uploadProgressPhoto(
         userId: userId,
-        imageFile: File(picked.path),
+        imageBytes: await picked.readAsBytes(),
+        fileName: picked.name,
       );
-
-      _photos = [photo, ..._photos];
     } catch (_) {
       _errorMessage = 'Upload ảnh thất bại. Vui lòng thử lại.';
     } finally {
       _isUploading = false;
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _photosSubscription?.cancel();
+    super.dispose();
   }
 }
