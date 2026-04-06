@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/utilities_provider.dart';
 import '../../providers/workout_provider.dart';
@@ -50,6 +51,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 leading: const CircleAvatar(child: Icon(Icons.person)),
                 title: Text(user?.name ?? 'Account'),
                 subtitle: Text(user?.email ?? 'No email'),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ProfileScreen(),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 12),
@@ -75,11 +84,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       actions: [
                         TextButton(
-                          onPressed: () => Navigator.of(dialogContext).pop(false),
+                          onPressed: () =>
+                              Navigator.of(dialogContext).pop(false),
                           child: const Text('Cancel'),
                         ),
                         FilledButton(
-                          onPressed: () => Navigator.of(dialogContext).pop(true),
+                          onPressed: () =>
+                              Navigator.of(dialogContext).pop(true),
                           child: const Text('Delete'),
                         ),
                       ],
@@ -114,10 +125,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     Text(
                       'Rest Timer',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile(
@@ -159,17 +169,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     Text(
                       'One Rep Max (1RM)',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _weightController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(labelText: 'Weight (kg)'),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Weight (kg)',
+                      ),
                     ),
                     const SizedBox(height: 10),
                     TextField(
@@ -205,10 +217,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     Text(
                       'Local Notifications',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile(
