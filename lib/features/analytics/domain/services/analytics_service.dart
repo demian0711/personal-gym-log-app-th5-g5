@@ -8,10 +8,7 @@ class AnalyticsDataPoint {
   final DateTime date;
   final double value;
 
-  const AnalyticsDataPoint({
-    required this.date,
-    required this.value,
-  });
+  const AnalyticsDataPoint({required this.date, required this.value});
 }
 
 /// Service xử lý cả phần đọc dữ liệu Firestore và tính toán analytics.
@@ -19,7 +16,7 @@ class AnalyticsService {
   final FirebaseFirestore _firestore;
 
   AnalyticsService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Lấy workouts từ Firestore và sắp xếp thời gian tăng dần (ASC).
   Future<List<WorkoutModel>> fetchWorkouts(String userId) async {
@@ -84,7 +81,11 @@ class AnalyticsService {
     final Map<DateTime, double> byDay = {};
 
     for (final workout in workouts) {
-      final day = DateTime(workout.date.year, workout.date.month, workout.date.day);
+      final day = DateTime(
+        workout.date.year,
+        workout.date.month,
+        workout.date.day,
+      );
       final value = metric == AnalyticsMetric.volume
           ? calculateVolume(workout)
           : calculateWorkout1RM(workout);

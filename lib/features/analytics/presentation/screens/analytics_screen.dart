@@ -25,10 +25,7 @@ class AnalyticsScreen extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      provider.errorMessage!,
-                      textAlign: TextAlign.center,
-                    ),
+                    Text(provider.errorMessage!, textAlign: TextAlign.center),
                     const SizedBox(height: 12),
                     FilledButton(
                       onPressed: provider.loadAnalytics,
@@ -53,16 +50,15 @@ class AnalyticsScreen extends StatelessWidget {
           }
 
           final metric = provider.metric;
-          final metricLabel = metric == AnalyticsMetric.volume ? 'Volume' : '1RM';
+          final metricLabel = metric == AnalyticsMetric.volume
+              ? 'Volume'
+              : '1RM';
           final latestDate = provider.latestDate;
 
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _MetricToggle(
-                metric: metric,
-                onChanged: provider.setMetric,
-              ),
+              _MetricToggle(metric: metric, onChanged: provider.setMetric),
               const SizedBox(height: 12),
               Card(
                 elevation: 0,
@@ -73,9 +69,7 @@ class AnalyticsScreen extends StatelessWidget {
                     children: [
                       Text(
                         '$metricLabel theo thời gian',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
+                        style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 12),
@@ -97,9 +91,7 @@ class AnalyticsScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Summary',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
+                        style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 8),
@@ -126,10 +118,7 @@ class _MetricToggle extends StatelessWidget {
   final AnalyticsMetric metric;
   final ValueChanged<AnalyticsMetric> onChanged;
 
-  const _MetricToggle({
-    required this.metric,
-    required this.onChanged,
-  });
+  const _MetricToggle({required this.metric, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {

@@ -91,9 +91,6 @@ class AnalyticsProvider extends ChangeNotifier {
   }
 
   void _rebuildChartData() {
-    _chartData = _service.mapToChartData(
-      workouts: _workouts,
-      metric: _metric,
-    );
+    _chartData = _service.mapToChartData(workouts: _workouts, metric: _metric);
   }
 }
