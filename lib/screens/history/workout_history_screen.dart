@@ -13,78 +13,92 @@ class WorkoutHistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Consumer<WorkoutProvider>(
-      builder: (context, provider, _) {
-        final history = provider.history;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Workout History'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf), // Icon tải file PDF
+            tooltip: 'Export to PDF/Excel',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Tính năng xuất báo cáo Excel/PDF đang được hoàn thiện!',
+                  ),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: Consumer<WorkoutProvider>(
+        builder: (context, provider, _) {
+          final history = provider.history;
 
-        if (history.isEmpty) {
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Workout History',
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
+          if (history.isEmpty) {
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'No workouts have been saved yet. Go to the Workout tab and tap Finish Workout to create history.',
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'No workouts have been saved yet. Go to the Workout tab and tap Finish Workout to create history.',
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            itemCount: history.length,
+            itemBuilder: (context, index) {
+              final workout = history[index];
+              final totalSets = workout.exercises.fold<int>(
+                0,
+                (total, item) => total + item.sets.length,
+              );
+
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(14),
+                  title: Text(
+                    workout.title,
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      '${_formatDate(workout.date)} • ${workout.durationInMinutes} min • ${workout.exercises.length} exercises • $totalSets sets',
+                    ),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showWorkoutDetail(context, workout),
+                ),
+              );
+            },
           );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          itemCount: history.length,
-          itemBuilder: (context, index) {
-            final workout = history[index];
-            final totalSets = workout.exercises.fold<int>(
-              0,
-              (total, item) => total + item.sets.length,
-            );
-
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(14),
-                title: Text(
-                  workout.title,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                subtitle: Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Text(
-                    '${_formatDate(workout.date)} • ${workout.durationInMinutes} min • ${workout.exercises.length} exercises • $totalSets sets',
-                  ),
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _showWorkoutDetail(context, workout),
-              ),
-            );
-          },
-        );
-      },
+        },
+      ),
     );
   }
 }
 
 void _showWorkoutDetail(BuildContext context, Workout workout) {
   final history = context.read<WorkoutProvider>().history;
-  
+
   // Find the previous workout of the same type (same title)
   final workoutIndex = history.indexWhere((w) => w.id == workout.id);
   Workout? previousWorkout;
@@ -170,7 +184,10 @@ Widget _buildExerciseDetailCard(
           Text(exercise.muscleGroup),
           const SizedBox(height: 8),
           for (var i = 0; i < exercise.sets.length; i++) ...[
-            _buildSetRow(exercise.sets[i], previousExercise?.sets.elementAtOrNull(i)),
+            _buildSetRow(
+              exercise.sets[i],
+              previousExercise?.sets.elementAtOrNull(i),
+            ),
             if (i < exercise.sets.length - 1) const SizedBox(height: 4),
           ],
         ],
@@ -227,11 +244,7 @@ Widget _buildComparisonTag(ExerciseSet current, ExerciseSet previous) {
     ),
     child: Text(
       text,
-      style: TextStyle(
-        fontSize: 11,
-        color: color,
-        fontWeight: FontWeight.w600,
-      ),
+      style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
     ),
   );
 }
