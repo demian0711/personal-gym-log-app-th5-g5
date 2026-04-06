@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../features/analytics/presentation/screens/analytics_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/utilities_provider.dart';
@@ -69,6 +70,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: Text(
                   'Templates: ${workout.templates.length} • History: ${workout.history.length}',
                 ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.analytics_outlined),
+                title: const Text('Analytics'),
+                subtitle: const Text('Volume và 1RM theo thời gian'),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AnalyticsScreen(),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 12),
