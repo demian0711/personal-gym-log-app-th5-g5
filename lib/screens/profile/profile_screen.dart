@@ -134,6 +134,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   prefixIcon: Icon(Icons.calendar_month),
                 ),
               ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double
+                    .infinity, // Kéo dài nút ra cho dễ bấm bằng 1 tay (chuẩn đề cương)
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Kích hoạt kiểm tra lỗi (Validator)
+                    if (_formKey.currentState!.validate()) {
+                      // Nếu không có lỗi đỏ nào, hiện thông báo thành công!
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Đã lưu thông tin hồ sơ thành công! 🚀',
+                          ),
+                          backgroundColor:
+                              Colors.green, // Hiện màu xanh lá cho đẹp
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Lưu thông tin',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
