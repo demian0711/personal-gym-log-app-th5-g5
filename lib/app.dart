@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
+import 'features/profile/data/repositories/profile_repository_impl.dart';
+import 'features/profile/data/services/profile_firestore_service.dart';
+import 'features/profile/presentation/providers/profile_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/utilities_provider.dart';
 import 'providers/workout_provider.dart';
@@ -23,6 +26,23 @@ class PersonalGymLogApp extends StatelessWidget {
           update: (_, auth, workout) {
             final provider = workout ?? WorkoutProvider(storage);
             provider.bindUser(auth.currentUser?.id);
+            return provider;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, ProfileProvider>(
+          create: (_) =>
+              ProfileProvider(ProfileRepositoryImpl(ProfileFirestoreService())),
+          update: (_, auth, profile) {
+            final provider =
+                profile ??
+                ProfileProvider(
+                  ProfileRepositoryImpl(ProfileFirestoreService()),
+                );
+            provider.bindUser(
+              userId: auth.currentUser?.id,
+              email: auth.currentUser?.email ?? '',
+              fallbackDisplayName: auth.currentUser?.name ?? '',
+            );
             return provider;
           },
         ),
