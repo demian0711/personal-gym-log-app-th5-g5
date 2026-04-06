@@ -48,10 +48,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
               Row(
                 children: [
+                  // --- Ô NHẬP CHIỀU CAO ĐÃ CÓ VALIDATOR ---
                   Expanded(
                     child: TextFormField(
                       controller: _heightController,
                       keyboardType: TextInputType.number,
+                      // ĐÂY LÀ ĐOẠN CHẶN LỖI (VALIDATOR)
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Trống!'; // Báo lỗi nếu chưa nhập gì
+                        }
+                        if (double.tryParse(value) == null) {
+                          return 'Chỉ nhập số'; // Báo lỗi nếu nhập chữ cái
+                        }
+                        return null; // Không có lỗi gì
+                      },
                       decoration: const InputDecoration(
                         labelText: 'Chiều cao (cm)',
                         border: OutlineInputBorder(),
@@ -59,11 +70,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 16), // Khoảng cách giữa 2 ô
+                  // --- Ô NHẬP CÂN NẶNG ĐÃ CÓ VALIDATOR ---
                   Expanded(
                     child: TextFormField(
                       controller: _weightController,
                       keyboardType: TextInputType.number,
+                      // ĐÂY LÀ ĐOẠN CHẶN LỖI (VALIDATOR)
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Trống!';
+                        }
+                        if (double.tryParse(value) == null) {
+                          return 'Chỉ nhập số';
+                        }
+                        return null;
+                      },
                       decoration: const InputDecoration(
                         labelText: 'Cân nặng (kg)',
                         border: OutlineInputBorder(),
