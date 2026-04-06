@@ -1,32 +1,43 @@
-import 'dart:convert';
-
-import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+import '../features/auth/data/repositories/firebase_auth_repository.dart';
+import '../features/auth/data/services/firebase_auth_service.dart';
+import '../features/auth/data/services/user_firestore_service.dart';
+import '../features/auth/domain/repositories/auth_repository.dart';
 import '../models/app_user.dart';
-import '../services/local_storage_service.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final LocalStorageService _storage;
-  List<AppUser> _users = [];
+  final AuthRepository _authRepository;
   AppUser? _currentUser;
   bool _isLoading = true;
+  String? _lastError;
 
-  AuthProvider(this._storage) {
+  AuthProvider({AuthRepository? authRepository})
+    : _authRepository =
+          authRepository ??
+          FirebaseAuthRepository(
+            authService: FirebaseAuthService(),
+            userFirestoreService: UserFirestoreService(),
+          ) {
     _initialize();
   }
 
   bool get isLoading => _isLoading;
   AppUser? get currentUser => _currentUser;
   bool get isAuthenticated => _currentUser != null;
+  String? get lastError => _lastError;
 
   Future<void> _initialize() async {
     _isLoading = true;
     notifyListeners();
 
-    _users = await _storage.getUsers();
-    final activeUserId = await _storage.getActiveUserId();
-    _currentUser = _findUserById(activeUserId);
+    _currentUser = _authRepository.currentUser;
+    _authRepository.authStateChanges().listen((user) {
+      _currentUser = user;
+      _isLoading = false;
+      notifyListeners();
+    });
 
     _isLoading = false;
     notifyListeners();
@@ -47,30 +58,29 @@ class AuthProvider extends ChangeNotifier {
       return 'Vui lòng nhập đầy đủ thông tin.';
     }
 
-    final existing = _users.any(
-      (user) => user.email.toLowerCase() == normalizedEmail,
-    );
-    if (existing) {
-      return 'Email đã được đăng ký.';
-    }
-
-    final now = DateTime.now();
-    final user = AppUser(
-      id: 'user_${now.millisecondsSinceEpoch}',
-      name: trimmedName,
-      email: normalizedEmail,
-      passwordHash: _hashPassword(trimmedPassword),
-      createdAt: now,
-    );
-
-    _users = [..._users, user];
-    _currentUser = user;
-
-    await _storage.saveUsers(_users);
-    await _storage.setActiveUserId(user.id);
-
+    _isLoading = true;
+    _lastError = null;
     notifyListeners();
-    return null;
+
+    try {
+      _currentUser = await _authRepository.registerWithEmail(
+        name: trimmedName,
+        email: normalizedEmail,
+        password: trimmedPassword,
+      );
+      return null;
+    } on FirebaseAuthException catch (error) {
+      final message = _mapFirebaseAuthError(error);
+      _lastError = message;
+      return message;
+    } catch (_) {
+      const message = 'Không thể tạo tài khoản. Vui lòng thử lại.';
+      _lastError = message;
+      return message;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<String?> login({
@@ -84,48 +94,92 @@ class AuthProvider extends ChangeNotifier {
       return 'Vui lòng nhập email và mật khẩu.';
     }
 
-    final user = _findUserByEmail(normalizedEmail);
-    if (user == null) {
-      return 'Không tìm thấy tài khoản.';
-    }
-
-    if (user.passwordHash != _hashPassword(trimmedPassword)) {
-      return 'Mật khẩu không đúng.';
-    }
-
-    _currentUser = user;
-    await _storage.setActiveUserId(user.id);
+    _isLoading = true;
+    _lastError = null;
     notifyListeners();
-    return null;
+
+    try {
+      _currentUser = await _authRepository.loginWithEmail(
+        email: normalizedEmail,
+        password: trimmedPassword,
+      );
+      return null;
+    } on FirebaseAuthException catch (error) {
+      final message = _mapFirebaseAuthError(error);
+      _lastError = message;
+      return message;
+    } catch (_) {
+      const message = 'Không thể đăng nhập. Vui lòng thử lại.';
+      _lastError = message;
+      return message;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String?> loginWithGoogle() async {
+    _isLoading = true;
+    _lastError = null;
+    notifyListeners();
+
+    try {
+      final user = await _authRepository.loginWithGoogle();
+      if (user == null) {
+        _isLoading = false;
+        notifyListeners();
+        return 'Bạn đã hủy đăng nhập Google.';
+      }
+      _currentUser = user;
+      return null;
+    } on FirebaseAuthException catch (error) {
+      final message = _mapFirebaseAuthError(error);
+      _lastError = message;
+      return message;
+    } catch (_) {
+      const message = 'Đăng nhập Google thất bại. Vui lòng thử lại.';
+      _lastError = message;
+      return message;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> logout() async {
-    _currentUser = null;
-    await _storage.setActiveUserId(null);
+    _isLoading = true;
     notifyListeners();
-  }
-
-  String _hashPassword(String password) {
-    final bytes = utf8.encode(password);
-    return sha256.convert(bytes).toString();
-  }
-
-  AppUser? _findUserByEmail(String normalizedEmail) {
-    for (final user in _users) {
-      if (user.email.toLowerCase() == normalizedEmail) {
-        return user;
-      }
+    try {
+      await _authRepository.logout();
+      _currentUser = null;
+      _lastError = null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-    return null;
   }
 
-  AppUser? _findUserById(String? id) {
-    if (id == null || id.isEmpty) return null;
-    for (final user in _users) {
-      if (user.id == id) {
-        return user;
-      }
+  String _mapFirebaseAuthError(FirebaseAuthException error) {
+    switch (error.code) {
+      case 'invalid-email':
+        return 'Email không hợp lệ.';
+      case 'user-disabled':
+        return 'Tài khoản đã bị vô hiệu hóa.';
+      case 'user-not-found':
+        return 'Không tìm thấy tài khoản.';
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Email hoặc mật khẩu không đúng.';
+      case 'email-already-in-use':
+        return 'Email đã được đăng ký.';
+      case 'weak-password':
+        return 'Mật khẩu quá yếu (ít nhất 6 ký tự).';
+      case 'operation-not-allowed':
+        return 'Phương thức đăng nhập chưa được bật trên Firebase.';
+      case 'network-request-failed':
+        return 'Lỗi mạng. Vui lòng kiểm tra kết nối internet.';
+      default:
+        return error.message ?? 'Có lỗi xác thực xảy ra.';
     }
-    return null;
   }
 }

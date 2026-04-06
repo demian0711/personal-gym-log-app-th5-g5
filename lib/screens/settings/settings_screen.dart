@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../features/analytics/presentation/screens/analytics_screen.dart';
+import '../../features/progress_photos/presentation/screens/progress_photos_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../providers/utilities_provider.dart';
 import '../../providers/workout_provider.dart';
 
@@ -40,6 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final workout = context.watch<WorkoutProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
     final user = auth.currentUser;
 
     return Consumer<UtilitiesProvider>(
@@ -85,6 +88,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       builder: (_) => const AnalyticsScreen(),
                     ),
                   );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.photo_camera_back_outlined),
+                title: const Text('Progress Photos (Cloudinary)'),
+                subtitle: const Text(
+                  'Chụp ảnh, upload Cloudinary, lưu URL lên Firestore',
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ProgressPhotosScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                secondary: const Icon(Icons.dark_mode_outlined),
+                title: const Text('Dark Mode'),
+                subtitle: const Text('Giao diện tối dễ nhìn khi dùng ban đêm'),
+                value: themeProvider.isDarkMode,
+                onChanged: (value) {
+                  themeProvider.setDarkMode(value);
                 },
               ),
             ),
@@ -241,11 +278,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 12),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Workout reminder (hourly)'),
+                      title: const Text('Workout reminder (daily)'),
+                      subtitle: Text(
+                        'Giờ nhắc: ${utilities.workoutReminderTime.format(context)}',
+                      ),
                       value: utilities.workoutReminderEnabled,
                       onChanged: (value) async {
                         await utilities.setWorkoutReminderEnabled(value);
                       },
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final selected = await showTimePicker(
+                          context: context,
+                          initialTime: utilities.workoutReminderTime,
+                        );
+                        if (selected == null) {
+                          return;
+                        }
+                        await utilities.setWorkoutReminderTime(selected);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Đã đặt giờ nhắc: ${selected.format(context)}',
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.schedule_outlined),
+                      label: const Text('Set reminder time'),
                     ),
                     OutlinedButton.icon(
                       onPressed: utilities.sendTestNotification,

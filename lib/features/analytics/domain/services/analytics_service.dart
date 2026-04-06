@@ -21,9 +21,8 @@ class AnalyticsService {
   /// Lấy workouts từ Firestore và sắp xếp thời gian tăng dần (ASC).
   Future<List<WorkoutModel>> fetchWorkouts(String userId) async {
     final snapshot = await _firestore
-        .collection('users')
-        .doc(userId)
         .collection('workouts')
+        .where('userId', isEqualTo: userId)
         .get();
 
     final workouts = snapshot.docs.map(WorkoutModel.fromFirestore).toList();

@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'core/config/cloudinary_config.dart';
 import 'core/theme/app_theme.dart';
 import 'features/analytics/domain/services/analytics_service.dart';
 import 'features/analytics/presentation/providers/analytics_provider.dart';
+import 'features/progress_photos/data/repositories/progress_photo_repository_impl.dart';
+import 'features/progress_photos/data/services/cloudinary_service.dart';
+import 'features/progress_photos/data/services/progress_photo_firestore_service.dart';
+import 'features/progress_photos/presentation/providers/progress_photo_provider.dart';
 import 'features/profile/data/repositories/profile_repository_impl.dart';
 import 'features/profile/data/services/profile_firestore_service.dart';
 import 'features/profile/presentation/providers/profile_provider.dart';
 import 'providers/auth_provider.dart';
-import 'providers/utilities_provider.dart';
+import 'providers/theme_provider.dart';
 import 'providers/workout_provider.dart';
 import 'screens/auth/auth_gate.dart';
 import 'services/local_storage_service.dart';
@@ -22,7 +27,8 @@ class PersonalGymLogApp extends StatelessWidget {
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider(storage)),
+        ChangeNotifierProvider(create: (_) => ThemeProvider(storage)),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProxyProvider<AuthProvider, WorkoutProvider>(
           create: (_) => WorkoutProvider(storage),
           update: (_, auth, workout) {
@@ -56,13 +62,44 @@ class PersonalGymLogApp extends StatelessWidget {
             return provider;
           },
         ),
-        ChangeNotifierProvider(create: (_) => UtilitiesProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, ProgressPhotoProvider>(
+          create: (_) => ProgressPhotoProvider(
+            ProgressPhotoRepositoryImpl(
+              cloudinaryService: CloudinaryService(
+                cloudName: CloudinaryConfig.cloudName,
+                uploadPreset: CloudinaryConfig.uploadPreset,
+              ),
+              firestoreService: ProgressPhotoFirestoreService(),
+            ),
+          ),
+          update: (_, auth, photos) {
+            final provider =
+                photos ??
+                ProgressPhotoProvider(
+                  ProgressPhotoRepositoryImpl(
+                    cloudinaryService: CloudinaryService(
+                      cloudName: CloudinaryConfig.cloudName,
+                      uploadPreset: CloudinaryConfig.uploadPreset,
+                    ),
+                    firestoreService: ProgressPhotoFirestoreService(),
+                  ),
+                );
+            provider.bindUser(auth.currentUser?.id);
+            return provider;
+          },
+        ),
       ],
-      child: MaterialApp(
-        title: 'Personal Gym Log',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        home: const AuthGate(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp(
+            title: 'Personal Gym Log',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+            home: const AuthGate(),
+          );
+        },
       ),
     );
   }

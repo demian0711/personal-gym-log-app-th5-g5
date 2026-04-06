@@ -3,13 +3,15 @@ class AppUser {
   final String name;
   final String email;
   final String passwordHash;
+  final String? photoUrl;
   final DateTime createdAt;
 
   const AppUser({
     required this.id,
     required this.name,
     required this.email,
-    required this.passwordHash,
+    this.passwordHash = '',
+    this.photoUrl,
     required this.createdAt,
   });
 
@@ -19,6 +21,7 @@ class AppUser {
       'name': name,
       'email': email,
       'passwordHash': passwordHash,
+      'photoUrl': photoUrl,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -28,8 +31,11 @@ class AppUser {
       id: map['id'] as String,
       name: map['name'] as String,
       email: map['email'] as String,
-      passwordHash: map['passwordHash'] as String,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      passwordHash: (map['passwordHash'] as String?) ?? '',
+      photoUrl: map['photoUrl'] as String?,
+      createdAt:
+          DateTime.tryParse((map['createdAt'] as String?) ?? '') ??
+          DateTime.now(),
     );
   }
 }
