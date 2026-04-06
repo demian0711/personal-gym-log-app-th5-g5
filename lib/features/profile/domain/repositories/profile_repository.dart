@@ -10,4 +10,6 @@ abstract class ProfileRepository {
   });
 
   Future<UserModel> updateProfile(UserModel user);
+
+  Future<UserModel> updateProfilePhoto(String userId, String imagePath);
 }
