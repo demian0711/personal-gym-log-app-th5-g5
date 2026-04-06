@@ -1,11 +1,14 @@
+import 'dart:io';
+import '../../../progress_photos/data/services/cloudinary_service.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../models/user_model.dart';
 import '../services/profile_firestore_service.dart';
 
 class ProfileRepositoryImpl implements ProfileRepository {
   final ProfileFirestoreService _service;
+  final CloudinaryService _cloudinary;
 
-  ProfileRepositoryImpl(this._service);
+  ProfileRepositoryImpl(this._service, this._cloudinary);
 
   @override
   Future<UserModel> fetchOrCreateProfile({
@@ -40,5 +43,17 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<UserModel> updateProfile(UserModel user) async {
     await _service.updateUser(user);
     return user;
+  }
+
+  @override
+  Future<UserModel> updateProfilePhoto(String userId, String imagePath) async {
+    final photoUrl = await _cloudinary.uploadToCloudinary(File(imagePath));
+    final existing = await _service.fetchUser(userId);
+    if (existing == null) {
+      throw Exception('Không tìm thấy profile để cập nhật ảnh.');
+    }
+    final updated = existing.copyWith(photoUrl: photoUrl);
+    await _service.updateUser(updated);
+    return updated;
   }
 }

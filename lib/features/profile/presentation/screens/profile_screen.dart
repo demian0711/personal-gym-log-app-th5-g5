@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/profile_provider.dart';
@@ -91,6 +92,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ).showSnackBar(const SnackBar(content: Text('Đã lưu hồ sơ thành công.')));
   }
 
+  Future<void> _showPhotoOptions(
+    BuildContext context,
+    ProfileProvider provider,
+  ) async {
+    final picker = ImagePicker();
+    await showModalBottomSheet(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: const Text('Chụp ảnh'),
+              onTap: () async {
+                Navigator.pop(sheetContext);
+                final image = await picker.pickImage(source: ImageSource.camera);
+                if (image != null) {
+                  await provider.updateProfilePhoto(image.path);
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Chọn từ thư viện'),
+              onTap: () async {
+                Navigator.pop(sheetContext);
+                final image = await picker.pickImage(
+                  source: ImageSource.gallery,
+                );
+                if (image != null) {
+                  await provider.updateProfilePhoto(image.path);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,14 +169,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 Center(
-                  child: CircleAvatar(
-                    radius: 44,
-                    backgroundImage: _photoUrl != null && _photoUrl!.isNotEmpty
-                        ? NetworkImage(_photoUrl!)
-                        : null,
-                    child: (_photoUrl == null || _photoUrl!.isEmpty)
-                        ? const Icon(Icons.person, size: 42)
-                        : null,
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 44,
+                        backgroundImage: _photoUrl != null && _photoUrl!.isNotEmpty
+                            ? NetworkImage(_photoUrl!)
+                            : null,
+                        child: (_photoUrl == null || _photoUrl!.isEmpty)
+                            ? const Icon(Icons.person, size: 42)
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: () => _showPhotoOptions(context, provider),
+                          child: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 12),
