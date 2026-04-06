@@ -41,7 +41,10 @@ class PersonalGymLogApp extends StatelessWidget {
           create: (_) => ProfileProvider(
             ProfileRepositoryImpl(
               ProfileFirestoreService(),
-              CloudinaryService(),
+              CloudinaryService(
+                cloudName: CloudinaryConfig.cloudName,
+                uploadPreset: CloudinaryConfig.uploadPreset,
+              ),
             ),
           ),
           update: (_, auth, profile) {
@@ -50,7 +53,10 @@ class PersonalGymLogApp extends StatelessWidget {
                 ProfileProvider(
                   ProfileRepositoryImpl(
                     ProfileFirestoreService(),
-                    CloudinaryService(),
+                    CloudinaryService(
+                      cloudName: CloudinaryConfig.cloudName,
+                      uploadPreset: CloudinaryConfig.uploadPreset,
+                    ),
                   ),
                 );
             provider.bindUser(
