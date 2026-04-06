@@ -17,12 +17,11 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAMvy860qLDvL4q2OBjXtlJDSbXKvaR3Ug',
-    appId: '1:813401800112:android:3c05b4bcc9069b7c906a75',
-    messagingSenderId: '813401800112',
-    projectId: 'gymapp-7d586',
-    databaseURL: 'https://gymapp-7d586.firebasedatabase.app',
-    storageBucket: 'gymapp-7d586.firebasestorage.app',
+    apiKey: 'AIzaSyBP5eoed3h79RF6U1fJWvK7QWMiVu84UN4',
+    appId: '1:158847912768:android:31a2d03095aedf993588a5',
+    messagingSenderId: '158847912768',
+    projectId: 'personal-gym-log',
+    storageBucket: 'personal-gym-log.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

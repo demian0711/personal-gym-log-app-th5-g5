@@ -38,15 +38,33 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isSubmitting = false);
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
+    }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    setState(() => _isSubmitting = true);
+
+    final auth = context.read<AuthProvider>();
+    final error = await auth.loginWithGoogle();
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (error != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final authLoading = context.watch<AuthProvider>().isLoading;
+    final disabled = _isSubmitting || authLoading;
 
     return Scaffold(
       body: SafeArea(
@@ -67,9 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                          ),
+                          decoration: const InputDecoration(labelText: 'Email'),
                           validator: (value) {
                             final trimmed = value?.trim() ?? '';
                             if (trimmed.isEmpty) {
@@ -103,10 +119,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton(
-                            onPressed: _isSubmitting ? null : _handleLogin,
+                            onPressed: disabled ? null : _handleLogin,
                             child: Text(
-                              _isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập',
+                              disabled ? 'Đang đăng nhập...' : 'Đăng nhập',
                             ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: disabled ? null : _handleGoogleLogin,
+                            icon: const Icon(Icons.account_circle_outlined),
+                            label: const Text('Đăng nhập với Google'),
                           ),
                         ),
                       ],
@@ -119,9 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: TextButton(
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const RegisterScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
                     );
                   },
                   child: const Text('Chưa có tài khoản? Đăng ký'),
@@ -150,9 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 16),
         Text(
           'Chào mừng quay lại',
-          style: textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 6),
         Text(

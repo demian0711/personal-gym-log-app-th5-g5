@@ -6,6 +6,7 @@ import '../../models/exercise_set.dart';
 import '../../models/workout.dart';
 import '../../providers/workout_provider.dart';
 import 'muscle_groups_screen.dart';
+import 'qr_exercise_scanner_screen.dart';
 
 class TemplateScreen extends StatefulWidget {
   const TemplateScreen({super.key});
@@ -332,6 +333,19 @@ class _TemplateScreenState extends State<TemplateScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Templates'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const QrExerciseScannerScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.qr_code_scanner),
+            tooltip: 'Quét QR bài tập',
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [

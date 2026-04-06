@@ -10,7 +10,7 @@ class AppUser {
     required this.id,
     required this.name,
     required this.email,
-    required this.passwordHash,
+    this.passwordHash = '',
     this.photoUrl,
     required this.createdAt,
   });
@@ -31,9 +31,11 @@ class AppUser {
       id: map['id'] as String,
       name: map['name'] as String,
       email: map['email'] as String,
-      passwordHash: map['passwordHash'] as String,
+      passwordHash: (map['passwordHash'] as String?) ?? '',
       photoUrl: map['photoUrl'] as String?,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      createdAt:
+          DateTime.tryParse((map['createdAt'] as String?) ?? '') ??
+          DateTime.now(),
     );
   }
 }

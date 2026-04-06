@@ -42,9 +42,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isSubmitting = false);
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
@@ -54,6 +54,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final authLoading = context.watch<AuthProvider>().isLoading;
+    final disabled = _isSubmitting || authLoading;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Đăng ký')),
@@ -98,9 +100,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                          ),
+                          decoration: const InputDecoration(labelText: 'Email'),
                           validator: (value) {
                             final trimmed = value?.trim() ?? '';
                             if (trimmed.isEmpty) {
@@ -152,9 +152,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton(
-                            onPressed: _isSubmitting ? null : _handleRegister,
+                            onPressed: disabled ? null : _handleRegister,
                             child: Text(
-                              _isSubmitting ? 'Đang tạo...' : 'Tạo tài khoản',
+                              disabled ? 'Đang tạo...' : 'Tạo tài khoản',
                             ),
                           ),
                         ),

@@ -19,6 +19,12 @@ class LocalStorageService {
   static const String _usersKey = 'auth_users';
   static const String _activeUserKey = 'auth_active_user_id';
   static const String _unitKey = 'unit_preference';
+  static const String _cloudinaryCloudNameKey = 'cloudinary_cloud_name';
+  static const String _cloudinaryUploadPresetKey = 'cloudinary_upload_preset';
+  static const String _reminderEnabledKey = 'workout_reminder_enabled';
+  static const String _reminderHourKey = 'workout_reminder_hour';
+  static const String _reminderMinuteKey = 'workout_reminder_minute';
+  static const String _isDarkModeKey = 'theme_is_dark_mode';
   static const String _workoutPrefix = 'workout_data_';
 
   SharedPreferences? _prefs;
@@ -95,10 +101,7 @@ class LocalStorageService {
     if (raw == null || raw.isEmpty) return [];
 
     final decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded
-        .cast<Map<String, dynamic>>()
-        .map(AppUser.fromMap)
-        .toList();
+    return decoded.cast<Map<String, dynamic>>().map(AppUser.fromMap).toList();
   }
 
   Future<void> saveUsers(List<AppUser> users) async {
@@ -116,6 +119,54 @@ class LocalStorageService {
       return;
     }
     await _prefsInstance.setString(_activeUserKey, userId);
+  }
+
+  Future<String?> getCloudinaryCloudName() async {
+    return _prefsInstance.getString(_cloudinaryCloudNameKey);
+  }
+
+  Future<void> setCloudinaryCloudName(String value) async {
+    await _prefsInstance.setString(_cloudinaryCloudNameKey, value.trim());
+  }
+
+  Future<String?> getCloudinaryUploadPreset() async {
+    return _prefsInstance.getString(_cloudinaryUploadPresetKey);
+  }
+
+  Future<void> setCloudinaryUploadPreset(String value) async {
+    await _prefsInstance.setString(_cloudinaryUploadPresetKey, value.trim());
+  }
+
+  Future<bool> getReminderEnabled() async {
+    return _prefsInstance.getBool(_reminderEnabledKey) ?? false;
+  }
+
+  Future<void> setReminderEnabled(bool value) async {
+    await _prefsInstance.setBool(_reminderEnabledKey, value);
+  }
+
+  Future<int> getReminderHour() async {
+    return _prefsInstance.getInt(_reminderHourKey) ?? 19;
+  }
+
+  Future<void> setReminderHour(int value) async {
+    await _prefsInstance.setInt(_reminderHourKey, value.clamp(0, 23));
+  }
+
+  Future<int> getReminderMinute() async {
+    return _prefsInstance.getInt(_reminderMinuteKey) ?? 0;
+  }
+
+  Future<void> setReminderMinute(int value) async {
+    await _prefsInstance.setInt(_reminderMinuteKey, value.clamp(0, 59));
+  }
+
+  Future<bool> getDarkModeEnabled() async {
+    return _prefsInstance.getBool(_isDarkModeKey) ?? false;
+  }
+
+  Future<void> setDarkModeEnabled(bool value) async {
+    await _prefsInstance.setBool(_isDarkModeKey, value);
   }
 
   Future<UserWorkoutData?> getWorkoutData(String userId) async {

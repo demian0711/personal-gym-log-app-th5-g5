@@ -47,7 +47,13 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<UserModel> updateProfilePhoto(String userId, String imagePath) async {
-    final photoUrl = await _cloudinary.uploadToCloudinary(File(imagePath));
+    final file = File(imagePath);
+    final photoUrl = await _cloudinary.uploadImageBytes(
+      bytes: await file.readAsBytes(),
+      fileName: file.uri.pathSegments.isNotEmpty
+          ? file.uri.pathSegments.last
+          : 'profile_$userId.jpg',
+    );
     final existing = await _service.fetchUser(userId);
     if (existing == null) {
       throw Exception('Không tìm thấy profile để cập nhật ảnh.');

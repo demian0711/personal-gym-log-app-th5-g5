@@ -18,12 +18,19 @@ class DashboardScreen extends StatelessWidget {
     return Consumer<WorkoutProvider>(
       builder: (context, provider, _) {
         final history = provider.history;
-        final lastWorkout = history.isNotEmpty ? history.first : null;
+        final sortedHistory = [...history]
+          ..sort((a, b) => b.date.compareTo(a.date));
+        final lastWorkout = sortedHistory.isNotEmpty
+            ? sortedHistory.first
+            : null;
 
-        final chartData = _buildChartData(history);
-        final weeklyCount = _countCurrentWeekWorkouts(history);
-        final weeklyMinutes = _sumCurrentWeekMinutes(history);
-        final bestDuration = _findBestDuration(history);
+        final chartData = _buildChartData(sortedHistory);
+        final recentCount = sortedHistory.take(7).length;
+        final startOfWeek = DateTime.now().subtract(const Duration(days: 7));
+        final weeklyCount =
+          sortedHistory.where((workout) => workout.date.isAfter(startOfWeek)).length;
+        final totalVolume = _sumTotalVolume(sortedHistory);
+        final personalRecord = _findPersonalRecord(sortedHistory);
 
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -47,24 +54,24 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _DashboardStatCard(
-                      title: 'Workouts/week',
-                      value: '$weeklyCount',
+                      title: 'Recent workouts',
+                      value: '$recentCount',
                       icon: Icons.calendar_month,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _DashboardStatCard(
-                      title: 'Total minutes',
-                      value: '$weeklyMinutes',
+                      title: 'Total volume',
+                      value: totalVolume.toStringAsFixed(0),
                       icon: Icons.timer,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _DashboardStatCard(
-                      title: 'Best',
-                      value: '${bestDuration}m',
+                      title: 'PR (kg)',
+                      value: personalRecord.toStringAsFixed(1),
                       icon: Icons.local_fire_department,
                     ),
                   ),
@@ -300,7 +307,7 @@ class _StrengthChartCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Recent data (volume or representative weight)',
+              'Recent 7 workouts (total volume)',
               style: textTheme.bodySmall,
             ),
             const SizedBox(height: 14),
@@ -311,7 +318,7 @@ class _StrengthChartCard extends StatelessWidget {
                   minX: 0,
                   maxX: (data.length - 1).toDouble(),
                   minY: 0,
-                  maxY: (data.reduce((a, b) => a > b ? a : b) * 1.25),
+                  maxY: _resolveMaxY(data),
                   borderData: FlBorderData(
                     show: true,
                     border: Border(
@@ -328,7 +335,7 @@ class _StrengthChartCard extends StatelessWidget {
                     ),
                   ),
                   gridData: FlGridData(
-                    horizontalInterval: 20,
+                    horizontalInterval: _resolveGridInterval(data),
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
                         color: colorScheme.outlineVariant.withValues(
@@ -529,59 +536,72 @@ class _LatestWorkoutCard extends StatelessWidget {
 
 List<double> _buildChartData(List<Workout> history) {
   if (history.isEmpty) {
-    return [42, 50, 49, 58, 64, 69, 74];
+    return [0];
   }
 
   final recent = history.take(7).toList().reversed.toList();
-  return recent
-      .map(
-        (workout) =>
-            (workout.durationInMinutes + (workout.exercises.length * 8))
-                .toDouble(),
-      )
-      .toList();
+  return recent.map((workout) => _calculateWorkoutVolume(workout)).toList();
 }
 
-int _countCurrentWeekWorkouts(List<Workout> history) {
+double _sumTotalVolume(List<Workout> history) {
   if (history.isEmpty) {
     return 0;
   }
 
-  final now = DateTime.now();
-  final startOfWeek = DateTime(
-    now.year,
-    now.month,
-    now.day,
-  ).subtract(Duration(days: now.weekday - 1));
-
-  return history.where((workout) => workout.date.isAfter(startOfWeek)).length;
+  return history.fold<double>(
+    0,
+    (total, workout) => total + _calculateWorkoutVolume(workout),
+  );
 }
 
-int _sumCurrentWeekMinutes(List<Workout> history) {
+double _findPersonalRecord(List<Workout> history) {
   if (history.isEmpty) {
     return 0;
   }
 
-  final now = DateTime.now();
-  final startOfWeek = DateTime(
-    now.year,
-    now.month,
-    now.day,
-  ).subtract(Duration(days: now.weekday - 1));
-
-  return history
-      .where((workout) => workout.date.isAfter(startOfWeek))
-      .fold(0, (total, workout) => total + workout.durationInMinutes);
+  double best = 0;
+  for (final workout in history) {
+    for (final exercise in workout.exercises) {
+      for (final set in exercise.sets) {
+        if (set.weight > best) {
+          best = set.weight;
+        }
+      }
+    }
+  }
+  return best;
 }
 
-int _findBestDuration(List<Workout> history) {
-  if (history.isEmpty) {
-    return 0;
+double _calculateWorkoutVolume(Workout workout) {
+  double total = 0;
+  for (final exercise in workout.exercises) {
+    for (final set in exercise.sets) {
+      if (!set.isCompleted) {
+        continue;
+      }
+      total += set.weight * set.reps;
+    }
   }
+  return total;
+}
 
-  return history
-      .map((workout) => workout.durationInMinutes)
-      .reduce((current, next) => current > next ? current : next);
+double _resolveMaxY(List<double> data) {
+  final maxValue = data.reduce((a, b) => a > b ? a : b);
+  if (maxValue <= 0) {
+    return 100;
+  }
+  return maxValue * 1.25;
+}
+
+double _resolveGridInterval(List<double> data) {
+  final maxValue = data.reduce((a, b) => a > b ? a : b);
+  if (maxValue <= 100) {
+    return 20;
+  }
+  if (maxValue <= 500) {
+    return 50;
+  }
+  return 100;
 }
 
 String _formatDate(DateTime date) {

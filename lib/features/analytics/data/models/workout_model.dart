@@ -50,10 +50,7 @@ class WorkoutExerciseModel {
   final String name;
   final List<WorkoutSetModel> sets;
 
-  const WorkoutExerciseModel({
-    required this.name,
-    required this.sets,
-  });
+  const WorkoutExerciseModel({required this.name, required this.sets});
 
   factory WorkoutExerciseModel.fromMap(Map<String, dynamic> map) {
     final rawSets = (map['sets'] as List<dynamic>? ?? <dynamic>[]);
@@ -71,10 +68,7 @@ class WorkoutSetModel {
   final int reps;
   final double weight;
 
-  const WorkoutSetModel({
-    required this.reps,
-    required this.weight,
-  });
+  const WorkoutSetModel({required this.reps, required this.weight});
 
   factory WorkoutSetModel.fromMap(Map<String, dynamic> map) {
     return WorkoutSetModel(

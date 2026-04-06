@@ -1,12 +1,14 @@
-import 'dart:io';
-
 import '../../data/models/progress_photo_model.dart';
 
 abstract class ProgressPhotoRepository {
-  Future<List<ProgressPhotoModel>> fetchProgressPhotos(String userId);
-
-  Future<ProgressPhotoModel> uploadAndSavePhoto({
+  Future<void> uploadProgressPhoto({
     required String userId,
-    required File imageFile,
+    required List<int> imageBytes,
+    required String fileName,
+    String? note,
   });
+
+  Stream<List<ProgressPhotoModel>> streamUserPhotos(String userId);
+
+  Future<void> deletePhoto({required String photoId});
 }

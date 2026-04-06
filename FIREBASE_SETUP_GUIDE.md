@@ -1,201 +1,199 @@
-# Firebase Setup Guide
+# Firebase Setup Guide (Flutter + Auth + Firestore)
 
-This guide explains how to configure Firebase credentials for the Personal Gym Log App.
+Tài liệu này hướng dẫn từ đầu cho dự án **Personal Gym Log**.
 
-## Overview
+## 1) Tạo Firebase Project
 
-The app is now configured with Firebase Realtime Database integration. Templates and workout logs are:
-- **Stored locally** in Hive database for offline access
-- **Automatically synced** to Firebase when online
-- **Downloaded from Firebase** and merged with local data
+1. Vào Firebase Console: https://console.firebase.google.com
+2. Chọn **Create a project**.
+3. Đặt tên project (ví dụ: `personal-gym-log`).
+4. Có thể tắt Google Analytics ở bước đầu để setup nhanh.
+5. Nhấn **Create project**.
 
-## Configuration Steps
+## 2) Thêm Android App vào Firebase
 
-### 1. Get Your Firebase Credentials
+1. Trong project Firebase, chọn biểu tượng Android (**Add app**).
+2. Nhập **Android package name** đúng với app:
+   - `com.example.personal_gym_log_app_th5_g5`
+3. Có thể nhập app nickname (tùy chọn).
+4. Nhấn **Register app**.
+5. Tải file `google-services.json`.
+6. Đặt file vào đúng vị trí:
+   - `android/app/google-services.json`
 
-1. Go to your [Firebase Console](https://console.firebase.google.com)
-2. Select your project (or create a new one)
-3. Navigate to **Project Settings** → **General**
-4. Find your project credentials:
-   - **Project ID**: Shows as `projectId`
-   - **Web API Key**: Under "Web API Key"
-   - **Database URL**: Under "Realtime Database" → Connection details
+## 3) Cấu hình Gradle cho Firebase
 
-### 2. Update firebase_options.dart
+Dự án hiện đã cấu hình sẵn đúng hướng Flutter Gradle mới:
 
-Edit `lib/firebase_options.dart` and replace the placeholder values:
+- `android/settings.gradle.kts` đã có plugin:
+  - `com.google.gms.google-services`
+- `android/app/build.gradle.kts` đã áp dụng:
+  - `id("com.google.gms.google-services")`
 
-**For Android:**
-```dart
-static const FirebaseOptions android = FirebaseOptions(
-  apiKey: 'YOUR_ANDROID_API_KEY',           // From Google Services or Firebase Console
-  appId: '1:YOUR_PROJECT_NUMBER:android:YOUR_ANDROID_APP_ID',  // From google-services.json
-  messagingSenderId: 'YOUR_PROJECT_NUMBER',  // Your Firebase Project Number
-  projectId: 'YOUR_PROJECT_ID',              // e.g., 'my-gym-app-12345'
-  databaseURL: 'https://YOUR_PROJECT_ID.firebasedatabase.app',  // e.g., 'https://my-gym-app-12345.firebasedatabase.app'
-  storageBucket: 'YOUR_PROJECT_ID.appspot.com',
-);
+Nếu bạn tạo project mới, luôn đảm bảo 2 điểm trên có mặt.
+
+## 4) Bật Authentication
+
+### 4.1 Email/Password
+
+1. Firebase Console → **Authentication** → **Get started**.
+2. Mở tab **Sign-in method**.
+3. Bật provider **Email/Password**.
+4. Save.
+
+### 4.2 Google Sign-In
+
+1. Cũng ở **Sign-in method**, bật **Google**.
+2. Chọn email support.
+3. Save.
+
+### 4.3 SHA-1/SHA-256 cho Android (quan trọng cho Google Sign-In)
+
+1. Chạy lệnh lấy SHA-1 debug:
+   - Windows: dùng `gradlew signingReport` trong thư mục `android`.
+2. Vào Firebase Console → Project settings → Android app.
+3. Thêm SHA-1 (và SHA-256 nếu có).
+4. Tải lại `google-services.json` nếu Firebase yêu cầu và thay vào `android/app/`.
+
+## 5) Bật Cloud Firestore
+
+1. Firebase Console → **Firestore Database**.
+2. Chọn **Create database**.
+3. Chọn **Start in production mode**.
+4. Chọn region gần bạn nhất.
+5. Create.
+
+## 6) Cài package Flutter cần thiết
+
+Trong `pubspec.yaml`, dự án dùng:
+
+- `firebase_core`
+- `firebase_auth`
+- `cloud_firestore`
+- `google_sign_in`
+
+Sau khi sửa package, chạy:
+
+```bash
+flutter pub get
 ```
 
-**For iOS:**
-```dart
-static const FirebaseOptions ios = FirebaseOptions(
-  apiKey: 'YOUR_IOS_API_KEY',              // From GoogleService-Info.plist
-  appId: '1:YOUR_PROJECT_NUMBER:ios:YOUR_IOS_APP_ID',  // From GoogleService-Info.plist
-  messagingSenderId: 'YOUR_PROJECT_NUMBER',
-  projectId: 'YOUR_PROJECT_ID',
-  databaseURL: 'https://YOUR_PROJECT_ID.firebasedatabase.app',
-  storageBucket: 'YOUR_PROJECT_ID.appspot.com',
-  iosBundleId: 'com.example.personalGymLogApp',
-);
-```
+## 7) Firebase hoạt động trong app như thế nào?
 
-### 3. Set Up Realtime Database Rules
+Luồng tổng quát:
 
-In Firebase Console, go to **Realtime Database** → **Rules** and set:
+1. `main.dart` gọi `Firebase.initializeApp(...)` để khởi tạo SDK.
+2. `AuthProvider` lắng nghe `authStateChanges()` từ Firebase Auth.
+3. Khi user login/register thành công:
+   - Firebase Auth trả user (`uid`, `email`, `displayName`...).
+   - App upsert hồ sơ vào Firestore `users/{uid}`.
+4. Các module khác dùng `uid` làm khóa dữ liệu người dùng.
+5. Firestore bật persistence để hỗ trợ offline cache và đồng bộ lại khi online.
+
+---
+
+## 8) Firestore NoSQL structure đề xuất theo đề cương
+
+### Collection cấp cao
+
+- `users/{userId}`
+- `workouts/{workoutId}`
+- `progress_photos/{photoId}`
+
+### Ví dụ document
+
+`users/{userId}`
 
 ```json
 {
-  "rules": {
-    "users": {
-      "$uid": {
-        "templates": {
-          ".read": "auth != null || !root.exists()",
-          ".write": "auth != null || !root.exists()"
-        },
-        "workoutLogs": {
-          ".read": "auth != null || !root.exists()",
-          ".write": "auth != null || !root.exists()"
-        }
-      }
+  "uid": "abc123",
+  "email": "user@gmail.com",
+  "displayName": "Phat",
+  "photoUrl": "https://...",
+  "authProvider": "google",
+  "createdAt": "serverTimestamp",
+  "updatedAt": "serverTimestamp"
+}
+```
+
+`workouts/{workoutId}`
+
+```json
+{
+  "userId": "abc123",
+  "date": "2026-04-06T08:00:00Z",
+  "title": "Push Day",
+  "totalVolume": 12500,
+  "exercises": [
+    {
+      "name": "Bench Press",
+      "sets": [
+        {"weight": 80, "reps": 8}
+      ]
+    }
+  ],
+  "createdAt": "serverTimestamp",
+  "updatedAt": "serverTimestamp"
+}
+```
+
+`progress_photos/{photoId}`
+
+```json
+{
+  "userId": "abc123",
+  "imageUrl": "https://res.cloudinary.com/...",
+  "capturedAt": "2026-04-06T08:30:00Z",
+  "note": "Week 4 check-in",
+  "createdAt": "serverTimestamp"
+}
+```
+
+## 9) Query Firestore cơ bản (NoSQL)
+
+- Lấy toàn bộ workout của 1 user:
+  - filter theo `where('userId', isEqualTo: uid)`
+- Sắp xếp theo ngày mới nhất:
+  - `orderBy('date', descending: true)`
+- Lấy 1 workout gần nhất:
+  - thêm `limit(1)`
+- Lấy progress photos theo user + thời gian:
+  - `where('userId', isEqualTo: uid).orderBy('capturedAt', descending: true)`
+
+Lưu ý: khi kết hợp `where + orderBy`, Firestore có thể yêu cầu tạo index (Console sẽ cung cấp link tự động).
+
+## 10) Rules Firestore mẫu (bản cơ bản)
+
+```txt
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /workouts/{workoutId} {
+      allow read, write: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+    }
+
+    match /progress_photos/{photoId} {
+      allow read, write: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null
+        && resource.data.userId == request.auth.uid;
     }
   }
 }
 ```
 
-> **Note**: These rules allow unauthenticated access for testing. For production, implement proper authentication.
+## 11) Checklist nhanh trước khi chạy app
 
-### 4. Configure Google Services Files
-
-#### For Android:
-1. Download `google-services.json` from Firebase Console
-2. Place it in `android/app/`
-3. The build process will automatically use it
-
-#### For iOS:
-1. Download `GoogleService-Info.plist` from Firebase Console
-2. Add it to Xcode project under `ios/Runner/`
-
-### 5. Update main.dart (If Not Already Done)
-
-The app initialization already includes:
-```dart
-await Firebase.initializeApp(
-  options: DefaultFirebaseOptions.currentPlatform,
-);
-```
-
-This is automatically called in `lib/main.dart`.
-
-## How It Works
-
-### Automatic Synchronization
-
-When you add a template via "Add to Template" button:
-
-1. ✅ Template is saved to **local Hive database** 
-2. 🔄 Template is uploaded to **Firebase Realtime Database**
-3. 📱 Data syncs in background when network is available
-
-### Data Structure in Firebase
-
-Templates and workout logs are stored in:
-```
-users/
-  └── default_user/
-      ├── templates/
-      │   └── {template_id}.json
-      └── workoutLogs/
-          └── {log_id}.json
-```
-
-### Manual Sync Operations
-
-You can manually trigger sync in your code:
-
-```dart
-// Access provider from context
-final provider = Provider.of<WorkoutProvider>(context, listen: false);
-
-// Download all from Firebase
-await provider.syncFromFirebase();
-
-// Upload all to Firebase
-await provider.syncToFirebase();
-
-// Check sync status
-if (provider.isSyncing) {
-  // Show loading indicator
-}
-```
-
-## Testing
-
-1. Add a template through the app
-2. Check Firebase Console → Realtime Database to see if data appears
-3. Clear local data and use `syncFromFirebase()` to verify download works
-4. Restart app offline to confirm local data persists
-
-## Troubleshooting
-
-### Firebase Connection Fails
-- ✅ Verify `firebase_options.dart` values match your Firebase project
-- ✅ Check internet connection
-- ✅ Verify Firebase Realtime Database is enabled
-- ✅ Check database rules allow read/write
-
-### No Data Appears in Firebase
-- ✅ Check that _userId is set and non-empty
-- ✅ Look at app logs: `print()` statements show sync status
-- ✅ Verify database path: `users/{userId}/templates/`
-
-### App Crashes on Start
-- ✅ Ensure `firebase_options.dart` has valid credentials
-- ✅ Check pubspec.yaml has firebase dependencies
-- ✅ Run `flutter clean && flutter pub get`
-
-## User ID Configuration
-
-Currently, the app uses `'default_user'` as the user ID. This means all data is stored under one user.
-
-**To use different users:**
-
-In `lib/main.dart`, replace:
-```dart
-const defaultUserId = 'default_user';
-```
-
-With your authentication system:
-```dart
-// Example: use Firebase Auth
-final user = FirebaseAuth.instance.currentUser;
-FirebaseService().setUserId(user?.uid ?? 'default_user');
-```
-
-## Security Notes
-
-⚠️ **For Production Apps:**
-- Implement Firebase Authentication (Email, Google Sign-In, etc.)
-- Never hardcode user IDs
-- Use proper security rules and validation
-- Enable Cloud Firestore security audits
-
-## Next Steps
-
-1. ✅ Update `firebase_options.dart` with your credentials
-2. ✅ Download and configure `google-services.json` (Android) or `GoogleService-Info.plist` (iOS)
-3. ✅ Set up Realtime Database rules in Firebase Console
-4. ✅ Test by running the app and adding a template
-5. ✅ Verify data appears in Firebase Console
-
-For more help, see the [Firebase Documentation](https://firebase.google.com/docs/database/start).
+- `google-services.json` đúng chỗ `android/app/`
+- Đã bật Email/Password và Google provider
+- Đã thêm SHA-1 cho Android
+- Đã tạo Firestore database
+- Đã chạy `flutter pub get`
+- Chạy app bằng `flutter run`

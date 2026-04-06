@@ -1,25 +1,54 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
-import 'package:personal_gym_log_app_th5_g5/app.dart';
-import 'package:personal_gym_log_app_th5_g5/services/local_storage_service.dart';
+import 'package:personal_gym_log_app_th5_g5/features/auth/domain/repositories/auth_repository.dart';
+import 'package:personal_gym_log_app_th5_g5/models/app_user.dart';
+import 'package:personal_gym_log_app_th5_g5/providers/auth_provider.dart';
+import 'package:personal_gym_log_app_th5_g5/screens/auth/auth_gate.dart';
+
+class _FakeAuthRepository implements AuthRepository {
+  @override
+  Stream<AppUser?> authStateChanges() => Stream<AppUser?>.value(null);
+
+  @override
+  AppUser? get currentUser => null;
+
+  @override
+  Future<AppUser> loginWithEmail({
+    required String email,
+    required String password,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<AppUser?> loginWithGoogle() async => null;
+
+  @override
+  Future<void> logout() async {}
+
+  @override
+  Future<AppUser> registerWithEmail({
+    required String name,
+    required String email,
+    required String password,
+  }) {
+    throw UnimplementedError();
+  }
+}
 
 void main() {
-  testWidgets('Auth gate shows login screen when signed out',
-      (WidgetTester tester) async {
-    SharedPreferences.setMockInitialValues({});
-    final storage = LocalStorageService();
-    await storage.init();
+  testWidgets('Auth gate shows login screen when signed out', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ChangeNotifierProvider(
+        create: (_) => AuthProvider(authRepository: _FakeAuthRepository()),
+        child: const MaterialApp(home: AuthGate()),
+      ),
+    );
 
-    await tester.pumpWidget(const PersonalGymLogApp());
     await tester.pumpAndSettle();
 
     expect(find.text('Đăng nhập'), findsOneWidget);

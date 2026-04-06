@@ -472,6 +472,82 @@ class WorkoutGuideService {
     ),
   ];
 
+  static GuideExercise? findExerciseByQr(String rawValue) {
+    final normalized = rawValue.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return null;
+    }
+
+    final candidates = <String>{normalized};
+
+    final uri = Uri.tryParse(normalized);
+    if (uri != null) {
+      final byQuery =
+          uri.queryParameters['exercise'] ?? uri.queryParameters['id'];
+      if (byQuery != null && byQuery.trim().isNotEmpty) {
+        candidates.add(byQuery.trim().toLowerCase());
+      }
+
+      final pathSegments = uri.pathSegments;
+      if (pathSegments.isNotEmpty) {
+        final last = pathSegments.last.trim().toLowerCase();
+        if (last.isNotEmpty) {
+          candidates.add(last);
+        }
+      }
+
+      if (uri.host.trim().isNotEmpty) {
+        candidates.add(uri.host.trim().toLowerCase());
+      }
+    }
+
+    final prefixes = [
+      'exercise:',
+      'exercise/',
+      'workout:',
+      'workout/',
+      'gym://exercise/',
+      'gym://workout/',
+      'qr:',
+    ];
+
+    for (final base in List<String>.from(candidates)) {
+      for (final prefix in prefixes) {
+        if (base.startsWith(prefix)) {
+          final stripped = base.substring(prefix.length).trim();
+          if (stripped.isNotEmpty) {
+            candidates.add(stripped);
+          }
+        }
+      }
+    }
+
+    final expandedCandidates = <String>{};
+    for (final candidate in candidates) {
+      final value = Uri.decodeComponent(candidate).trim().toLowerCase();
+      if (value.isEmpty) {
+        continue;
+      }
+      expandedCandidates.add(value);
+      expandedCandidates.add(value.replaceAll(RegExp(r'\s+'), '_'));
+      expandedCandidates.add(value.replaceAll('-', '_'));
+    }
+
+    for (final exercise in exercises) {
+      final byName = exercise.name.toLowerCase().replaceAll(
+        RegExp(r'\s+'),
+        '_',
+      );
+      if (expandedCandidates.contains(exercise.id.toLowerCase()) ||
+          expandedCandidates.contains(exercise.name.toLowerCase()) ||
+          expandedCandidates.contains(byName)) {
+        return exercise;
+      }
+    }
+
+    return null;
+  }
+
   static MuscleGroup? getMuscleGroupById(String id) {
     try {
       return muscleGroups.firstWhere((mg) => mg.id == id);

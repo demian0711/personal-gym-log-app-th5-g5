@@ -1,43 +1,73 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
-import '../constants/cloudinary_config.dart';
+import '../../../../core/config/cloudinary_config.dart';
+import '../../../../services/local_storage_service.dart';
 
-/// Service upload ảnh lên Cloudinary thông qua HTTP API.
 class CloudinaryService {
-  Future<String> uploadToCloudinary(File image) async {
-    if (kCloudinaryCloudName.isEmpty || kCloudinaryUploadPreset.isEmpty) {
+  final String cloudName;
+  final String uploadPreset;
+  final LocalStorageService _storage;
+
+  CloudinaryService({
+    required this.cloudName,
+    required this.uploadPreset,
+    LocalStorageService? storage,
+  }) : _storage = storage ?? LocalStorageService();
+
+  Future<String> uploadImageBytes({
+    required List<int> bytes,
+    required String fileName,
+  }) async {
+    final savedCloudName = (await _storage.getCloudinaryCloudName())?.trim();
+    final savedUploadPreset = (await _storage.getCloudinaryUploadPreset())
+        ?.trim();
+
+    final effectiveCloudName = (savedCloudName?.isNotEmpty ?? false)
+        ? savedCloudName!
+        : (cloudName.trim().isNotEmpty
+              ? cloudName.trim()
+              : CloudinaryConfig.cloudName.trim());
+
+    final effectiveUploadPreset = (savedUploadPreset?.isNotEmpty ?? false)
+        ? savedUploadPreset!
+        : (uploadPreset.trim().isNotEmpty
+              ? uploadPreset.trim()
+              : CloudinaryConfig.uploadPreset.trim());
+
+    if (effectiveCloudName.isEmpty || effectiveUploadPreset.isEmpty) {
       throw Exception(
-        'Cloudinary chưa được cấu hình. Vui lòng set CLOUDINARY_CLOUD_NAME và CLOUDINARY_UPLOAD_PRESET.',
+        'Cloudinary chưa được cấu hình. Hãy cập nhật cloudName/uploadPreset.',
       );
     }
 
     final uri = Uri.parse(
-      'https://api.cloudinary.com/v1_1/$kCloudinaryCloudName/image/upload',
+      'https://api.cloudinary.com/v1_1/$effectiveCloudName/image/upload',
     );
 
     final request = http.MultipartRequest('POST', uri)
-      ..fields['upload_preset'] = kCloudinaryUploadPreset
-      ..fields['folder'] = 'progress_photos'
-      ..files.add(await http.MultipartFile.fromPath('file', image.path));
+      ..fields['upload_preset'] = effectiveUploadPreset
+      ..fields['folder'] = CloudinaryConfig.assetFolder
+      ..fields['asset_folder'] = CloudinaryConfig.assetFolder
+      ..files.add(
+        http.MultipartFile.fromBytes('file', bytes, filename: fileName),
+      );
 
-    if (kCloudinaryApiKey.isNotEmpty) {
-      request.fields['api_key'] = kCloudinaryApiKey;
-    }
-
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Upload Cloudinary thất bại: ${response.body}');
+      throw Exception(
+        'Upload Cloudinary thất bại: ${response.body} '
+        '(cloudName=$effectiveCloudName, uploadPreset=$effectiveUploadPreset)',
+      );
     }
 
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    final secureUrl = data['secure_url'] as String?;
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final secureUrl = body['secure_url'] as String?;
     if (secureUrl == null || secureUrl.isEmpty) {
-      throw Exception('Cloudinary không trả về secure_url hợp lệ.');
+      throw Exception('Cloudinary không trả về URL hợp lệ.');
     }
 
     return secureUrl;

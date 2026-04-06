@@ -42,15 +42,37 @@ class Workout {
   }
 
   factory Workout.fromMap(Map<String, dynamic> map) {
-    final rawExercises = (map['exercises'] as List<dynamic>? ?? <dynamic>[])
-        .cast<Map<String, dynamic>>();
+    final rawExercises = (map['exercises'] as List<dynamic>? ?? <dynamic>[]);
 
     return Workout(
-      id: map['id'] as String,
-      title: map['title'] as String,
-      date: DateTime.parse(map['date'] as String),
+      id: (map['id'] as String?) ?? '',
+      title: (map['title'] as String?) ?? '',
+      date: _parseDate(map['date']),
       durationInMinutes: map['durationInMinutes'] as int? ?? 0,
-      exercises: rawExercises.map(Exercise.fromMap).toList(),
+      exercises: rawExercises
+          .whereType<Map<String, dynamic>>()
+          .map(Exercise.fromMap)
+          .toList(),
     );
+  }
+
+  static DateTime _parseDate(dynamic rawDate) {
+    if (rawDate is DateTime) {
+      return rawDate;
+    }
+    if (rawDate is String && rawDate.isNotEmpty) {
+      return DateTime.tryParse(rawDate) ?? DateTime.now();
+    }
+    if (rawDate is int) {
+      return DateTime.fromMillisecondsSinceEpoch(rawDate);
+    }
+    if (rawDate != null) {
+      final dynamic candidate = rawDate;
+      final dynamic date = candidate.toDate?.call();
+      if (date is DateTime) {
+        return date;
+      }
+    }
+    return DateTime.now();
   }
 }
