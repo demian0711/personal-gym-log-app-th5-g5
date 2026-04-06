@@ -95,6 +95,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 32),
+              const Text(
+                'Mục tiêu tập luyện',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Mục tiêu chính',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.flag),
+                ),
+                value: 'Tăng cơ', // Giá trị mặc định ban đầu
+                items:
+                    ['Tăng cơ', 'Giảm mỡ', 'Duy trì vóc dáng', 'Tăng sức mạnh']
+                        .map(
+                          (goal) =>
+                              DropdownMenuItem(value: goal, child: Text(goal)),
+                        )
+                        .toList(),
+                onChanged: (value) {
+                  // Xử lý khi người dùng chọn mục tiêu khác
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                keyboardType: TextInputType.number,
+                // Thêm validator bắt lỗi cho ô này luôn cho xịn
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Vui lòng nhập';
+                  if (int.tryParse(value) == null) return 'Chỉ nhập số nguyên';
+                  return null;
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Số buổi tập mục tiêu (buổi/tuần)',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.calendar_month),
+                ),
+              ),
             ],
           ),
         ),
