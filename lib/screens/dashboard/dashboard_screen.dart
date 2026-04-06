@@ -27,8 +27,9 @@ class DashboardScreen extends StatelessWidget {
         final chartData = _buildChartData(sortedHistory);
         final recentCount = sortedHistory.take(7).length;
         final startOfWeek = DateTime.now().subtract(const Duration(days: 7));
-        final weeklyCount =
-          sortedHistory.where((workout) => workout.date.isAfter(startOfWeek)).length;
+        final weeklyCount = sortedHistory
+            .where((workout) => workout.date.isAfter(startOfWeek))
+            .length;
         final totalVolume = _sumTotalVolume(sortedHistory);
         final personalRecord = _findPersonalRecord(sortedHistory);
 
