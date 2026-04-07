@@ -6,7 +6,7 @@ import '../../models/exercise_set.dart';
 import '../../models/workout.dart';
 import '../../providers/workout_provider.dart';
 import 'muscle_groups_screen.dart';
-import 'qr_exercise_scanner_screen.dart';
+import '../../features/progress_photos/presentation/screens/progress_photos_screen.dart';
 
 class TemplateScreen extends StatefulWidget {
   const TemplateScreen({super.key});
@@ -338,12 +338,12 @@ class _TemplateScreenState extends State<TemplateScreen>
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => const QrExerciseScannerScreen(),
+                  builder: (_) => const ProgressPhotosScreen(),
                 ),
               );
             },
-            icon: const Icon(Icons.qr_code_scanner),
-            tooltip: 'Quét QR bài tập',
+            icon: const Icon(Icons.photo_camera),
+            tooltip: 'Chụp ảnh tiến độ',
           ),
         ],
         bottom: TabBar(

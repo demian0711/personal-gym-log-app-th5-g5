@@ -107,7 +107,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: const Text('Chụp ảnh'),
               onTap: () async {
                 Navigator.pop(sheetContext);
-                final image = await picker.pickImage(source: ImageSource.camera);
+                final image = await picker.pickImage(
+                  source: ImageSource.camera,
+                );
                 if (image != null) {
                   await provider.updateProfilePhoto(image.path);
                 }
@@ -173,7 +175,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 44,
-                        backgroundImage: _photoUrl != null && _photoUrl!.isNotEmpty
+                        backgroundImage:
+                            _photoUrl != null && _photoUrl!.isNotEmpty
                             ? NetworkImage(_photoUrl!)
                             : null,
                         child: (_photoUrl == null || _photoUrl!.isEmpty)
@@ -187,7 +190,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onTap: () => _showPhotoOptions(context, provider),
                           child: CircleAvatar(
                             radius: 16,
-                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
                             child: const Icon(
                               Icons.camera_alt,
                               size: 16,

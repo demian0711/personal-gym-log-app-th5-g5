@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'core/config/cloudinary_config.dart';
@@ -16,17 +17,48 @@ import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/workout_provider.dart';
 import 'screens/auth/auth_gate.dart';
+import 'screens/splash_screen.dart';
 import 'services/local_storage_service.dart';
 
-class PersonalGymLogApp extends StatelessWidget {
+class PersonalGymLogApp extends StatefulWidget {
   const PersonalGymLogApp({super.key});
 
   @override
+  State<PersonalGymLogApp> createState() => _PersonalGymLogAppState();
+}
+
+class _PersonalGymLogAppState extends State<PersonalGymLogApp> {
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize date formatting for Vietnamese locale
+    initializeDateFormatting('vi_VN', null);
+    // Allow current frame to render splash screen before checking initialization
+    Future.microtask(() {
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return MaterialApp(
+        home: const SplashScreen(),
+        theme: ThemeData(useMaterial3: true),
+      );
+    }
+
     final storage = LocalStorageService();
 
     return MultiProvider(
       providers: [
+        // Critical providers - load immediately
         ChangeNotifierProvider(create: (_) => ThemeProvider(storage)),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProxyProvider<AuthProvider, WorkoutProvider>(
@@ -37,6 +69,8 @@ class PersonalGymLogApp extends StatelessWidget {
             return provider;
           },
         ),
+
+        // Non-critical providers - load lazily
         ChangeNotifierProxyProvider<AuthProvider, ProfileProvider>(
           create: (_) => ProfileProvider(
             ProfileRepositoryImpl(
@@ -59,7 +93,7 @@ class PersonalGymLogApp extends StatelessWidget {
                     ),
                   ),
                 );
-            provider.bindUser(
+            profile?.bindUser(
               userId: auth.currentUser?.id,
               email: auth.currentUser?.email ?? '',
               fallbackDisplayName: auth.currentUser?.name ?? '',
@@ -86,9 +120,9 @@ class PersonalGymLogApp extends StatelessWidget {
               firestoreService: ProgressPhotoFirestoreService(),
             ),
           ),
-          update: (_, auth, photos) {
+          update: (_, auth, progressPhoto) {
             final provider =
-                photos ??
+                progressPhoto ??
                 ProgressPhotoProvider(
                   ProgressPhotoRepositoryImpl(
                     cloudinaryService: CloudinaryService(
@@ -98,7 +132,7 @@ class PersonalGymLogApp extends StatelessWidget {
                     firestoreService: ProgressPhotoFirestoreService(),
                   ),
                 );
-            provider.bindUser(auth.currentUser?.id);
+            progressPhoto?.bindUser(auth.currentUser?.id);
             return provider;
           },
         ),

@@ -44,7 +44,8 @@ class NotificationService {
     await androidPlugin?.createNotificationChannel(_restChannel);
     await androidPlugin?.createNotificationChannel(_reminderChannel);
 
-    await _initializeTimezone();
+    // Defer timezone initialization to prevent blocking main thread
+    _initializeTimezone().ignore();
   }
 
   Future<void> _initializeTimezone() async {

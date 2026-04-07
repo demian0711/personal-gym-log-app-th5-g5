@@ -232,26 +232,40 @@ class WorkoutProvider extends ChangeNotifier {
   }
 
   Future<void> _loadForUser(String? userId) async {
-    _isLoading = true;
-    notifyListeners();
-
     _templates = [];
     _history = [];
 
-    if (userId != null) {
-      final data = await _storage.getWorkoutData(userId);
-      if (data != null) {
-        _templates = data.templates;
-        _history = data.history;
+    if (userId == null) {
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // Load from local storage first for quick display
+      final localData = await _storage.getWorkoutData(userId);
+      if (localData != null && localData.templates.isNotEmpty) {
+        _templates = localData.templates;
+        _history = localData.history;
+        notifyListeners();
       }
 
-      try {
-        _templates = await _firebase.downloadTemplates();
-        _history = await _workoutRepository.fetchAllWorkouts(userId: userId);
-        await _persist();
-      } catch (_) {
-        _lastError = 'Không thể đồng bộ dữ liệu từ Firestore.';
-      }
+      // Download from Firebase in parallel to avoid sequential waiting
+      final results = await Future.wait<dynamic>([
+        _firebase.downloadTemplates(),
+        _workoutRepository.fetchAllWorkouts(userId: userId),
+      ]);
+
+      _templates = (results[0] as List<dynamic>).cast<Workout>();
+      _history = (results[1] as List<dynamic>).cast<Workout>();
+
+      // Persist updated data
+      await _persist();
+    } catch (_) {
+      _lastError = 'Không thể đồng bộ dữ liệu từ Firestore.';
     }
 
     _isLoading = false;

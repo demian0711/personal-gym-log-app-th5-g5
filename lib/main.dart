@@ -10,22 +10,30 @@ import 'services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize storage first (critical for app)
   await LocalStorageService().init();
 
+  // Initialize Firebase (async, non-blocking afterwards)
+  await _initializeFirebase();
+
+  // Initialize notifications in background (non-blocking)
+  NotificationService.instance.initialize().ignore();
+
+  runApp(const PersonalGymLogApp());
+}
+
+Future<void> _initializeFirebase() async {
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
+    );
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
     );
   } on FirebaseException catch (error) {
     if (error.code != 'duplicate-app') {
       rethrow;
     }
   }
-
-  FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: true,
-  );
-
-  await NotificationService.instance.initialize();
-  runApp(const PersonalGymLogApp());
 }
