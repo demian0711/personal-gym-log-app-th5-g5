@@ -13,11 +13,7 @@ import 'features/profile/data/repositories/profile_repository_impl.dart';
 import 'features/profile/data/services/profile_firestore_service.dart';
 import 'features/profile/presentation/providers/profile_provider.dart';
 import 'providers/auth_provider.dart';
- HEAD
 import 'providers/theme_provider.dart';
-  
-import 'providers/utilities_provider.dart';
-  HPT
 import 'providers/workout_provider.dart';
 import 'screens/auth/auth_gate.dart';
 import 'services/local_storage_service.dart';
@@ -31,17 +27,12 @@ class PersonalGymLogApp extends StatelessWidget {
 
     return MultiProvider(
       providers: [
- HEAD
         ChangeNotifierProvider(create: (_) => ThemeProvider(storage)),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-  
-        ChangeNotifierProvider(create: (_) => AuthProvider(storage)),
-  HPT
         ChangeNotifierProxyProvider<AuthProvider, WorkoutProvider>(
           create: (_) => WorkoutProvider(storage),
           update: (_, auth, workout) {
             final provider = workout ?? WorkoutProvider(storage);
- HEAD
             provider.bindUser(auth.currentUser?.id);
             return provider;
           },
@@ -107,13 +98,10 @@ class PersonalGymLogApp extends StatelessWidget {
                     firestoreService: ProgressPhotoFirestoreService(),
                   ),
                 );
-  
-  HPT
             provider.bindUser(auth.currentUser?.id);
             return provider;
           },
         ),
-        ChangeNotifierProvider(create: (_) => UtilitiesProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {

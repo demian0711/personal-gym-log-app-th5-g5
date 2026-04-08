@@ -5,34 +5,25 @@ import 'package:flutter/foundation.dart';
 import '../models/exercise.dart';
 import '../models/user_workout_data.dart';
 import '../models/workout.dart';
- HEAD
 import '../features/workout/data/repositories/workout_repository_impl.dart';
 import '../features/workout/data/services/workout_firestore_service.dart';
 import '../features/workout/domain/repositories/workout_repository.dart';
-  
-  HPT
 import '../services/firebase_service.dart';
 import '../services/local_storage_service.dart';
 
 class WorkoutProvider extends ChangeNotifier {
   final LocalStorageService _storage;
   final FirebaseService _firebase = FirebaseService();
- HEAD
   final WorkoutRepository _workoutRepository;
-  
-  HPT
 
   List<Workout> _templates = [];
   List<Workout> _history = [];
   String? _userId;
   bool _isLoading = false;
   bool _isSyncing = false;
- HEAD
   String? _lastError;
   Workout? _activeWorkout;
   DateTime? _activeStartedAt;
-  
-  HPT
 
   WorkoutProvider(this._storage, {WorkoutRepository? workoutRepository})
     : _workoutRepository =
@@ -42,12 +33,9 @@ class WorkoutProvider extends ChangeNotifier {
   List<Workout> get history => List.unmodifiable(_history);
   bool get isLoading => _isLoading;
   bool get isSyncing => _isSyncing;
- HEAD
   String? get lastError => _lastError;
   Workout? get activeWorkout => _activeWorkout;
   bool get hasActiveWorkout => _activeWorkout != null;
-  
-  HPT
 
   void bindUser(String? userId) {
     if (_userId == userId) return;
@@ -93,7 +81,6 @@ class WorkoutProvider extends ChangeNotifier {
   Future<void> addWorkoutLog(Workout workout) async {
     _history.insert(0, workout);
     await _storage.saveWorkoutLog(workout);
- HEAD
     _lastError = null;
     try {
       final userId = _userId;
@@ -103,11 +90,6 @@ class WorkoutProvider extends ChangeNotifier {
     } catch (_) {
       _lastError = 'Không thể đồng bộ buổi tập lên Firestore.';
     }
-  
-    try {
-      await _firebase.uploadWorkoutLog(workout);
-    } catch (_) {}
-  HPT
     notifyListeners();
     unawaited(_persist());
   }
@@ -132,31 +114,21 @@ class WorkoutProvider extends ChangeNotifier {
   Future<void> syncFromFirebase() async {
     if (_userId == null) return;
     _isSyncing = true;
- HEAD
     _lastError = null;
-  
-  HPT
     notifyListeners();
 
     try {
       _templates = await _firebase.downloadTemplates();
- HEAD
       _history = await _workoutRepository.fetchAllWorkouts(userId: _userId!);
       await _persist();
     } catch (_) {
       _lastError = 'Không thể tải dữ liệu workout từ Firestore.';
-  
-      _history = await _firebase.downloadWorkoutLogs();
-      await _persist();
-    } catch (_) {
-  HPT
     } finally {
       _isSyncing = false;
       notifyListeners();
     }
   }
 
- HEAD
   void startWorkoutFromTemplate(Workout template) {
     final now = DateTime.now();
     _activeStartedAt = now;
@@ -253,16 +225,6 @@ class WorkoutProvider extends ChangeNotifier {
       }
     } catch (_) {
       _lastError = 'Không thể đồng bộ workout lên Firestore.';
-  
-  Future<void> syncToFirebase() async {
-    if (_userId == null) return;
-    _isSyncing = true;
-    notifyListeners();
-
-    try {
-      await _firebase.syncAllToFirebase(_templates, _history);
-    } catch (_) {
-  HPT
     } finally {
       _isSyncing = false;
       notifyListeners();
@@ -303,7 +265,6 @@ class WorkoutProvider extends ChangeNotifier {
     await _storage.saveWorkoutData(userId, data);
   }
 
- HEAD
   Exercise _cloneExerciseWithSuggestion(Exercise exercise) {
     return exercise.copyWith(
       sets: exercise.sets.map((set) {
@@ -314,145 +275,6 @@ class WorkoutProvider extends ChangeNotifier {
           isCompleted: false,
         );
       }).toList(),
-  
-  void _seedTemplates() {
-    if (_templates.isNotEmpty) return;
-    final now = DateTime.now();
-
-    _templates.addAll([
-      Workout(
-        id: 'seed_push',
-        title: 'Push Day',
-        date: now,
-        exercises: [
-          Exercise(
-            id: 'seed_push_bench',
-            name: 'Bench Press',
-            muscleGroup: 'Chest',
-            sets: _defaultSets(4),
-          ),
-          Exercise(
-            id: 'seed_push_ohp',
-            name: 'Overhead Press',
-            muscleGroup: 'Shoulders',
-            sets: _defaultSets(3),
-          ),
-          Exercise(
-            id: 'seed_push_tricep',
-            name: 'Triceps Pushdown',
-            muscleGroup: 'Triceps',
-            sets: _defaultSets(3),
-          ),
-        ],
-      ),
-      Workout(
-        id: 'seed_pull',
-        title: 'Pull Day',
-        date: now,
-        exercises: [
-          Exercise(
-            id: 'seed_pull_deadlift',
-            name: 'Deadlift',
-            muscleGroup: 'Back',
-            sets: _defaultSets(3),
-          ),
-          Exercise(
-            id: 'seed_pull_row',
-            name: 'Bent-over Row',
-            muscleGroup: 'Back',
-            sets: _defaultSets(3),
-          ),
-          Exercise(
-            id: 'seed_pull_biceps',
-            name: 'Biceps Curl',
-            muscleGroup: 'Biceps',
-            sets: _defaultSets(3),
-          ),
-        ],
-      ),
-      Workout(
-        id: 'seed_legs',
-        title: 'Legs Day',
-        date: now,
-        exercises: [
-          Exercise(
-            id: 'seed_legs_squat',
-            name: 'Back Squat',
-            muscleGroup: 'Legs',
-            sets: _defaultSets(4),
-          ),
-          Exercise(
-            id: 'seed_legs_lunge',
-            name: 'Walking Lunges',
-            muscleGroup: 'Legs',
-            sets: _defaultSets(3),
-          ),
-          Exercise(
-            id: 'seed_legs_calf',
-            name: 'Calf Raise',
-            muscleGroup: 'Calves',
-            sets: _defaultSets(3),
-          ),
-        ],
-      ),
-      Workout(
-        id: 'seed_upper',
-        title: 'Upper Body',
-        date: now,
-        exercises: [
-          Exercise(
-            id: 'seed_upper_pullup',
-            name: 'Pull Up',
-            muscleGroup: 'Back',
-            sets: _defaultSets(3),
-          ),
-          Exercise(
-            id: 'seed_upper_incline',
-            name: 'Incline Dumbbell Press',
-            muscleGroup: 'Chest',
-            sets: _defaultSets(3),
-          ),
-          Exercise(
-            id: 'seed_upper_lateral',
-            name: 'Lateral Raise',
-            muscleGroup: 'Shoulders',
-            sets: _defaultSets(3),
-          ),
-        ],
-      ),
-      Workout(
-        id: 'seed_lower',
-        title: 'Lower Body',
-        date: now,
-        exercises: [
-          Exercise(
-            id: 'seed_lower_rdl',
-            name: 'Romanian Deadlift',
-            muscleGroup: 'Hamstrings',
-            sets: _defaultSets(3),
-          ),
-          Exercise(
-            id: 'seed_lower_legpress',
-            name: 'Leg Press',
-            muscleGroup: 'Legs',
-            sets: _defaultSets(3),
-          ),
-          Exercise(
-            id: 'seed_lower_core',
-            name: 'Plank',
-            muscleGroup: 'Core',
-            sets: _defaultSets(3),
-          ),
-        ],
-      ),
-    ]);
-  }
-
-  List<ExerciseSet> _defaultSets(int count) {
-    return List.generate(
-      count,
-      (index) => ExerciseSet(order: index + 1, weight: 0, reps: 0),
-  HPT
     );
   }
 

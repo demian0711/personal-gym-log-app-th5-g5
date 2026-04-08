@@ -49,10 +49,6 @@ void main() {
       ),
     );
 
- HEAD
-  
-    await tester.pumpWidget(const PersonalGymLogApp());
-  HPT
     await tester.pumpAndSettle();
 
     expect(find.text('Đăng nhập'), findsOneWidget);

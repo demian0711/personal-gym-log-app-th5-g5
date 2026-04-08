@@ -9,7 +9,6 @@ class WorkoutHistoryScreen extends StatefulWidget {
   const WorkoutHistoryScreen({super.key});
 
   @override
- HEAD
   State<WorkoutHistoryScreen> createState() => _WorkoutHistoryScreenState();
 }
 
@@ -78,8 +77,6 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
   }
 
   @override
-  
-  HPT
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
