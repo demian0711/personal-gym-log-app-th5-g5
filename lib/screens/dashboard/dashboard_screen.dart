@@ -3,7 +3,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/workout.dart';
+import '../../providers/utilities_provider.dart';
 import '../../providers/workout_provider.dart';
+import '../workout/active_workout_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -17,10 +19,22 @@ class DashboardScreen extends StatelessWidget {
         final history = provider.history;
         final lastWorkout = history.isNotEmpty ? history.first : null;
 
+<<<<<<< Updated upstream
         final chartData = _buildChartData(history);
         final weeklyCount = _countCurrentWeekWorkouts(history);
         final weeklyMinutes = _sumCurrentWeekMinutes(history);
         final bestDuration = _findBestDuration(history);
+=======
+        final chartData = _buildChartData(sortedHistory);
+        final recentCount = sortedHistory.take(7).length;
+        final startOfWeek = DateTime.now().subtract(const Duration(days: 7));
+        final weeklyCount = sortedHistory
+            .where((workout) => workout.date.isAfter(startOfWeek))
+            .length;
+        final workoutStreak = _calculateWorkoutStreak(sortedHistory);
+        final totalVolume = _sumTotalVolume(sortedHistory);
+        final personalRecord = _findPersonalRecord(sortedHistory);
+>>>>>>> Stashed changes
 
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -29,6 +43,13 @@ class DashboardScreen extends StatelessWidget {
             children: [
               _buildWelcomeCard(context),
               const SizedBox(height: 16),
+<<<<<<< Updated upstream
+=======
+              _buildWeeklyProgress(context, weeklyCount, weeklyTarget),
+              const SizedBox(height: 12),
+              _buildQuickStartCard(context, provider),
+              const SizedBox(height: 16),
+>>>>>>> Stashed changes
               Text(
                 'Tổng quan nhanh',
                 style: textTheme.titleMedium?.copyWith(
@@ -56,9 +77,23 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _DashboardStatCard(
+<<<<<<< Updated upstream
                       title: 'Best',
                       value: '${bestDuration}m',
                       icon: Icons.local_fire_department,
+=======
+                      title: 'Current streak',
+                      value: '$workoutStreak d',
+                      icon: Icons.local_fire_department,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _DashboardStatCard(
+                      title: 'PR (kg)',
+                      value: personalRecord.toStringAsFixed(1),
+                      icon: Icons.emoji_events,
+>>>>>>> Stashed changes
                     ),
                   ),
                 ],
@@ -75,6 +110,154 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
+<<<<<<< Updated upstream
+=======
+Widget _buildQuickStartCard(BuildContext context, WorkoutProvider provider) {
+  final hasActiveWorkout = provider.hasActiveWorkout;
+
+  return Card(
+    elevation: 0,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    child: Padding(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              hasActiveWorkout
+                  ? 'Bạn đang có buổi tập chưa hoàn thành.'
+                  : 'Bắt đầu nhanh một buổi tập từ template.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          const SizedBox(width: 12),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => ChangeNotifierProvider<UtilitiesProvider>.value(
+                    value: context.read<UtilitiesProvider>(),
+                    child: Scaffold(
+                      appBar: AppBar(
+                        title: Text(
+                          hasActiveWorkout
+                              ? 'Tiếp tục buổi tập'
+                              : 'Bắt đầu buổi tập nhanh',
+                        ),
+                      ),
+                      body: const SafeArea(child: ActiveWorkoutScreen()),
+                    ),
+                  ),
+                ),
+              );
+            },
+            icon: Icon(hasActiveWorkout ? Icons.play_circle : Icons.flash_on),
+            label: Text(
+              hasActiveWorkout ? 'Tiếp tục' : 'Bắt đầu nhanh',
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildHeroImage() {
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(18),
+    child: Stack(
+      alignment: Alignment.bottomLeft,
+      children: [
+        Image.asset(
+          'assets/images/gym_banner.png',
+          height: 160,
+          width: double.infinity,
+          fit: BoxFit.cover,
+        ),
+        Container(
+          height: 160,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.black.withValues(alpha: 0.55),
+                Colors.black.withValues(alpha: 0.08),
+              ],
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+            ),
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.all(16),
+          child: Text(
+            'Gym Focus',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildWeeklyProgress(BuildContext context, int current, int target) {
+  final colorScheme = Theme.of(context).colorScheme;
+  final textTheme = Theme.of(context).textTheme;
+  final progress = (current / target).clamp(0.0, 1.0);
+
+  return Card(
+    elevation: 0,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Weekly Goal Progress',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                '$current / $target sessions',
+                style: textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 10,
+              backgroundColor: colorScheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            progress >= 1.0
+                ? 'Goal achieved! Amazing work this week.'
+                : 'You are ${target - current} sessions away from your weekly goal.',
+            style: textTheme.bodySmall,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+>>>>>>> Stashed changes
 Widget _buildWelcomeCard(BuildContext context) {
   final colorScheme = Theme.of(context).colorScheme;
   final textTheme = Theme.of(context).textTheme;
@@ -458,9 +641,52 @@ int _sumCurrentWeekMinutes(List<Workout> history) {
       .fold(0, (total, workout) => total + workout.durationInMinutes);
 }
 
+<<<<<<< Updated upstream
 int _findBestDuration(List<Workout> history) {
   if (history.isEmpty) {
     return 0;
+=======
+int _calculateWorkoutStreak(List<Workout> history) {
+  if (history.isEmpty) {
+    return 0;
+  }
+
+  final workoutDays = history
+      .map((workout) => DateTime(workout.date.year, workout.date.month, workout.date.day))
+      .toSet();
+
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final yesterday = today.subtract(const Duration(days: 1));
+
+  DateTime cursor;
+  if (workoutDays.contains(today)) {
+    cursor = today;
+  } else if (workoutDays.contains(yesterday)) {
+    cursor = yesterday;
+  } else {
+    return 0;
+  }
+
+  var streak = 0;
+  while (workoutDays.contains(cursor)) {
+    streak += 1;
+    cursor = cursor.subtract(const Duration(days: 1));
+  }
+
+  return streak;
+}
+
+double _calculateWorkoutVolume(Workout workout) {
+  double total = 0;
+  for (final exercise in workout.exercises) {
+    for (final set in exercise.sets) {
+      if (!set.isCompleted) {
+        continue;
+      }
+      total += set.weight * set.reps;
+    }
+>>>>>>> Stashed changes
   }
 
   return history
