@@ -71,6 +71,12 @@ class ProfileProvider extends ChangeNotifier {
     required String unit,
     required int weeklyTarget,
     double? targetWeight,
+    double? height,
+    double? currentWeight,
+    double? chest,
+    double? waist,
+    double? hips,
+    Map<int, String>? weeklyPlan,
   }) async {
     final userId = _boundUserId;
     if (userId == null) {
@@ -98,10 +104,16 @@ class ProfileProvider extends ChangeNotifier {
             email: _boundEmail,
             displayName: _boundFallbackDisplayName,
             photoUrl: _boundPhotoUrl,
-            goal: 'duy trì',
-            unit: 'kg',
-            weeklyTarget: 3,
-            targetWeight: null,
+            goal: goal,
+            unit: unit,
+            weeklyTarget: weeklyTarget,
+            targetWeight: targetWeight,
+            height: height,
+            currentWeight: currentWeight,
+            chest: chest,
+            waist: waist,
+            hips: hips,
+            weeklyPlan: weeklyPlan ?? {},
           );
 
       final updated = current.copyWith(
@@ -110,6 +122,12 @@ class ProfileProvider extends ChangeNotifier {
         unit: unit,
         weeklyTarget: weeklyTarget,
         targetWeight: targetWeight,
+        height: height,
+        currentWeight: currentWeight,
+        chest: chest,
+        waist: waist,
+        hips: hips,
+        weeklyPlan: weeklyPlan,
         clearTargetWeight: targetWeight == null,
       );
 
@@ -149,7 +167,7 @@ class ProfileProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateProfilePhoto(String imagePath) async {
+  Future<void> updateProfilePhoto(List<int> bytes, String fileName) async {
     final userId = _boundUserId;
     if (userId == null) return;
 
@@ -158,7 +176,7 @@ class ProfileProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _profile = await _repository.updateProfilePhoto(userId, imagePath);
+      _profile = await _repository.updateProfilePhoto(userId, bytes, fileName);
     } catch (_) {
       _errorMessage = 'Không thể cập nhật ảnh hồ sơ.';
     } finally {

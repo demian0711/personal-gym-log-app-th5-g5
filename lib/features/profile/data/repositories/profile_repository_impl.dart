@@ -1,4 +1,3 @@
-import 'dart:io';
 import '../../../progress_photos/data/services/cloudinary_service.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../models/user_model.dart';
@@ -46,13 +45,14 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<UserModel> updateProfilePhoto(String userId, String imagePath) async {
-    final file = File(imagePath);
+  Future<UserModel> updateProfilePhoto(
+    String userId,
+    List<int> bytes,
+    String fileName,
+  ) async {
     final photoUrl = await _cloudinary.uploadImageBytes(
-      bytes: await file.readAsBytes(),
-      fileName: file.uri.pathSegments.isNotEmpty
-          ? file.uri.pathSegments.last
-          : 'profile_$userId.jpg',
+      bytes: bytes,
+      fileName: fileName,
     );
     final existing = await _service.fetchUser(userId);
     if (existing == null) {
