@@ -1,7 +1,4 @@
- HEAD
 import 'package:cloud_firestore/cloud_firestore.dart';
-  
-  HPT
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/firebase_core_platform_interface.dart';
 import 'package:flutter/material.dart';
@@ -25,13 +22,10 @@ Future<void> main() async {
     }
   }
 
- HEAD
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
   );
 
-  
-  HPT
   await NotificationService.instance.initialize();
   runApp(const PersonalGymLogApp());
 }
