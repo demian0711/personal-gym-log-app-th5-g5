@@ -19,15 +19,12 @@ class LocalStorageService {
   static const String _usersKey = 'auth_users';
   static const String _activeUserKey = 'auth_active_user_id';
   static const String _unitKey = 'unit_preference';
- HEAD
   static const String _cloudinaryCloudNameKey = 'cloudinary_cloud_name';
   static const String _cloudinaryUploadPresetKey = 'cloudinary_upload_preset';
   static const String _reminderEnabledKey = 'workout_reminder_enabled';
   static const String _reminderHourKey = 'workout_reminder_hour';
   static const String _reminderMinuteKey = 'workout_reminder_minute';
   static const String _isDarkModeKey = 'theme_is_dark_mode';
-  
-  HPT
   static const String _workoutPrefix = 'workout_data_';
 
   SharedPreferences? _prefs;
@@ -122,7 +119,6 @@ class LocalStorageService {
       return;
     }
     await _prefsInstance.setString(_activeUserKey, userId);
- HEAD
   }
 
   Future<String?> getCloudinaryCloudName() async {
@@ -171,8 +167,6 @@ class LocalStorageService {
 
   Future<void> setDarkModeEnabled(bool value) async {
     await _prefsInstance.setBool(_isDarkModeKey, value);
-  
-  HPT
   }
 
   Future<UserWorkoutData?> getWorkoutData(String userId) async {
