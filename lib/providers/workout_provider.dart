@@ -6,60 +6,121 @@ import '../models/exercise.dart';
 import '../models/exercise_set.dart';
 import '../models/user_workout_data.dart';
 import '../models/workout.dart';
+import '../services/firebase_service.dart';
 import '../services/local_storage_service.dart';
 
 class WorkoutProvider extends ChangeNotifier {
   final LocalStorageService _storage;
+  final FirebaseService _firebase = FirebaseService();
+
   List<Workout> _templates = [];
   List<Workout> _history = [];
   String? _userId;
   bool _isLoading = false;
+  bool _isSyncing = false;
 
   WorkoutProvider(this._storage);
 
   List<Workout> get templates => List.unmodifiable(_templates);
   List<Workout> get history => List.unmodifiable(_history);
   bool get isLoading => _isLoading;
+  bool get isSyncing => _isSyncing;
 
   void bindUser(String? userId) {
     if (_userId == userId) return;
     _userId = userId;
+    if (userId != null) {
+      _firebase.setUserId(userId);
+    }
     unawaited(_loadForUser(userId));
   }
 
-  void addTemplate(Workout template) {
+  Future<void> addTemplate(Workout template) async {
     _templates.add(template);
+    await _storage.saveTemplate(template);
+    try {
+      await _firebase.uploadTemplate(template);
+    } catch (_) {}
     notifyListeners();
     unawaited(_persist());
   }
 
-  void updateTemplate(Workout template) {
+  Future<void> updateTemplate(Workout template) async {
     final index = _templates.indexWhere((item) => item.id == template.id);
     if (index == -1) return;
     _templates[index] = template;
+    await _storage.saveTemplate(template);
+    try {
+      await _firebase.uploadTemplate(template);
+    } catch (_) {}
     notifyListeners();
     unawaited(_persist());
   }
 
-  void removeTemplate(String id) {
+  Future<void> removeTemplate(String id) async {
     _templates.removeWhere((template) => template.id == id);
+    await _storage.deleteTemplate(id);
+    try {
+      await _firebase.deleteTemplate(id);
+    } catch (_) {}
     notifyListeners();
     unawaited(_persist());
   }
 
-  void addWorkoutLog(Workout workout) {
+  Future<void> addWorkoutLog(Workout workout) async {
     _history.insert(0, workout);
+    await _storage.saveWorkoutLog(workout);
+    try {
+      await _firebase.uploadWorkoutLog(workout);
+    } catch (_) {}
     notifyListeners();
     unawaited(_persist());
   }
 
-  void clearAll() {
+  Future<void> clearAll() async {
+    for (final template in _templates) {
+      await _storage.deleteTemplate(template.id);
+    }
+    for (final workout in _history) {
+      await _storage.deleteWorkoutLog(workout.id);
+    }
     _templates.clear();
     _history.clear();
     notifyListeners();
+
     final userId = _userId;
     if (userId != null) {
-      unawaited(_storage.clearWorkoutData(userId));
+      await _storage.clearWorkoutData(userId);
+    }
+  }
+
+  Future<void> syncFromFirebase() async {
+    if (_userId == null) return;
+    _isSyncing = true;
+    notifyListeners();
+
+    try {
+      _templates = await _firebase.downloadTemplates();
+      _history = await _firebase.downloadWorkoutLogs();
+      await _persist();
+    } catch (_) {
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> syncToFirebase() async {
+    if (_userId == null) return;
+    _isSyncing = true;
+    notifyListeners();
+
+    try {
+      await _firebase.syncAllToFirebase(_templates, _history);
+    } catch (_) {
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
     }
   }
 
@@ -231,11 +292,7 @@ class WorkoutProvider extends ChangeNotifier {
   List<ExerciseSet> _defaultSets(int count) {
     return List.generate(
       count,
-      (index) => ExerciseSet(
-        order: index + 1,
-        weight: 0,
-        reps: 0,
-      ),
+      (index) => ExerciseSet(order: index + 1, weight: 0, reps: 0),
     );
   }
 }

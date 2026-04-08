@@ -1,11 +1,21 @@
 import 'dart:convert';
 
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/app_user.dart';
 import '../models/user_workout_data.dart';
+import '../models/workout.dart';
 
 class LocalStorageService {
+  static final LocalStorageService _instance = LocalStorageService._internal();
+  factory LocalStorageService() => _instance;
+  LocalStorageService._internal();
+
+  static const String _workoutsBoxName = 'workouts';
+  static const String _templatesBoxName = 'templates';
+  static const String _settingsBoxName = 'settings';
+
   static const String _usersKey = 'auth_users';
   static const String _activeUserKey = 'auth_active_user_id';
   static const String _unitKey = 'unit_preference';
@@ -14,10 +24,14 @@ class LocalStorageService {
   SharedPreferences? _prefs;
 
   Future<void> init() async {
+    await Hive.initFlutter();
+    await Hive.openBox(_workoutsBoxName);
+    await Hive.openBox(_templatesBoxName);
+    await Hive.openBox(_settingsBoxName);
     _prefs = await SharedPreferences.getInstance();
   }
 
-  SharedPreferences get _instance {
+  SharedPreferences get _prefsInstance {
     final prefs = _prefs;
     if (prefs == null) {
       throw StateError('LocalStorageService has not been initialized.');
@@ -25,16 +39,59 @@ class LocalStorageService {
     return prefs;
   }
 
+  Future<void> saveWorkoutLog(Workout workout) async {
+    final box = Hive.box(_workoutsBoxName);
+    await box.put(workout.id, workout.toMap());
+  }
+
+  Future<List<Workout>> getAllWorkoutLogs() async {
+    final box = Hive.box(_workoutsBoxName);
+    final logs = box.values
+        .map((map) => Workout.fromMap(Map<String, dynamic>.from(map)))
+        .toList();
+    logs.sort((a, b) => b.date.compareTo(a.date));
+    return logs;
+  }
+
+  Future<void> deleteWorkoutLog(String id) async {
+    final box = Hive.box(_workoutsBoxName);
+    await box.delete(id);
+  }
+
+  Future<void> saveTemplate(Workout template) async {
+    final box = Hive.box(_templatesBoxName);
+    await box.put(template.id, template.toMap());
+  }
+
+  Future<List<Workout>> getAllTemplates() async {
+    final box = Hive.box(_templatesBoxName);
+    return box.values
+        .map((map) => Workout.fromMap(Map<String, dynamic>.from(map)))
+        .toList();
+  }
+
+  Future<void> deleteTemplate(String id) async {
+    final box = Hive.box(_templatesBoxName);
+    await box.delete(id);
+  }
+
   Future<void> saveUnit(String unit) async {
-    await _instance.setString(_unitKey, unit);
+    final settingsBox = Hive.box(_settingsBoxName);
+    await settingsBox.put('unit', unit);
+    await _prefsInstance.setString(_unitKey, unit);
   }
 
   Future<String> getUnit() async {
-    return _instance.getString(_unitKey) ?? 'kg';
+    final settingsBox = Hive.box(_settingsBoxName);
+    final fromHive = settingsBox.get('unit');
+    if (fromHive is String && fromHive.isNotEmpty) {
+      return fromHive;
+    }
+    return _prefsInstance.getString(_unitKey) ?? 'kg';
   }
 
   Future<List<AppUser>> getUsers() async {
-    final raw = _instance.getString(_usersKey);
+    final raw = _prefsInstance.getString(_usersKey);
     if (raw == null || raw.isEmpty) return [];
 
     final decoded = jsonDecode(raw) as List<dynamic>;
@@ -46,23 +103,23 @@ class LocalStorageService {
 
   Future<void> saveUsers(List<AppUser> users) async {
     final payload = jsonEncode(users.map((user) => user.toMap()).toList());
-    await _instance.setString(_usersKey, payload);
+    await _prefsInstance.setString(_usersKey, payload);
   }
 
   Future<String?> getActiveUserId() async {
-    return _instance.getString(_activeUserKey);
+    return _prefsInstance.getString(_activeUserKey);
   }
 
   Future<void> setActiveUserId(String? userId) async {
     if (userId == null) {
-      await _instance.remove(_activeUserKey);
+      await _prefsInstance.remove(_activeUserKey);
       return;
     }
-    await _instance.setString(_activeUserKey, userId);
+    await _prefsInstance.setString(_activeUserKey, userId);
   }
 
   Future<UserWorkoutData?> getWorkoutData(String userId) async {
-    final raw = _instance.getString('$_workoutPrefix$userId');
+    final raw = _prefsInstance.getString('$_workoutPrefix$userId');
     if (raw == null || raw.isEmpty) return null;
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
     return UserWorkoutData.fromMap(decoded);
@@ -70,10 +127,10 @@ class LocalStorageService {
 
   Future<void> saveWorkoutData(String userId, UserWorkoutData data) async {
     final payload = jsonEncode(data.toMap());
-    await _instance.setString('$_workoutPrefix$userId', payload);
+    await _prefsInstance.setString('$_workoutPrefix$userId', payload);
   }
 
   Future<void> clearWorkoutData(String userId) async {
-    await _instance.remove('$_workoutPrefix$userId');
+    await _prefsInstance.remove('$_workoutPrefix$userId');
   }
 }

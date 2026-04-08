@@ -40,9 +40,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   void _startWorkout(Workout template) {
     final now = DateTime.now();
     final exercises = template.exercises
-        .map((exercise) => exercise.copyWith(
-              sets: _copySets(exercise),
-            ))
+        .map((exercise) => exercise.copyWith(sets: _copySets(exercise)))
         .toList();
 
     final workout = Workout(
@@ -89,14 +87,25 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     _showMessage('Workout saved.');
   }
 
+  void _backToStartWorkout() {
+    _clearControllers();
+
+    setState(() {
+      _activeWorkout = null;
+      _startTime = null;
+    });
+  }
+
   void _initControllers(Workout workout) {
     for (final exercise in workout.exercises) {
       _setControllers[exercise.id] = exercise.sets.map((set) {
         return _SetInputControllers(
-          weightController:
-              TextEditingController(text: _formatWeight(set.weight)),
+          weightController: TextEditingController(
+            text: _formatWeight(set.weight),
+          ),
           repsController: TextEditingController(
-              text: set.reps == 0 ? '' : set.reps.toString()),
+            text: set.reps == 0 ? '' : set.reps.toString(),
+          ),
         );
       }).toList();
     }
@@ -111,9 +120,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     }
 
     return exercise.sets
-        .map(
-          (set) => set.copyWith(isCompleted: false),
-        )
+        .map((set) => set.copyWith(isCompleted: false))
         .toList();
   }
 
@@ -126,11 +133,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     return weight.toString();
   }
 
-  void _toggleSet(
-    Workout workout,
-    int exerciseIndex,
-    int setIndex,
-  ) {
+  void _toggleSet(Workout workout, int exerciseIndex, int setIndex) {
     final exercise = workout.exercises[exerciseIndex];
     final set = exercise.sets[setIndex];
     final controllers = _setControllers[exercise.id]?[setIndex];
@@ -138,7 +141,8 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     if (controllers == null) return;
 
     if (!set.isCompleted) {
-      final weightValid = controllers.weightKey.currentState?.validate() ?? false;
+      final weightValid =
+          controllers.weightKey.currentState?.validate() ?? false;
       final repsValid = controllers.repsKey.currentState?.validate() ?? false;
       if (!weightValid || !repsValid) {
         return;
@@ -215,9 +219,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   int _totalSets(Workout workout) {
@@ -255,6 +259,15 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
           const SizedBox(height: 16),
           if (workout == null) _buildStartCard(templates),
           if (workout != null) ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                tooltip: 'Back to start',
+                onPressed: _backToStartWorkout,
+                icon: const Icon(Icons.arrow_back),
+              ),
+            ),
+            const SizedBox(height: 8),
             _buildWorkoutHeader(workout),
             const SizedBox(height: 16),
             for (var i = 0; i < workout.exercises.length; i++)
@@ -294,25 +307,32 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: _selectedTemplateId,
-              items: templates
-                  .map(
-                    (template) => DropdownMenuItem<String>(
-                      value: template.id,
-                      child: Text(template.title),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedTemplateId = value;
-                });
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return DropdownMenu<String>(
+                  width: constraints.maxWidth,
+                  initialSelection: _selectedTemplateId,
+                  enableFilter: true,
+                  enableSearch: true,
+                  requestFocusOnTap: true,
+                  label: const Text('Template'),
+                  leadingIcon: const Icon(Icons.search),
+                  trailingIcon: const Icon(Icons.arrow_drop_down),
+                  dropdownMenuEntries: templates
+                      .map(
+                        (template) => DropdownMenuEntry<String>(
+                          value: template.id,
+                          label: template.title,
+                        ),
+                      )
+                      .toList(),
+                  onSelected: (value) {
+                    setState(() {
+                      _selectedTemplateId = value;
+                    });
+                  },
+                );
               },
-              decoration: const InputDecoration(
-                labelText: 'Template',
-                border: OutlineInputBorder(),
-              ),
             ),
             const SizedBox(height: 12),
             Align(
@@ -353,8 +373,8 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.black.withOpacity(0.55),
-                  Colors.black.withOpacity(0.05),
+                  Colors.black.withValues(alpha: 0.55),
+                  Colors.black.withValues(alpha: 0.05),
                 ],
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
@@ -450,8 +470,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                             key: input.weightKey,
                             controller: input.weightController,
                             enabled: !isCompleted,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
+                            keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
                             inputFormatters: [

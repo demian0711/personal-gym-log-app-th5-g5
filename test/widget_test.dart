@@ -19,7 +19,7 @@ void main() {
     final storage = LocalStorageService();
     await storage.init();
 
-    await tester.pumpWidget(PersonalGymLogApp(storageService: storage));
+    await tester.pumpWidget(const PersonalGymLogApp());
     await tester.pumpAndSettle();
 
     expect(find.text('Đăng nhập'), findsOneWidget);
