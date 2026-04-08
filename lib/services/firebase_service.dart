@@ -13,9 +13,9 @@ class FirebaseService {
     _userId = userId;
   }
 
-  // ==========================================
+  //
   // --- TEMPLATES ---
-  // ==========================================
+  //
 
   /// Upload a template to Firestore
   Future<void> uploadTemplate(Workout template) async {
@@ -89,9 +89,9 @@ class FirebaseService {
         });
   }
 
-  // ==========================================
+  //
   // --- WORKOUT LOGS ---
-  // ==========================================
+  //
 
   /// Upload a workout log to Firestore
   Future<void> uploadWorkoutLog(Workout log) async {
@@ -167,9 +167,9 @@ class FirebaseService {
         });
   }
 
-  // ==========================================
+  //
   // --- SYNC OPERATIONS ---
-  // ==========================================
+  //
 
   /// Sync all local data to Firestore
   Future<void> syncAllToFirebase(

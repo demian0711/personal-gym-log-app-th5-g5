@@ -5,7 +5,10 @@ import '../../features/analytics/presentation/screens/analytics_screen.dart';
 import '../../features/progress_photos/presentation/screens/progress_photos_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../providers/auth_provider.dart';
+ HEAD
 import '../../providers/theme_provider.dart';
+  
+  HPT
 import '../../providers/utilities_provider.dart';
 import '../../providers/workout_provider.dart';
 
@@ -55,6 +58,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 leading: const CircleAvatar(child: Icon(Icons.person)),
                 title: Text(user?.name ?? 'Account'),
                 subtitle: Text(user?.email ?? 'No email'),
+ HEAD
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
                 onTap: () {
                   Navigator.of(context).push(
@@ -63,6 +67,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   );
                 },
+  
+  HPT
               ),
             ),
             const SizedBox(height: 12),
@@ -76,6 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 12),
+ HEAD
             Card(
               child: ListTile(
                 leading: const Icon(Icons.analytics_outlined),
@@ -126,6 +133,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 12),
+  
+  HPT
             OutlinedButton.icon(
               onPressed: () async {
                 final confirm = await showDialog<bool>(
@@ -138,6 +147,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       actions: [
                         TextButton(
+ HEAD
                           onPressed: () =>
                               Navigator.of(dialogContext).pop(false),
                           child: const Text('Cancel'),
@@ -145,6 +155,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         FilledButton(
                           onPressed: () =>
                               Navigator.of(dialogContext).pop(true),
+  
+                          onPressed: () => Navigator.of(dialogContext).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(true),
+  HPT
                           child: const Text('Delete'),
                         ),
                       ],
