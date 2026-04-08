@@ -1,41 +1,33 @@
 {
   "project_info": {
-    "project_number": "158847912768",
-    "project_id": "personal-gym-log",
-    "storage_bucket": "personal-gym-log.firebasestorage.app"
+    "project_number": "972551890881",
+    "project_id": "th5thi",
+    "storage_bucket": "th5thi.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:158847912768:android:31a2d03095aedf993588a5",
+        "mobilesdk_app_id": "1:972551890881:android:3b5ed496663613abe67140",
         "android_client_info": {
           "package_name": "com.example.personal_gym_log_app_th5_g5"
         }
       },
       "oauth_client": [
         {
-          "client_id": "158847912768-gffdrb9evb269ehn0tfom6gi6k11dlel.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.personal_gym_log_app_th5_g5",
-            "certificate_hash": "61fad22a360a143639bf0c94fbf6e3ddf68bd076"
-          }
-        },
-        {
-          "client_id": "158847912768-2o5bn0q1novplbsb19ul8ttrt0fk6na6.apps.googleusercontent.com",
+          "client_id": "972551890881-whatever.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBP5eoed3h79RF6U1fJWvK7QWMiVu84UN4"
+          "current_key": "AIzaSyCtih01ZNkkmlOLDMiioRgi64oswkGutBo"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "158847912768-2o5bn0q1novplbsb19ul8ttrt0fk6na6.apps.googleusercontent.com",
+              "client_id": "972551890881-whatever.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
