@@ -118,7 +118,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
         child: Icon(
           Icons.fitness_center,
           size: 80,
-          color: Colors.white.withValues(alpha: 0.9),
+          color: Colors.white.withOpacity(0.9),
         ),
       ),
     );
@@ -239,7 +239,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.1),
+                color: Colors.amber.withOpacity(0.1),
                 border: Border(left: BorderSide(color: Colors.amber, width: 4)),
                 borderRadius: BorderRadius.circular(6),
               ),
@@ -279,8 +279,8 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.green.withValues(alpha: 0.1),
-            border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+            color: Colors.green.withOpacity(0.1),
+            border: Border.all(color: Colors.green.withOpacity(0.3)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -316,8 +316,8 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.1),
-              border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+              color: Colors.blue.withOpacity(0.1),
+              border: Border.all(color: Colors.blue.withOpacity(0.3)),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
@@ -344,8 +344,8 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.1),
-              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+              color: Colors.orange.withOpacity(0.1),
+              border: Border.all(color: Colors.orange.withOpacity(0.3)),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(

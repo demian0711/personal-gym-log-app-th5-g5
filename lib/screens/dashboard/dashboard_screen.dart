@@ -42,10 +42,12 @@ class DashboardScreen extends StatelessWidget {
               const SizedBox(height: 16),
               _buildWelcomeCard(context),
               const SizedBox(height: 16),
+              _buildTodayPlan(context, profileProvider.profile?.weeklyPlan),
+              const SizedBox(height: 16),
               _buildWeeklyProgress(context, weeklyCount, weeklyTarget),
               const SizedBox(height: 16),
               Text(
-                'Quick Overview',
+                'Tổng quan nhanh',
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -55,7 +57,7 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _DashboardStatCard(
-                      title: 'Recent workouts',
+                      title: 'Buổi tập gần đây',
                       value: '$recentCount',
                       icon: Icons.calendar_month,
                     ),
@@ -63,7 +65,7 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _DashboardStatCard(
-                      title: 'Total volume',
+                      title: 'Tổng khối lượng',
                       value: totalVolume.toStringAsFixed(0),
                       icon: Icons.timer,
                     ),
@@ -71,7 +73,7 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _DashboardStatCard(
-                      title: 'PR (kg)',
+                      title: 'Kỷ lục PR (kg)',
                       value: personalRecord.toStringAsFixed(1),
                       icon: Icons.local_fire_department,
                     ),
@@ -107,8 +109,8 @@ Widget _buildHeroImage() {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.black.withValues(alpha: 0.55),
-                Colors.black.withValues(alpha: 0.08),
+                Colors.black.withOpacity(0.55),
+                Colors.black.withOpacity(0.08),
               ],
               begin: Alignment.bottomCenter,
               end: Alignment.topCenter,
@@ -118,7 +120,7 @@ Widget _buildHeroImage() {
         const Padding(
           padding: EdgeInsets.all(16),
           child: Text(
-            'Gym Focus',
+            'Động lực mỗi ngày',
             style: TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -135,7 +137,6 @@ Widget _buildWeeklyProgress(BuildContext context, int current, int target) {
   final colorScheme = Theme.of(context).colorScheme;
   final textTheme = Theme.of(context).textTheme;
   final progress = (current / target).clamp(0.0, 1.0);
-
   return Card(
     elevation: 0,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -148,13 +149,13 @@ Widget _buildWeeklyProgress(BuildContext context, int current, int target) {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Weekly Goal Progress',
+                'Tiến độ mục tiêu tuần',
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               Text(
-                '$current / $target sessions',
+                '$current / $target buổi',
                 style: textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: colorScheme.primary,
@@ -175,9 +176,67 @@ Widget _buildWeeklyProgress(BuildContext context, int current, int target) {
           const SizedBox(height: 8),
           Text(
             progress >= 1.0
-                ? 'Goal achieved! Amazing work this week.'
-                : 'You are ${target - current} sessions away from your weekly goal.',
+                ? 'Tuyệt vời! Bạn đã hoàn thành mục tiêu tuần.'
+                : 'Bạn còn ${target - current} buổi tập nữa để đạt mục tiêu.',
             style: textTheme.bodySmall,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildTodayPlan(BuildContext context, Map<int, String>? weeklyPlan) {
+  final now = DateTime.now();
+  final dayIndex = now.weekday; // 1-7 (Mon-Sun)
+  final plan = weeklyPlan?[dayIndex];
+  
+  final colorScheme = Theme.of(context).colorScheme;
+  final textTheme = Theme.of(context).textTheme;
+
+  return Card(
+    elevation: 0,
+    shape: RoundedRectangleBorder(
+      side: BorderSide(color: colorScheme.outlineVariant),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.event_available, color: colorScheme.primary, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Kế hoạch hôm nay',
+                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    plan ?? 'Thành quả hôm nay là do nỗ lực hôm qua. Cùng bắt đầu thôi!',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: plan != null ? colorScheme.onPrimaryContainer : Colors.grey[600],
+                      fontStyle: plan != null ? FontStyle.normal : FontStyle.italic,
+                    ),
+                  ),
+                ),
+                if (plan != null)
+                  Icon(Icons.check_circle_outline, color: colorScheme.primary),
+              ],
+            ),
           ),
         ],
       ),
@@ -208,7 +267,7 @@ Widget _buildWelcomeCard(BuildContext context) {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.insights, color: Colors.white),
@@ -216,7 +275,7 @@ Widget _buildWelcomeCard(BuildContext context) {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Workout Dashboard',
+                'Bảng điều khiển',
                 style: textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -227,9 +286,9 @@ Widget _buildWelcomeCard(BuildContext context) {
         ),
         const SizedBox(height: 10),
         Text(
-          'Track your strength progress and get a quick summary of your latest workout.',
+          'Theo dõi tiến trình sức mạnh và tóm tắt các buổi tập gần nhất của bạn.',
           style: textTheme.bodyMedium?.copyWith(
-            color: Colors.white.withValues(alpha: 0.94),
+            color: Colors.white.withOpacity(0.94),
           ),
         ),
       ],
@@ -256,7 +315,7 @@ class _DashboardStatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+        color: colorScheme.surfaceContainerHighest.withOpacity(0.6),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -301,14 +360,14 @@ class _StrengthChartCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Strength Growth Chart',
+              'Biểu đồ tăng trưởng sức mạnh',
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Recent 7 workouts (total volume)',
+              '7 buổi tập gần đây (tổng khối lượng)',
               style: textTheme.bodySmall,
             ),
             const SizedBox(height: 14),
@@ -339,9 +398,7 @@ class _StrengthChartCard extends StatelessWidget {
                     horizontalInterval: _resolveGridInterval(data),
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
-                        color: colorScheme.outlineVariant.withValues(
-                          alpha: 0.3,
-                        ),
+                        color: colorScheme.outlineVariant.withOpacity(0.3),
                         strokeWidth: 1,
                       );
                     },
@@ -356,8 +413,8 @@ class _StrengthChartCard extends StatelessWidget {
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        interval: 20,
-                        reservedSize: 34,
+                        interval: 200, // Adjusted for volume
+                        reservedSize: 40,
                         getTitlesWidget: (value, meta) {
                           return Text(
                             value.toInt().toString(),
@@ -379,7 +436,7 @@ class _StrengthChartCard extends StatelessWidget {
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              'S${idx + 1}',
+                              'B${idx + 1}',
                               style: textTheme.labelSmall,
                             ),
                           );
@@ -394,7 +451,7 @@ class _StrengthChartCard extends StatelessWidget {
                         return spots
                             .map(
                               (spot) => LineTooltipItem(
-                                spot.y.toStringAsFixed(0),
+                                '${spot.y.toStringAsFixed(0)} kg',
                                 TextStyle(
                                   color: colorScheme.onInverseSurface,
                                   fontWeight: FontWeight.w700,
@@ -426,8 +483,8 @@ class _StrengthChartCard extends StatelessWidget {
                         show: true,
                         gradient: LinearGradient(
                           colors: [
-                            colorScheme.primary.withValues(alpha: 0.35),
-                            colorScheme.primary.withValues(alpha: 0.02),
+                            colorScheme.primary.withOpacity(0.35),
+                            colorScheme.primary.withOpacity(0.02),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -465,7 +522,7 @@ class _LatestWorkoutCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Latest Workout',
+                    'Buổi tập gần nhất',
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -475,13 +532,11 @@ class _LatestWorkoutCard extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest.withValues(
-                        alpha: 0.5,
-                      ),
+                      color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      'No workout data yet. Complete a workout to see a summary here.',
+                      'Chưa có dữ liệu bài tập nào. Hãy hoàn thành một buổi tập để xem tóm tắt tại đây.',
                       style: textTheme.bodyMedium,
                     ),
                   ),
@@ -491,7 +546,7 @@ class _LatestWorkoutCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Latest Workout',
+                    'Buổi tập gần nhất',
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -501,9 +556,7 @@ class _LatestWorkoutCard extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest.withValues(
-                        alpha: 0.5,
-                      ),
+                      color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -517,12 +570,12 @@ class _LatestWorkoutCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Date: ${_formatDate(workout!.date)}',
+                          'Ngày: ${_formatDate(workout!.date)}',
                           style: textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Duration: ${workout!.durationInMinutes} min • ${workout!.exercises.length} exercises',
+                          'Thời gian: ${workout!.durationInMinutes} phút • ${workout!.exercises.length} bài tập',
                           style: textTheme.bodyMedium,
                         ),
                       ],
@@ -589,20 +642,17 @@ double _calculateWorkoutVolume(Workout workout) {
 double _resolveMaxY(List<double> data) {
   final maxValue = data.reduce((a, b) => a > b ? a : b);
   if (maxValue <= 0) {
-    return 100;
+    return 1000; // Increased base for volume
   }
   return maxValue * 1.25;
 }
 
 double _resolveGridInterval(List<double> data) {
   final maxValue = data.reduce((a, b) => a > b ? a : b);
-  if (maxValue <= 100) {
-    return 20;
-  }
-  if (maxValue <= 500) {
-    return 50;
-  }
-  return 100;
+  if (maxValue <= 100) return 20;
+  if (maxValue <= 1000) return 200;
+  if (maxValue <= 5000) return 1000;
+  return 2000;
 }
 
 String _formatDate(DateTime date) {

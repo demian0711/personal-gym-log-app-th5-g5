@@ -9,43 +9,12 @@ class WorkoutHistoryScreen extends StatefulWidget {
   const WorkoutHistoryScreen({super.key});
 
   @override
- HEAD
   State<WorkoutHistoryScreen> createState() => _WorkoutHistoryScreenState();
 }
 
 class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
   final WorkoutExportService _exportService = WorkoutExportService();
   bool _isExporting = false;
-
-  Future<void> _exportExcel(List<Workout> history) async {
-    if (history.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Chưa có dữ liệu để xuất file.')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isExporting = true;
-    });
-
-    try {
-      await _exportService.exportToExcel(history);
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Xuất Excel thất bại.')));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isExporting = false;
-        });
-      }
-    }
-  }
 
   Future<void> _exportPdf(List<Workout> history) async {
     if (history.isEmpty) {
@@ -78,8 +47,6 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
   }
 
   @override
-  
-  HPT
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
@@ -95,23 +62,28 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  child: Column(
                     children: [
-                      FilledButton.icon(
-                        onPressed: _isExporting
-                            ? null
-                            : () => _exportExcel(sortedHistory),
-                        icon: const Icon(Icons.table_chart_outlined),
-                        label: const Text('Export Excel'),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: _isExporting
-                            ? null
-                            : () => _exportPdf(sortedHistory),
-                        icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: const Text('Export PDF'),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _isExporting
+                              ? null
+                              : () => _exportPdf(sortedHistory),
+                          icon: _isExporting
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.picture_as_pdf_outlined),
+                          label: const Text('Xuất báo cáo PDF'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -125,14 +97,14 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Workout History',
+                        'Lịch sử tập luyện',
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'No workouts have been saved yet. Go to the Workout tab and tap Finish Workout to create history.',
+                        'Chưa có buổi tập nào được lưu. Hãy bắt đầu tập luyện để ghi lại lịch sử.',
                       ),
                     ],
                   ),
@@ -151,25 +123,26 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                 margin: const EdgeInsets.only(bottom: 12),
                 child: Padding(
                   padding: const EdgeInsets.all(14),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      FilledButton.icon(
-                        onPressed: _isExporting
-                            ? null
-                            : () => _exportExcel(sortedHistory),
-                        icon: const Icon(Icons.table_chart_outlined),
-                        label: const Text('Export Excel'),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _isExporting
+                          ? null
+                          : () => _exportPdf(sortedHistory),
+                      icon: _isExporting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(Icons.picture_as_pdf_outlined),
+                      label: const Text('Xuất báo cáo PDF'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      OutlinedButton.icon(
-                        onPressed: _isExporting
-                            ? null
-                            : () => _exportPdf(sortedHistory),
-                        icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: const Text('Export PDF'),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               );
@@ -194,7 +167,7 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                 subtitle: Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    '${_formatDate(workout.date)} • ${workout.durationInMinutes} min • ${workout.exercises.length} exercises • $totalSets sets',
+                    '${_formatDate(workout.date)} • ${workout.durationInMinutes} phút • ${workout.exercises.length} bài tập • $totalSets sets',
                   ),
                 ),
                 trailing: const Icon(Icons.chevron_right),
@@ -232,7 +205,7 @@ void _showWorkoutDetail(BuildContext context, Workout workout) {
               ),
               const SizedBox(height: 4),
               Text(
-                '${_formatDate(workout.date)} • ${workout.durationInMinutes} min',
+                '${_formatDate(workout.date)} • ${workout.durationInMinutes} phút',
               ),
               const SizedBox(height: 14),
               for (final exercise in workout.exercises)
@@ -256,7 +229,7 @@ void _showWorkoutDetail(BuildContext context, Workout workout) {
                           Padding(
                             padding: const EdgeInsets.only(bottom: 4),
                             child: Text(
-                              'Set ${set.order}: ${set.weight} kg × ${set.reps} reps',
+                              'Set ${set.order}: ${set.weight} kg × ${set.reps} lần',
                             ),
                           ),
                       ],

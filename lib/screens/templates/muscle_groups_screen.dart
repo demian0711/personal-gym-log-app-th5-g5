@@ -171,7 +171,7 @@ class _MuscleGroupsScreenState extends State<MuscleGroupsScreen> {
               child: Icon(
                 Icons.fitness_center,
                 size: 100,
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Colors.white.withOpacity(0.1),
               ),
             ),
             Column(

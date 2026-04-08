@@ -548,8 +548,8 @@ class _TemplateScreenState extends State<TemplateScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.black.withValues(alpha: 0.5),
-                  Colors.black.withValues(alpha: 0.05),
+                  Colors.black.withOpacity(0.5),
+                  Colors.black.withOpacity(0.05),
                 ],
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
