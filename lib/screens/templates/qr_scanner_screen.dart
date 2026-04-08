@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_set.dart';
 import '../../models/workout.dart';
@@ -148,6 +150,19 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   }
 
   Widget _buildPreviewSheet(GuideExercise exercise, {String? gifUrl}) {
+    // If the exercise has a videoId, we can show a YouTube player in-app
+    YoutubePlayerController? controller;
+    if (exercise.videoId != null) {
+      controller = YoutubePlayerController(
+        initialVideoId: exercise.videoId!,
+        flags: const YoutubePlayerFlags(
+          autoPlay: true,
+          mute: false,
+          loop: true,
+        ),
+      );
+    }
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
@@ -185,28 +200,94 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          if (gifUrl != null && gifUrl.isNotEmpty)
-                            Image.network(
-                              gifUrl,
-                              fit: BoxFit.contain,
-                              loadingBuilder:
-                                  (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
+                          if (controller != null)
+                            YoutubePlayer(
+                              controller: controller,
+                              showVideoProgressIndicator: true,
+                              progressIndicatorColor: Colors.teal,
+                              onReady: () {
+                                // Add any onReady logic here
+                              },
+                            )
+                          else if (gifUrl != null && gifUrl.isNotEmpty)
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Image.network(
+                                  gifUrl,
+                                  fit: BoxFit.contain,
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                        if (loadingProgress == null)
+                                          return child;
+                                        return const Center(
+                                          child: CircularProgressIndicator(
+                                            color: Colors.teal,
+                                          ),
+                                        );
+                                      },
+                                  errorBuilder: (context, obj, stack) {
                                     return const Center(
-                                      child: CircularProgressIndicator(
-                                        color: primaryTeal,
+                                      child: Icon(
+                                        Icons.broken_image,
+                                        color: Colors.white24,
+                                        size: 64,
                                       ),
                                     );
                                   },
-                              errorBuilder: (context, obj, stack) {
-                                return const Center(
-                                  child: Icon(
-                                    Icons.broken_image,
-                                    color: Colors.white24,
-                                    size: 64,
+                                ),
+                                // Play Video Overlay
+                                Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () async {
+                                      final query = Uri.encodeComponent(
+                                        '${exercise.name} exercise tutorial',
+                                      );
+                                      final url = Uri.parse(
+                                        'https://www.youtube.com/results?search_query=$query',
+                                      );
+                                      if (await canLaunchUrl(url)) {
+                                        await launchUrl(
+                                          url,
+                                          mode: LaunchMode.externalApplication,
+                                        );
+                                      }
+                                    },
+                                    child: Center(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black45,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white70,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.play_arrow_rounded,
+                                              color: Colors.white,
+                                              size: 48,
+                                            ),
+                                            const Text(
+                                              'Watch Video',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                );
-                              },
+                                ),
+                              ],
                             )
                           else
                             Positioned.fill(
@@ -219,7 +300,18 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                                 ),
                               ),
                             ),
-                          if (gifUrl == null)
+                          if (gifUrl == null && controller == null)
+                            Positioned(
+                              top: 20,
+                              right: 20,
+                              child: _getCategoryIconWidget(
+                                exercise.muscleGroupId,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
                             const Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
