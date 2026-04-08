@@ -7,7 +7,12 @@ import '../../models/workout.dart';
 import '../../providers/workout_provider.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  final VoidCallback onStartExercisesTap;
+
+  const DashboardScreen({
+    super.key,
+    required this.onStartExercisesTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +37,7 @@ class DashboardScreen extends StatelessWidget {
             .length;
         final totalVolume = _sumTotalVolume(sortedHistory);
         final personalRecord = _findPersonalRecord(sortedHistory);
+        final streakDays = _calculateWorkoutStreak(sortedHistory);
 
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -45,6 +51,12 @@ class DashboardScreen extends StatelessWidget {
               _buildTodayPlan(context, profileProvider.profile?.weeklyPlan),
               const SizedBox(height: 16),
               _buildWeeklyProgress(context, weeklyCount, weeklyTarget),
+              const SizedBox(height: 16),
+              _buildStreakAndQuickStart(
+                context,
+                streakDays,
+                onStartExercisesTap,
+              ),
               const SizedBox(height: 16),
               Text(
                 'Tổng quan nhanh',
@@ -292,6 +304,84 @@ Widget _buildWelcomeCard(BuildContext context) {
           ),
         ),
       ],
+    ),
+  );
+}
+
+Widget _buildStreakAndQuickStart(
+  BuildContext context,
+  int streakDays,
+  VoidCallback onStartExercisesTap,
+) {
+  final textTheme = Theme.of(context).textTheme;
+  final colorScheme = Theme.of(context).colorScheme;
+  final hasStreak = streakDays > 0;
+
+  return Card(
+    elevation: 0,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Workout Streak',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$streakDays day${streakDays == 1 ? '' : 's'}',
+                  style: textTheme.labelLarge?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(
+                hasStreak ? Icons.local_fire_department : Icons.flag_outlined,
+                color: colorScheme.primary,
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  hasStreak
+                      ? 'Great consistency! Keep your momentum going.'
+                      : 'Start a workout today to build your streak.',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onStartExercisesTap,
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Start Exercises'),
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -660,4 +750,41 @@ String _formatDate(DateTime date) {
   final m = date.month.toString().padLeft(2, '0');
   final y = date.year;
   return '$d/$m/$y';
+}
+
+int _calculateWorkoutStreak(List<Workout> history) {
+  if (history.isEmpty) {
+    return 0;
+  }
+
+  DateTime dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  final workoutDates = history
+      .map((workout) => dateOnly(workout.date))
+      .toSet()
+      .toList()
+    ..sort((a, b) => b.compareTo(a));
+
+  if (workoutDates.isEmpty) {
+    return 0;
+  }
+
+  final today = dateOnly(DateTime.now());
+  final yesterday = today.subtract(const Duration(days: 1));
+  final latest = workoutDates.first;
+
+  if (latest != today && latest != yesterday) {
+    return 0;
+  }
+
+  final dateSet = workoutDates.toSet();
+  var streak = 0;
+  var cursor = latest;
+
+  while (dateSet.contains(cursor)) {
+    streak++;
+    cursor = cursor.subtract(const Duration(days: 1));
+  }
+
+  return streak;
 }

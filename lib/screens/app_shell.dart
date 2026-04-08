@@ -23,13 +23,27 @@ class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
   late final UtilitiesProvider _utilitiesProvider;
 
-  static const List<Widget> _screens = [
-    DashboardScreen(),
-    TemplateScreen(),
-    ActiveWorkoutScreen(),
-    WorkoutHistoryScreen(),
-    SettingsScreen(),
-  ];
+  Widget _buildCurrentScreen() {
+    switch (_currentIndex) {
+      case 0:
+        return DashboardScreen(
+          onStartExercisesTap: () {
+            setState(() {
+              _currentIndex = 2;
+            });
+          },
+        );
+      case 1:
+        return const TemplateScreen();
+      case 2:
+        return const ActiveWorkoutScreen();
+      case 3:
+        return const WorkoutHistoryScreen();
+      case 4:
+      default:
+        return const SettingsScreen();
+    }
+  }
 
   @override
   void initState() {
@@ -73,7 +87,7 @@ class _AppShellState extends State<AppShell> {
         ),
         child: ChangeNotifierProvider<UtilitiesProvider>.value(
           value: _utilitiesProvider,
-          child: SafeArea(child: _screens[_currentIndex]),
+          child: SafeArea(child: _buildCurrentScreen()),
         ),
       ),
       bottomNavigationBar: AppBottomNav(

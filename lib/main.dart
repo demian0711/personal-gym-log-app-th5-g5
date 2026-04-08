@@ -43,6 +43,5 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('Error initializing NotificationService: $e');
   }
-
   runApp(const PersonalGymLogApp());
 }

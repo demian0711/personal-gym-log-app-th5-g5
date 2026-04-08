@@ -103,7 +103,6 @@ class PersonalGymLogApp extends StatelessWidget {
             return provider;
           },
         ),
-        ChangeNotifierProvider(create: (_) => UtilitiesProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
