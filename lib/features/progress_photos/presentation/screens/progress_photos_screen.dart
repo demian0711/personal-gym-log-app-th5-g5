@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/models/progress_photo_model.dart';
 import '../providers/progress_photo_provider.dart';
 import 'photo_detail_screen.dart';
+import '../../../progress/presentation/widgets/photo_capture_widget.dart';
 
 class ProgressPhotosScreen extends StatefulWidget {
   const ProgressPhotosScreen({super.key});
@@ -15,44 +15,9 @@ class ProgressPhotosScreen extends StatefulWidget {
 }
 
 class _ProgressPhotosScreenState extends State<ProgressPhotosScreen> {
-  final ImagePicker _picker = ImagePicker();
-  final TextEditingController _noteController = TextEditingController();
-
   @override
   void dispose() {
-    _noteController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickAndUpload(BuildContext context, ImageSource source) async {
-    final file = await _picker.pickImage(source: source, imageQuality: 85);
-
-    if (file == null) {
-      return;
-    }
-
-    final bytes = await file.readAsBytes();
-    if (!mounted) {
-      return;
-    }
-
-    final message = await context.read<ProgressPhotoProvider>().uploadPhoto(
-      imageBytes: bytes,
-      fileName: file.name,
-      note: _noteController.text,
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message ?? 'Upload ảnh thành công.')),
-    );
-
-    if (message == null) {
-      _noteController.clear();
-    }
   }
 
   /// Nhóm ảnh theo ngày
@@ -104,101 +69,11 @@ class _ProgressPhotosScreenState extends State<ProgressPhotosScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // Section: Upload ảnh
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Thêm ảnh tiến độ',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Theo dõi sự thay đổi cơ thể của bạn qua từng ngày luyện tập',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _noteController,
-                        decoration: const InputDecoration(
-                          labelText: 'Ghi chú (tuỳ chọn)',
-                          hintText: 'VD: Tăng cơ bắp, giảm mỡ, v.v',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.note_outlined),
-                        ),
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: FilledButton.icon(
-                              onPressed: provider.isUploading
-                                  ? null
-                                  : () => _pickAndUpload(
-                                      context,
-                                      ImageSource.camera,
-                                    ),
-                              icon: const Icon(Icons.camera_alt_outlined),
-                              label: const Text('Chụp ảnh'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: FilledButton.icon(
-                              onPressed: provider.isUploading
-                                  ? null
-                                  : () => _pickAndUpload(
-                                      context,
-                                      ImageSource.gallery,
-                                    ),
-                              icon: const Icon(Icons.image_outlined),
-                              label: const Text('Thư viện'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (provider.isUploading)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: LinearProgressIndicator(
-                            minHeight: 4,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      if ((provider.errorMessage ?? '').isNotEmpty)
-                        Container(
-                          margin: const EdgeInsets.only(top: 12),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: colorScheme.errorContainer,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: colorScheme.onErrorContainer,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  provider.errorMessage!,
-                                  style: TextStyle(
-                                    color: colorScheme.onErrorContainer,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+              // Section: Upload ảnh - Sử dụng PhotoCaptureWidget
+              PhotoCaptureWidget(
+                onPhotoUploaded: (message) {
+                  // Optional: Xử lý sau khi upload thành công
+                },
               ),
               const SizedBox(height: 20),
 

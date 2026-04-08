@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'core/config/cloudinary_config.dart';
 import 'core/theme/app_theme.dart';
+import 'features/analytics/data/models/workout_model_mapper.dart';
 import 'features/analytics/domain/services/analytics_service.dart';
 import 'features/analytics/presentation/providers/analytics_provider.dart';
 import 'features/progress_photos/data/repositories/progress_photo_repository_impl.dart';
@@ -113,27 +114,37 @@ class _PersonalGymLogAppState extends State<PersonalGymLogApp> {
         ChangeNotifierProxyProvider<AuthProvider, ProgressPhotoProvider>(
           create: (_) => ProgressPhotoProvider(
             ProgressPhotoRepositoryImpl(
+              firestoreService: ProgressPhotoFirestoreService(),
               cloudinaryService: CloudinaryService(
                 cloudName: CloudinaryConfig.cloudName,
                 uploadPreset: CloudinaryConfig.uploadPreset,
               ),
-              firestoreService: ProgressPhotoFirestoreService(),
             ),
           ),
-          update: (_, auth, progressPhoto) {
-            final provider =
-                progressPhoto ??
+          update: (_, auth, provider) {
+            final p =
+                provider ??
                 ProgressPhotoProvider(
                   ProgressPhotoRepositoryImpl(
+                    firestoreService: ProgressPhotoFirestoreService(),
                     cloudinaryService: CloudinaryService(
                       cloudName: CloudinaryConfig.cloudName,
                       uploadPreset: CloudinaryConfig.uploadPreset,
                     ),
-                    firestoreService: ProgressPhotoFirestoreService(),
                   ),
                 );
-            progressPhoto?.bindUser(auth.currentUser?.id);
-            return provider;
+            p.bindUser(auth.currentUser?.id);
+            return p;
+          },
+        ),
+        ChangeNotifierProxyProvider<WorkoutProvider, AnalyticsProvider>(
+          create: (_) => AnalyticsProvider(AnalyticsService()),
+          update: (_, workout, analytics) {
+            final a = analytics ?? AnalyticsProvider(AnalyticsService());
+            a.updateFromWorkouts(
+              workout.history.map((w) => w.toAnalyticsModel()).toList(),
+            );
+            return a;
           },
         ),
       ],

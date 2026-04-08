@@ -17,33 +17,44 @@ class ExerciseDetailScreen extends StatefulWidget {
 
 class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   int _currentStepIndex = 0;
+  static const Color primaryTeal = Color(0xFF0F6B6E);
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(title: Text(widget.exercise.name), elevation: 0),
+      appBar: AppBar(
+        title: Text(widget.exercise.name),
+        elevation: 0,
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeaderCard(),
+            _buildHeaderCard(colorScheme),
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSection('Mo Ta', widget.exercise.description),
+                  _buildSection(
+                    'Description',
+                    widget.exercise.description,
+                    colorScheme,
+                  ),
                   const SizedBox(height: 24),
-                  _buildStepsSection(),
+                  _buildStepsSection(colorScheme),
                   const SizedBox(height: 24),
-                  _buildBenefitsSection(),
+                  _buildBenefitsSection(colorScheme),
                   const SizedBox(height: 24),
-                  _buildTipsSection(),
+                  _buildTipsSection(colorScheme),
                   const SizedBox(height: 24),
-                  _buildScheduleSection(),
+                  _buildScheduleSection(colorScheme),
                   const SizedBox(height: 24),
-                  _buildDefaultsSection(),
+                  _buildDefaultsSection(colorScheme),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -54,7 +65,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addToTemplate(),
         icon: const Icon(Icons.add),
-        label: const Text('Them vao Tap'),
+        label: const Text('Add to Template'),
       ),
     );
   }
@@ -89,10 +100,10 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     provider.addTemplate(template).then((_) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Da them "${widget.exercise.name}" vao My Templates'),
+          content: Text('Added "${widget.exercise.name}" to My Templates'),
           duration: const Duration(milliseconds: 2000),
           action: SnackBarAction(
-            label: 'Go',
+            label: 'Back',
             onPressed: () {
               Navigator.pop(context);
               Navigator.pop(context);
@@ -103,41 +114,70 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     });
   }
 
-  Widget _buildHeaderCard() {
+  Widget _buildHeaderCard(ColorScheme colorScheme) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.blueAccent, Colors.purpleAccent],
+          colors: [primaryTeal, primaryTeal.withValues(alpha: 0.85)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: primaryTeal.withValues(alpha: 0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      child: Center(
-        child: Icon(
-          Icons.fitness_center,
-          size: 80,
-          color: Colors.white.withValues(alpha: 0.9),
-        ),
+      child: Column(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(36),
+            ),
+            child: Icon(
+              Icons.fitness_center,
+              size: 40,
+              color: Colors.white.withValues(alpha: 0.95),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            widget.exercise.name,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSection(String title, String content) {
+  Widget _buildSection(String title, String content, ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: primaryTeal,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           content,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade700,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
             height: 1.6,
           ),
         ),
@@ -145,13 +185,16 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     );
   }
 
-  Widget _buildStepsSection() {
+  Widget _buildStepsSection(ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Cac Buoc Thuc Hien',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          'Steps to Perform',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: primaryTeal,
+          ),
         ),
         const SizedBox(height: 12),
         Stepper(
@@ -165,14 +208,13 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
               .map(
                 (step) => Step(
                   title: Text(
-                    'Buoc ${widget.exercise.steps.indexOf(step) + 1}',
+                    'Step ${widget.exercise.steps.indexOf(step) + 1}',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   content: Text(
                     step,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade700,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
                       height: 1.5,
                     ),
                   ),
@@ -186,13 +228,16 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     );
   }
 
-  Widget _buildBenefitsSection() {
+  Widget _buildBenefitsSection(ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Loi Ich',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          'Benefits',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: primaryTeal,
+          ),
         ),
         const SizedBox(height: 12),
         ...widget.exercise.benefits.map((benefit) {
@@ -206,14 +251,16 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                   width: 6,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: Colors.blueAccent,
+                    color: primaryTeal,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
                 Expanded(
                   child: Text(
                     benefit,
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],
@@ -224,13 +271,16 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     );
   }
 
-  Widget _buildTipsSection() {
+  Widget _buildTipsSection(ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Meo Vang',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          'Pro Tips',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: primaryTeal,
+          ),
         ),
         const SizedBox(height: 12),
         ...widget.exercise.tips.map((tip) {
@@ -239,21 +289,20 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.1),
-                border: Border(left: BorderSide(color: Colors.amber, width: 4)),
+                color: primaryTeal.withValues(alpha: 0.08),
+                border: Border(left: BorderSide(color: primaryTeal, width: 4)),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.lightbulb, size: 20, color: Colors.amber),
+                  const Icon(Icons.lightbulb, size: 20, color: primaryTeal),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       tip,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade700,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -266,39 +315,37 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     );
   }
 
-  Widget _buildScheduleSection() {
+  Widget _buildScheduleSection(ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Lich Tap Goi Y',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          'Recommended Schedule',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: primaryTeal,
+          ),
         ),
         const SizedBox(height: 12),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.green.withValues(alpha: 0.1),
-            border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+            color: primaryTeal.withValues(alpha: 0.08),
+            border: Border.all(color: primaryTeal.withValues(alpha: 0.2)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.calendar_today,
-                color: Colors.green.shade600,
-                size: 24,
-              ),
+              Icon(Icons.calendar_today, color: primaryTeal, size: 24),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  widget.exercise.trainingSchedule ??
-                      'Khong co lap lich cu the',
+                  widget.exercise.trainingSchedule ?? 'No specific schedule',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.green.shade700,
+                    color: primaryTeal,
                   ),
                 ),
               ),
@@ -309,20 +356,20 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     );
   }
 
-  Widget _buildDefaultsSection() {
+  Widget _buildDefaultsSection(ColorScheme colorScheme) {
     return Row(
       children: [
         Expanded(
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.1),
-              border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+              color: primaryTeal.withValues(alpha: 0.1),
+              border: Border.all(color: primaryTeal.withValues(alpha: 0.2)),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
               children: [
-                const Icon(Icons.repeat, size: 32, color: Colors.blue),
+                const Icon(Icons.repeat, size: 32, color: primaryTeal),
                 const SizedBox(height: 8),
                 const Text(
                   'Sets',
@@ -344,13 +391,17 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.1),
-              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+              color: primaryTeal.withValues(alpha: 0.15),
+              border: Border.all(color: primaryTeal.withValues(alpha: 0.25)),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
               children: [
-                const Icon(Icons.trending_up, size: 32, color: Colors.orange),
+                Icon(
+                  Icons.trending_up,
+                  size: 32,
+                  color: primaryTeal.withValues(alpha: 0.9),
+                ),
                 const SizedBox(height: 8),
                 const Text(
                   'Reps',

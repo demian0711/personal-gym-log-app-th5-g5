@@ -30,6 +30,7 @@ Future<void> _initializeFirebase() async {
     );
     FirebaseFirestore.instance.settings = const Settings(
       persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
     );
   } on FirebaseException catch (error) {
     if (error.code != 'duplicate-app') {
