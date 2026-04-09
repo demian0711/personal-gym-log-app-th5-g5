@@ -72,9 +72,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     final rawDuration = _startTime == null
         ? 0
         : DateTime.now().difference(_startTime!).inMinutes;
-    final completedWorkout = _applyControllersToWorkout(workout).copyWith(
-      durationInMinutes: rawDuration > 0 ? rawDuration : 1,
-    );
+    final completedWorkout = _applyControllersToWorkout(
+      workout,
+    ).copyWith(durationInMinutes: rawDuration > 0 ? rawDuration : 1);
 
     context.read<UtilitiesProvider>().stopRestTimer();
     await context.read<WorkoutProvider>().addWorkoutLog(completedWorkout);
@@ -523,122 +523,142 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             const SizedBox(height: 12),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columnSpacing: 12,
-                columns: const [
-                  DataColumn(label: Text('Hiệp')),
-                  DataColumn(label: Text('Mức tạ (kg)')),
-                  DataColumn(label: Text('Số reps')),
-                  DataColumn(label: Text('Xong')),
-                ],
-                rows: exercise.sets.asMap().entries.map((entry) {
-                  final setIndex = entry.key;
-                  final set = entry.value;
-                  final input = controllers[setIndex];
-                  final isCompleted = set.isCompleted;
-                  final previousSet = previousPerformance == null
-                      ? null
-                      : _findSetByOrder(
-                          previousPerformance.exercise.sets,
-                          set.order,
-                        );
+              child: Theme(
+                data: Theme.of(context).copyWith(
+                  dataTableTheme: const DataTableThemeData(
+                    dataRowMinHeight: 70,
+                    dataRowMaxHeight: 90,
+                  ),
+                ),
+                child: DataTable(
+                  columnSpacing: 12,
+                  columns: const [
+                    DataColumn(label: Text('Hiệp')),
+                    DataColumn(label: Text('Mức tạ (kg)')),
+                    DataColumn(label: Text('Số reps')),
+                    DataColumn(label: Text('Xong')),
+                  ],
+                  rows: exercise.sets.asMap().entries.map((entry) {
+                    final setIndex = entry.key;
+                    final set = entry.value;
+                    final input = controllers[setIndex];
+                    final isCompleted = set.isCompleted;
+                    final previousSet = previousPerformance == null
+                        ? null
+                        : _findSetByOrder(
+                            previousPerformance.exercise.sets,
+                            set.order,
+                          );
 
-                  return DataRow(
-                    cells: [
-                      DataCell(Text(set.order.toString())),
-                      DataCell(
-                        SizedBox(
-                          width: 108,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              TextFormField(
-                                key: input.weightKey,
-                                controller: input.weightController,
-                                enabled: !isCompleted,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                      decimal: true,
+                    return DataRow(
+                      cells: [
+                        DataCell(Text(set.order.toString())),
+                        DataCell(
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: SizedBox(
+                              width: 108,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  TextFormField(
+                                    key: input.weightKey,
+                                    controller: input.weightController,
+                                    enabled: !isCompleted,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                        RegExp(r'^\d*\.?\d*'),
+                                      ),
+                                    ],
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      border: OutlineInputBorder(),
+                                      hintText: 'kg',
+                                      errorStyle: TextStyle(height: 0.8),
                                     ),
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.allow(
-                                    RegExp(r'^\d*\.?\d*'),
+                                    validator: _validateWeight,
                                   ),
+                                  if (previousSet != null &&
+                                      previousSet.weight > 0)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        'Lần trước: ${_formatWeight(previousSet.weight)} kg',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                    ),
                                 ],
-                                decoration: const InputDecoration(
-                                  isDense: true,
-                                  border: OutlineInputBorder(),
-                                  hintText: 'kg',
-                                ),
-                                validator: _validateWeight,
                               ),
-                              if (previousSet != null && previousSet.weight > 0)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    'Lần trước: ${_formatWeight(previousSet.weight)} kg',
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                      DataCell(
-                        SizedBox(
-                          width: 80,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              TextFormField(
-                                key: input.repsKey,
-                                controller: input.repsController,
-                                enabled: !isCompleted,
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
+                        DataCell(
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: SizedBox(
+                              width: 80,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  TextFormField(
+                                    key: input.repsKey,
+                                    controller: input.repsController,
+                                    enabled: !isCompleted,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      border: OutlineInputBorder(),
+                                      hintText: 'lần',
+                                      errorStyle: TextStyle(height: 0.8),
+                                    ),
+                                    validator: _validateReps,
+                                  ),
+                                  if (previousSet != null &&
+                                      previousSet.reps > 0)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        'Lần trước: ${previousSet.reps}',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                    ),
                                 ],
-                                decoration: const InputDecoration(
-                                  isDense: true,
-                                  border: OutlineInputBorder(),
-                                  hintText: 'lần',
-                                ),
-                                validator: _validateReps,
                               ),
-                              if (previousSet != null && previousSet.reps > 0)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    'Lần trước: ${previousSet.reps}',
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                      DataCell(
-                        IconButton(
-                          key: Key('toggle_set_${exercise.id}_${set.order}'),
-                          icon: Icon(
-                            isCompleted
-                                ? Icons.check_circle
-                                : Icons.check_circle_outline,
-                            color: isCompleted
-                                ? Colors.green
-                                : Colors.grey.shade600,
+                        DataCell(
+                          IconButton(
+                            key: Key('toggle_set_${exercise.id}_${set.order}'),
+                            icon: Icon(
+                              isCompleted
+                                  ? Icons.check_circle
+                                  : Icons.check_circle_outline,
+                              color: isCompleted
+                                  ? Colors.green
+                                  : Colors.grey.shade600,
+                            ),
+                            onPressed: () =>
+                                _toggleSet(workout, exerciseIndex, setIndex),
                           ),
-                          onPressed: () =>
-                              _toggleSet(workout, exerciseIndex, setIndex),
                         ),
-                      ),
-                    ],
-                  );
-                }).toList(),
+                      ],
+                    );
+                  }).toList(),
+                ),
               ),
             ),
           ],
@@ -663,10 +683,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                colorScheme.primary,
-                colorScheme.primaryContainer,
-              ],
+              colors: [colorScheme.primary, colorScheme.primaryContainer],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),

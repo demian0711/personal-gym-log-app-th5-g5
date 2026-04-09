@@ -17,6 +17,22 @@ class _QrExerciseScannerScreenState extends State<QrExerciseScannerScreen> {
   bool _isNavigating = false;
   DateTime? _lastInvalidToastAt;
   String _lastInvalidValue = '';
+  late final MobileScannerController _scannerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scannerController = MobileScannerController(
+      facing: CameraFacing.front,
+      detectionSpeed: DetectionSpeed.normal,
+    );
+  }
+
+  @override
+  void dispose() {
+    _scannerController.dispose();
+    super.dispose();
+  }
 
   void _onDetect(BuildContext context, BarcodeCapture capture) {
     if (_isNavigating) {
@@ -70,7 +86,10 @@ class _QrExerciseScannerScreenState extends State<QrExerciseScannerScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          MobileScanner(onDetect: (capture) => _onDetect(context, capture)),
+          MobileScanner(
+            controller: _scannerController,
+            onDetect: (capture) => _onDetect(context, capture),
+          ),
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
