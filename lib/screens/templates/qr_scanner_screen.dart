@@ -23,6 +23,22 @@ class QRScannerScreen extends StatefulWidget {
 class _QRScannerScreenState extends State<QRScannerScreen> {
   bool _isScanned = false;
   static const Color primaryTealColor = Color(0xFF0F6B6E);
+  late final MobileScannerController _scannerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scannerController = MobileScannerController(
+      facing: CameraFacing.back,
+      detectionSpeed: DetectionSpeed.normal,
+    );
+  }
+
+  @override
+  void dispose() {
+    _scannerController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +47,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       body: Stack(
         children: [
           MobileScanner(
-            controller: MobileScannerController(facing: CameraFacing.front),
+            controller: _scannerController,
             onDetect: (capture) {
               if (_isScanned) return;
               final List<Barcode> barcodes = capture.barcodes;
