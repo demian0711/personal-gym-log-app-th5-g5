@@ -11,7 +11,7 @@ class AnalyticsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Analytics')),
+      appBar: AppBar(title: const Text('Phân tích dữ liệu')),
       body: Consumer<AnalyticsProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
@@ -42,7 +42,7 @@ class AnalyticsScreen extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.all(20),
                 child: Text(
-                  'Chưa có dữ liệu workout để phân tích.',
+                  'Chưa có dữ liệu buổi tập để phân tích.',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -90,16 +90,16 @@ class AnalyticsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Summary',
+                        'Tóm tắt',
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Max $metricLabel: ${provider.maxValue.toStringAsFixed(1)}',
+                        'Giá trị cao nhất ($metricLabel): ${provider.maxValue.toStringAsFixed(1)}',
                       ),
                       Text(
-                        'Latest $metricLabel: ${provider.latestValue.toStringAsFixed(1)}'
+                        'Giá trị gần nhất ($metricLabel): ${provider.latestValue.toStringAsFixed(1)}'
                         '${latestDate != null ? ' (${_formatDate(latestDate)})' : ''}',
                       ),
                     ],

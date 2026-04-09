@@ -9,10 +9,7 @@ import '../../providers/workout_provider.dart';
 class DashboardScreen extends StatelessWidget {
   final VoidCallback onStartExercisesTap;
 
-  const DashboardScreen({
-    super.key,
-    required this.onStartExercisesTap,
-  });
+  const DashboardScreen({super.key, required this.onStartExercisesTap});
 
   @override
   Widget build(BuildContext context) {
@@ -46,10 +43,6 @@ class DashboardScreen extends StatelessWidget {
             children: [
               _buildHeroImage(),
               const SizedBox(height: 16),
-              _buildWelcomeCard(context),
-              const SizedBox(height: 16),
-              _buildTodayPlan(context, profileProvider.profile?.weeklyPlan),
-              const SizedBox(height: 16),
               _buildWeeklyProgress(context, weeklyCount, weeklyTarget),
               const SizedBox(height: 16),
               _buildStreakAndQuickStart(
@@ -59,7 +52,7 @@ class DashboardScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Tổng quan nhanh',
+                'Tổng quan tập luyện',
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -198,116 +191,6 @@ Widget _buildWeeklyProgress(BuildContext context, int current, int target) {
   );
 }
 
-Widget _buildTodayPlan(BuildContext context, Map<int, String>? weeklyPlan) {
-  final now = DateTime.now();
-  final dayIndex = now.weekday; // 1-7 (Mon-Sun)
-  final plan = weeklyPlan?[dayIndex];
-  
-  final colorScheme = Theme.of(context).colorScheme;
-  final textTheme = Theme.of(context).textTheme;
-
-  return Card(
-    elevation: 0,
-    shape: RoundedRectangleBorder(
-      side: BorderSide(color: colorScheme.outlineVariant),
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.event_available, color: colorScheme.primary, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                'Kế hoạch hôm nay',
-                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colorScheme.primaryContainer.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    plan ?? 'Thành quả hôm nay là do nỗ lực hôm qua. Cùng bắt đầu thôi!',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: plan != null ? colorScheme.onPrimaryContainer : Colors.grey[600],
-                      fontStyle: plan != null ? FontStyle.normal : FontStyle.italic,
-                    ),
-                  ),
-                ),
-                if (plan != null)
-                  Icon(Icons.check_circle_outline, color: colorScheme.primary),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-Widget _buildWelcomeCard(BuildContext context) {
-  final colorScheme = Theme.of(context).colorScheme;
-  final textTheme = Theme.of(context).textTheme;
-
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [colorScheme.primary, colorScheme.primaryContainer],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(18),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.insights, color: Colors.white),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Bảng điều khiển',
-                style: textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Text(
-          'Theo dõi tiến trình sức mạnh và tóm tắt các buổi tập gần nhất của bạn.',
-          style: textTheme.bodyMedium?.copyWith(
-            color: Colors.white.withOpacity(0.94),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
 Widget _buildStreakAndQuickStart(
   BuildContext context,
   int streakDays,
@@ -329,19 +212,22 @@ Widget _buildStreakAndQuickStart(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Workout Streak',
+                'Chuỗi ngày tập',
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '$streakDays day${streakDays == 1 ? '' : 's'}',
+                  '$streakDays ngày',
                   style: textTheme.labelLarge?.copyWith(
                     color: colorScheme.primary,
                     fontWeight: FontWeight.w700,
@@ -362,8 +248,8 @@ Widget _buildStreakAndQuickStart(
               Expanded(
                 child: Text(
                   hasStreak
-                      ? 'Great consistency! Keep your momentum going.'
-                      : 'Start a workout today to build your streak.',
+                      ? 'Bạn đang duy trì rất tốt, hãy tiếp tục giữ nhịp tập luyện.'
+                      : 'Hãy bắt đầu một buổi tập hôm nay để tạo chuỗi ngày tập.',
                   style: textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -377,7 +263,7 @@ Widget _buildStreakAndQuickStart(
             child: ElevatedButton.icon(
               onPressed: onStartExercisesTap,
               icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Start Exercises'),
+              label: const Text('Bắt đầu buổi tập nhanh'),
             ),
           ),
         ],
@@ -622,7 +508,9 @@ class _LatestWorkoutCard extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                      color: colorScheme.surfaceContainerHighest.withOpacity(
+                        0.5,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -646,7 +534,9 @@ class _LatestWorkoutCard extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                      color: colorScheme.surfaceContainerHighest.withOpacity(
+                        0.5,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -759,11 +649,9 @@ int _calculateWorkoutStreak(List<Workout> history) {
 
   DateTime dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
 
-  final workoutDates = history
-      .map((workout) => dateOnly(workout.date))
-      .toSet()
-      .toList()
-    ..sort((a, b) => b.compareTo(a));
+  final workoutDates =
+      history.map((workout) => dateOnly(workout.date)).toSet().toList()
+        ..sort((a, b) => b.compareTo(a));
 
   if (workoutDates.isEmpty) {
     return 0;

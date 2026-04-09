@@ -34,7 +34,7 @@ class _MuscleGroupExercisesScreenState
                     color: Colors.grey.shade300,
                   ),
                   const SizedBox(height: 16),
-                  const Text('Chua co bai tap nao'),
+                  const Text('Chưa có bài tập nào'),
                 ],
               ),
             )

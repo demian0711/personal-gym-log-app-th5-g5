@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../features/profile/presentation/providers/profile_provider.dart';
-
-import '../providers/auth_provider.dart';
 import '../providers/utilities_provider.dart';
 import '../widgets/app_bottom_nav.dart';
 import 'dashboard/dashboard_screen.dart';
@@ -60,23 +57,9 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final profile = context.watch<ProfileProvider>().profile;
-    final userName = profile?.displayName ?? context.watch<AuthProvider>().currentUser?.name;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('TH5 - Personal Gym Log'),
-            if (userName != null && userName.isNotEmpty)
-              Text(
-                'Xin chào, $userName',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-              ),
-          ],
-        ),
-      ),
+      appBar: AppBar(title: const Text('Personal Gym Log')),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(

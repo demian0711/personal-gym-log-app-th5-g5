@@ -158,7 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile & Goals')),
+      appBar: AppBar(title: const Text('Hồ sơ & mục tiêu')),
       body: Consumer<ProfileProvider>(
         builder: (context, provider, _) {
           _bindFromProvider(provider);
@@ -355,7 +355,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Save'),
+                      : const Text('Lưu'),
                 ),
               ],
             ),
