@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../features/analytics/presentation/screens/analytics_screen.dart';
-import '../../features/progress_photos/presentation/screens/progress_photos_screen.dart';
+import '../../features/profile/presentation/providers/profile_provider.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/progress_photos/presentation/screens/progress_photos_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/utilities_provider.dart';
@@ -41,9 +43,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final profileProvider = context.watch<ProfileProvider>();
     final workout = context.watch<WorkoutProvider>();
     final themeProvider = context.watch<ThemeProvider>();
+    final profile = profileProvider.profile;
     final user = auth.currentUser;
+    final supportsLocalNotifications = !kIsWeb;
+
+    final displayName = profile?.displayName ?? user?.name ?? 'Tài khoản';
+    final email = profile?.email ?? user?.email ?? 'Không có email';
+    final photoUrl = profile?.photoUrl;
 
     return Consumer<UtilitiesProvider>(
       builder: (context, utilities, _) {
@@ -52,9 +61,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Card(
               child: ListTile(
-                leading: const CircleAvatar(child: Icon(Icons.person)),
-                title: Text(user?.name ?? 'Tài khoản'),
-                subtitle: Text(user?.email ?? 'Không có email'),
+                leading: CircleAvatar(
+                  backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
+                      ? NetworkImage(photoUrl)
+                      : null,
+                  child: (photoUrl == null || photoUrl.isEmpty)
+                      ? const Icon(Icons.person)
+                      : null,
+                ),
+                title: Text(displayName),
+                subtitle: Text(email),
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
                 onTap: () {
                   Navigator.of(context).push(
@@ -120,9 +136,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: const Text('Chế độ tối'),
                 subtitle: const Text('Giao diện tối dễ nhìn khi dùng ban đêm'),
                 value: themeProvider.isDarkMode,
-                onChanged: (value) {
-                  themeProvider.setDarkMode(value);
-                },
+                onChanged: themeProvider.setDarkMode,
               ),
             ),
             const SizedBox(height: 12),
@@ -166,7 +180,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: () => auth.logout(),
+              onPressed: auth.logout,
               icon: const Icon(Icons.logout),
               label: const Text('Đăng xuất'),
             ),
@@ -282,38 +296,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Nhắc nhở tập luyện (hàng ngày)'),
                       subtitle: Text(
-                        'Giờ nhắc: ${utilities.workoutReminderTime.format(context)}',
+                        supportsLocalNotifications
+                            ? 'Giờ nhắc: ${utilities.workoutReminderTime.format(context)}'
+                            : 'Tính năng này hiện chỉ hỗ trợ trên mobile.',
                       ),
                       value: utilities.workoutReminderEnabled,
-                      onChanged: (value) async {
-                        await utilities.setWorkoutReminderEnabled(value);
-                      },
+                      onChanged: supportsLocalNotifications
+                          ? (value) async {
+                              await utilities.setWorkoutReminderEnabled(value);
+                            }
+                          : null,
                     ),
                     OutlinedButton.icon(
-                      onPressed: () async {
-                        final selected = await showTimePicker(
-                          context: context,
-                          initialTime: utilities.workoutReminderTime,
-                        );
-                        if (selected == null) {
-                          return;
-                        }
-                        await utilities.setWorkoutReminderTime(selected);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Đã đặt giờ nhắc: ${selected.format(context)}',
-                              ),
-                            ),
-                          );
-                        }
-                      },
+                      onPressed: supportsLocalNotifications
+                          ? () async {
+                              final selected = await showTimePicker(
+                                context: context,
+                                initialTime: utilities.workoutReminderTime,
+                              );
+                              if (selected == null) {
+                                return;
+                              }
+                              await utilities.setWorkoutReminderTime(selected);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Đã đặt giờ nhắc: ${selected.format(context)}',
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          : null,
                       icon: const Icon(Icons.schedule_outlined),
                       label: const Text('Set reminder time'),
                     ),
                     OutlinedButton.icon(
-                      onPressed: utilities.sendTestNotification,
+                      onPressed: supportsLocalNotifications
+                          ? utilities.sendTestNotification
+                          : null,
                       icon: const Icon(Icons.notifications_active_outlined),
                       label: const Text('Send test notification'),
                     ),
