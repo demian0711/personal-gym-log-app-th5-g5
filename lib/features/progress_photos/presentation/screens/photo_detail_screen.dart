@@ -17,7 +17,7 @@ class PhotoDetailScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: const Text('Photo Detail'),
+        title: const Text('Chi tiết ảnh'),
       ),
       body: Center(
         child: Hero(

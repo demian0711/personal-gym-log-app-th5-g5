@@ -27,7 +27,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       email: email,
       displayName: fallbackDisplayName.trim().isNotEmpty
           ? fallbackDisplayName.trim()
-          : 'User',
+          : 'Người dùng',
       photoUrl: photoUrl,
       goal: ProfileGoalOptions.defaultGoal,
       unit: 'kg',

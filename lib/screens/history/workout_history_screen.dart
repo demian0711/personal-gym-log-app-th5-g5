@@ -133,9 +133,7 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.picture_as_pdf_outlined),
                       label: const Text('Xuất báo cáo PDF'),
@@ -167,7 +165,7 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                 subtitle: Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    '${_formatDate(workout.date)} • ${workout.durationInMinutes} phút • ${workout.exercises.length} bài tập • $totalSets sets',
+                    '${_formatDate(workout.date)} • ${workout.durationInMinutes} phút • ${workout.exercises.length} bài tập • $totalSets hiệp',
                   ),
                 ),
                 trailing: const Icon(Icons.chevron_right),

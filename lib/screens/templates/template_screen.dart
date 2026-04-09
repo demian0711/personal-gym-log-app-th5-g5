@@ -40,18 +40,18 @@ class _TemplateScreenState extends State<TemplateScreen>
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(template == null ? 'New Template' : 'Edit Template'),
+          title: Text(template == null ? 'Mẫu tập mới' : 'Chỉnh sửa mẫu tập'),
           content: Form(
             key: formKey,
             child: TextFormField(
               controller: titleController,
               decoration: const InputDecoration(
-                labelText: 'Template name',
+                labelText: 'Tên mẫu tập',
                 border: OutlineInputBorder(),
               ),
               validator: (value) {
                 final trimmed = value?.trim() ?? '';
-                if (trimmed.isEmpty) return 'Required';
+                if (trimmed.isEmpty) return 'Không được để trống';
                 return null;
               },
             ),
@@ -59,7 +59,7 @@ class _TemplateScreenState extends State<TemplateScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: const Text('Hủy'),
             ),
             FilledButton(
               onPressed: () {
@@ -84,7 +84,7 @@ class _TemplateScreenState extends State<TemplateScreen>
 
                 Navigator.of(dialogContext).pop();
               },
-              child: const Text('Save'),
+              child: const Text('Lưu'),
             ),
           ],
         );
@@ -102,7 +102,7 @@ class _TemplateScreenState extends State<TemplateScreen>
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Add Exercise'),
+          title: const Text('Thêm bài tập'),
           content: Form(
             key: formKey,
             child: Column(
@@ -111,12 +111,12 @@ class _TemplateScreenState extends State<TemplateScreen>
                 TextFormField(
                   controller: nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Exercise name',
+                    labelText: 'Tên bài tập',
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
-                    if (trimmed.isEmpty) return 'Required';
+                    if (trimmed.isEmpty) return 'Không được để trống';
                     return null;
                   },
                 ),
@@ -124,12 +124,12 @@ class _TemplateScreenState extends State<TemplateScreen>
                 TextFormField(
                   controller: muscleController,
                   decoration: const InputDecoration(
-                    labelText: 'Muscle group',
+                    labelText: 'Nhóm cơ',
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
-                    if (trimmed.isEmpty) return 'Required';
+                    if (trimmed.isEmpty) return 'Không được để trống';
                     return null;
                   },
                 ),
@@ -137,14 +137,15 @@ class _TemplateScreenState extends State<TemplateScreen>
                 TextFormField(
                   controller: setsController,
                   decoration: const InputDecoration(
-                    labelText: 'Number of sets',
+                    labelText: 'Số hiệp',
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
                     final parsed = int.tryParse(trimmed);
-                    if (parsed == null || parsed <= 0) return 'Invalid';
+                    if (parsed == null || parsed <= 0)
+                      return 'Giá trị không hợp lệ';
                     return null;
                   },
                 ),
@@ -154,7 +155,7 @@ class _TemplateScreenState extends State<TemplateScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: const Text('Hủy'),
             ),
             FilledButton(
               onPressed: () {
@@ -178,7 +179,7 @@ class _TemplateScreenState extends State<TemplateScreen>
                 context.read<WorkoutProvider>().updateTemplate(updated);
                 Navigator.of(dialogContext).pop();
               },
-              child: const Text('Add'),
+              child: const Text('Thêm'),
             ),
           ],
         );
@@ -198,7 +199,7 @@ class _TemplateScreenState extends State<TemplateScreen>
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Edit Exercise'),
+          title: const Text('Chỉnh sửa bài tập'),
           content: Form(
             key: formKey,
             child: Column(
@@ -207,12 +208,12 @@ class _TemplateScreenState extends State<TemplateScreen>
                 TextFormField(
                   controller: nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Exercise name',
+                    labelText: 'Tên bài tập',
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
-                    if (trimmed.isEmpty) return 'Required';
+                    if (trimmed.isEmpty) return 'Không được để trống';
                     return null;
                   },
                 ),
@@ -220,12 +221,12 @@ class _TemplateScreenState extends State<TemplateScreen>
                 TextFormField(
                   controller: muscleController,
                   decoration: const InputDecoration(
-                    labelText: 'Muscle group',
+                    labelText: 'Nhóm cơ',
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
-                    if (trimmed.isEmpty) return 'Required';
+                    if (trimmed.isEmpty) return 'Không được để trống';
                     return null;
                   },
                 ),
@@ -233,14 +234,15 @@ class _TemplateScreenState extends State<TemplateScreen>
                 TextFormField(
                   controller: setsController,
                   decoration: const InputDecoration(
-                    labelText: 'Number of sets',
+                    labelText: 'Số hiệp',
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
                     final parsed = int.tryParse(trimmed);
-                    if (parsed == null || parsed <= 0) return 'Invalid';
+                    if (parsed == null || parsed <= 0)
+                      return 'Giá trị không hợp lệ';
                     return null;
                   },
                 ),
@@ -250,7 +252,7 @@ class _TemplateScreenState extends State<TemplateScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: const Text('Hủy'),
             ),
             FilledButton(
               onPressed: () {
@@ -277,7 +279,7 @@ class _TemplateScreenState extends State<TemplateScreen>
                 context.read<WorkoutProvider>().updateTemplate(updated);
                 Navigator.of(dialogContext).pop();
               },
-              child: const Text('Save'),
+              child: const Text('Lưu'),
             ),
           ],
         );
@@ -299,18 +301,16 @@ class _TemplateScreenState extends State<TemplateScreen>
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Confirm template deletion'),
-          content: Text(
-            'Are you sure you want to delete template "${template.title}"?',
-          ),
+          title: const Text('Xác nhận xóa mẫu tập'),
+          content: Text('Bạn có chắc muốn xóa mẫu tập "${template.title}"?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: const Text('Hủy'),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Delete'),
+              child: const Text('Xóa'),
             ),
           ],
         );
@@ -324,7 +324,7 @@ class _TemplateScreenState extends State<TemplateScreen>
     await context.read<WorkoutProvider>().removeTemplate(template.id);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Template "${template.title}" deleted')),
+      SnackBar(content: Text('Đã xóa mẫu tập "${template.title}"')),
     );
   }
 
@@ -332,7 +332,7 @@ class _TemplateScreenState extends State<TemplateScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Templates'),
+        title: const Text('Mẫu tập'),
         actions: [
           IconButton(
             onPressed: () {
@@ -349,8 +349,8 @@ class _TemplateScreenState extends State<TemplateScreen>
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'My Templates'),
-            Tab(text: 'Training Guide'),
+            Tab(text: 'Mẫu của tôi'),
+            Tab(text: 'Hướng dẫn tập'),
           ],
         ),
       ),
@@ -378,12 +378,12 @@ class _TemplateScreenState extends State<TemplateScreen>
             _buildHeroImage(),
             const SizedBox(height: 16),
             SearchBar(
-              hintText: 'Search templates by name...',
+              hintText: 'Tìm mẫu tập theo tên...',
               leading: const Icon(Icons.search),
               trailing: _searchQuery.isNotEmpty
                   ? [
                       IconButton(
-                        tooltip: 'Clear search',
+                        tooltip: 'Xóa tìm kiếm',
                         onPressed: () {
                           setState(() {
                             _searchQuery = '';
@@ -405,7 +405,7 @@ class _TemplateScreenState extends State<TemplateScreen>
                 child: Padding(
                   padding: EdgeInsets.all(16),
                   child: Text(
-                    'No templates yet. Create one to start workouts.',
+                    'Bạn chưa có mẫu tập nào. Hãy tạo mẫu để bắt đầu luyện tập.',
                   ),
                 ),
               ),
@@ -413,7 +413,7 @@ class _TemplateScreenState extends State<TemplateScreen>
               const Card(
                 child: Padding(
                   padding: EdgeInsets.all(16),
-                  child: Text('No templates match your search keyword.'),
+                  child: Text('Không có mẫu tập nào khớp từ khóa tìm kiếm.'),
                 ),
               ),
             for (final template in filteredTemplates)
@@ -451,13 +451,13 @@ class _TemplateScreenState extends State<TemplateScreen>
                               ),
                             ),
                             IconButton(
-                              tooltip: 'Edit',
+                              tooltip: 'Chỉnh sửa',
                               onPressed: () =>
                                   _showTemplateDialog(template: template),
                               icon: const Icon(Icons.edit),
                             ),
                             IconButton(
-                              tooltip: 'Delete',
+                              tooltip: 'Xóa',
                               onPressed: () async {
                                 final confirmed = await _confirmDeleteTemplate(
                                   template,
@@ -470,22 +470,22 @@ class _TemplateScreenState extends State<TemplateScreen>
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text('Exercises: ${template.exercises.length}'),
+                        Text('Số bài tập: ${template.exercises.length}'),
                         const SizedBox(height: 12),
                         if (template.exercises.isEmpty)
-                          const Text('No exercises yet. Add one below.'),
+                          const Text('Chưa có bài tập nào. Hãy thêm bên dưới.'),
                         for (final exercise in template.exercises)
                           ListTile(
                             contentPadding: EdgeInsets.zero,
                             title: Text(exercise.name),
                             subtitle: Text(
-                              '${exercise.muscleGroup} • ${exercise.sets.length} sets',
+                              '${exercise.muscleGroup} • ${exercise.sets.length} hiệp',
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  tooltip: 'Edit',
+                                  tooltip: 'Chỉnh sửa',
                                   onPressed: () => _showEditExerciseDialog(
                                     template,
                                     exercise,
@@ -493,7 +493,7 @@ class _TemplateScreenState extends State<TemplateScreen>
                                   icon: const Icon(Icons.edit),
                                 ),
                                 IconButton(
-                                  tooltip: 'Remove',
+                                  tooltip: 'Xóa khỏi mẫu',
                                   onPressed: () =>
                                       _removeExercise(template, exercise),
                                   icon: const Icon(Icons.close),
@@ -507,7 +507,7 @@ class _TemplateScreenState extends State<TemplateScreen>
                           child: OutlinedButton.icon(
                             onPressed: () => _showExerciseDialog(template),
                             icon: const Icon(Icons.fitness_center),
-                            label: const Text('Add Exercise'),
+                            label: const Text('Thêm bài tập'),
                           ),
                         ),
                       ],
@@ -524,7 +524,7 @@ class _TemplateScreenState extends State<TemplateScreen>
           child: FloatingActionButton.extended(
             onPressed: () => _showTemplateDialog(),
             icon: const Icon(Icons.add),
-            label: const Text('New Template'),
+            label: const Text('Mẫu mới'),
           ),
         ),
       ],
@@ -559,7 +559,7 @@ class _TemplateScreenState extends State<TemplateScreen>
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'Workout Templates',
+              'Mẫu tập luyện',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
