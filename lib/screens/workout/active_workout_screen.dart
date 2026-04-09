@@ -433,8 +433,8 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.black.withValues(alpha: 0.55),
-                  Colors.black.withValues(alpha: 0.05),
+                  Colors.black.withOpacity(0.55),
+                  Colors.black.withOpacity(0.05),
                 ],
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,

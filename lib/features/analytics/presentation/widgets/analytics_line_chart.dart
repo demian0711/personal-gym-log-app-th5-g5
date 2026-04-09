@@ -48,7 +48,7 @@ class AnalyticsLineChart extends StatelessWidget {
             horizontalInterval: interval,
             getDrawingHorizontalLine: (value) {
               return FlLine(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.28),
+                color: colorScheme.outlineVariant.withOpacity(0.28),
                 strokeWidth: 1,
               );
             },
@@ -140,8 +140,8 @@ class AnalyticsLineChart extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    colorScheme.primary.withValues(alpha: 0.28),
-                    colorScheme.primary.withValues(alpha: 0.02),
+                    colorScheme.primary.withOpacity(0.28),
+                    colorScheme.primary.withOpacity(0.02),
                   ],
                 ),
               ),

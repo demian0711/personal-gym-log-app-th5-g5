@@ -31,11 +31,15 @@ class _FakeAuthRepository implements AuthRepository {
   @override
   Future<AppUser> registerWithEmail({
     required String name,
+    required String username,
     required String email,
     required String password,
   }) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<bool> isUsernameUnique(String username) async => true;
 }
 
 void main() {

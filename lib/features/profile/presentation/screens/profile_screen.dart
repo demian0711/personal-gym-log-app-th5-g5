@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../domain/constants/profile_goal_options.dart';
 import '../providers/profile_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -16,11 +17,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _nameController = TextEditingController();
   final _weeklyTargetController = TextEditingController();
   final _targetWeightController = TextEditingController();
+  final _heightController = TextEditingController();
+  final _weightController = TextEditingController();
+  final _chestController = TextEditingController();
+  final _waistController = TextEditingController();
+  final _hipsController = TextEditingController();
 
-  static const List<String> _goalOptions = ['tăng cơ', 'giảm mỡ', 'duy trì'];
+  static const List<String> _goalOptions = ProfileGoalOptions.labels;
   static const List<String> _unitOptions = ['kg', 'lbs'];
 
-  String _selectedGoal = 'duy trì';
+  String _selectedGoal = ProfileGoalOptions.defaultGoal;
   String _selectedUnit = 'kg';
   String _email = '';
   String? _photoUrl;
@@ -31,6 +37,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _nameController.dispose();
     _weeklyTargetController.dispose();
     _targetWeightController.dispose();
+    _heightController.dispose();
+    _weightController.dispose();
+    _chestController.dispose();
+    _waistController.dispose();
+    _hipsController.dispose();
     super.dispose();
   }
 
@@ -47,9 +58,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _nameController.text = profile.displayName;
     _weeklyTargetController.text = profile.weeklyTarget.toString();
     _targetWeightController.text = profile.targetWeight?.toString() ?? '';
-    _selectedGoal = _goalOptions.contains(profile.goal)
-        ? profile.goal
-        : 'duy trì';
+    _heightController.text = profile.height?.toString() ?? '';
+    _weightController.text = profile.currentWeight?.toString() ?? '';
+    _chestController.text = profile.chest?.toString() ?? '';
+    _waistController.text = profile.waist?.toString() ?? '';
+    _hipsController.text = profile.hips?.toString() ?? '';
+    _selectedGoal = ProfileGoalOptions.normalize(profile.goal);
     _selectedUnit = _unitOptions.contains(profile.unit) ? profile.unit : 'kg';
     _email = profile.email;
     _photoUrl = profile.photoUrl;
@@ -74,6 +88,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       unit: _selectedUnit,
       weeklyTarget: weeklyTarget,
       targetWeight: targetWeight,
+      height: double.tryParse(_heightController.text),
+      currentWeight: double.tryParse(_weightController.text),
+      chest: double.tryParse(_chestController.text),
+      waist: double.tryParse(_waistController.text),
+      hips: double.tryParse(_hipsController.text),
     );
 
     if (!mounted) {
@@ -107,9 +126,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: const Text('Chụp ảnh'),
               onTap: () async {
                 Navigator.pop(sheetContext);
-                final image = await picker.pickImage(source: ImageSource.camera);
+                final image = await picker.pickImage(
+                  source: ImageSource.camera,
+                );
                 if (image != null) {
-                  await provider.updateProfilePhoto(image.path);
+                  final bytes = await image.readAsBytes();
+                  await provider.updateProfilePhoto(bytes, image.name);
                 }
               },
             ),
@@ -122,7 +144,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   source: ImageSource.gallery,
                 );
                 if (image != null) {
-                  await provider.updateProfilePhoto(image.path);
+                  final bytes = await image.readAsBytes();
+                  await provider.updateProfilePhoto(bytes, image.name);
                 }
               },
             ),
@@ -135,7 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile & Goals')),
+      appBar: AppBar(title: const Text('Hồ sơ & mục tiêu')),
       body: Consumer<ProfileProvider>(
         builder: (context, provider, _) {
           _bindFromProvider(provider);
@@ -173,7 +196,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 44,
-                        backgroundImage: _photoUrl != null && _photoUrl!.isNotEmpty
+                        backgroundImage:
+                            _photoUrl != null && _photoUrl!.isNotEmpty
                             ? NetworkImage(_photoUrl!)
                             : null,
                         child: (_photoUrl == null || _photoUrl!.isEmpty)
@@ -187,7 +211,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onTap: () => _showPhotoOptions(context, provider),
                           child: CircleAvatar(
                             radius: 16,
-                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
                             child: const Icon(
                               Icons.camera_alt,
                               size: 16,
@@ -271,28 +297,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
+                _buildSectionLabel(context, 'Thông số cơ bản'),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: _targetWeightController,
-                  decoration: InputDecoration(
-                    labelText: 'Mức tạ mục tiêu (optional - $_selectedUnit)',
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  validator: (value) {
-                    final text = value?.trim() ?? '';
-                    if (text.isEmpty) {
-                      return null;
-                    }
-                    final parsed = double.tryParse(text);
-                    if (parsed == null || parsed <= 0) {
-                      return 'Nhập số > 0 hoặc để trống.';
-                    }
-                    return null;
-                  },
+                _buildMeasurementField(
+                  context,
+                  label: 'Chiều cao',
+                  controller: _heightController,
+                  icon: Icons.height,
+                  suffix: 'cm',
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
+                _buildMeasurementField(
+                  context,
+                  label: 'Cân nặng hiện tại',
+                  controller: _weightController,
+                  icon: Icons.monitor_weight_outlined,
+                  suffix: _selectedUnit,
+                ),
+                const SizedBox(height: 12),
+                _buildMeasurementField(
+                  context,
+                  label: 'Cân nặng mục tiêu',
+                  controller: _targetWeightController,
+                  icon: Icons.ads_click,
+                  suffix: _selectedUnit,
+                ),
+                const SizedBox(height: 24),
+                _buildSectionLabel(context, 'Số đo cơ thể (cm)'),
+                const SizedBox(height: 12),
+                _buildMeasurementField(
+                  context,
+                  label: 'Ngực',
+                  controller: _chestController,
+                  icon: Icons.compress,
+                ),
+                const SizedBox(height: 12),
+                _buildMeasurementField(
+                  context,
+                  label: 'Eo',
+                  controller: _waistController,
+                  icon: Icons.settings_ethernet,
+                ),
+                const SizedBox(height: 12),
+                _buildMeasurementField(
+                  context,
+                  label: 'Hông',
+                  controller: _hipsController,
+                  icon: Icons.unfold_more,
+                ),
+                const SizedBox(height: 24),
                 FilledButton(
                   onPressed: provider.isSaving ? null : () => _save(provider),
                   child: provider.isSaving
@@ -301,13 +355,96 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Save'),
+                      : const Text('Lưu'),
                 ),
               ],
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget _buildSectionLabel(BuildContext context, String label) {
+    return Text(
+      label,
+      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
+
+  Widget _buildMeasurementField(
+    BuildContext context, {
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
+    String suffix = 'cm',
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: IconButton(
+          icon: Icon(
+            icon,
+            size: 22,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          onPressed: () =>
+              _showNumberPicker(context, label, controller, suffix),
+          tooltip: 'Chọn nhanh $label',
+        ),
+        suffixText: suffix,
+      ),
+    );
+  }
+
+  void _showNumberPicker(
+    BuildContext context,
+    String title,
+    TextEditingController controller,
+    String suffix,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          height: 400,
+          child: Column(
+            children: [
+              Text(
+                'Chọn $title ($suffix)',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const Divider(),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: 500,
+                  itemBuilder: (context, index) {
+                    final val = index + 1;
+                    return ListTile(
+                      title: Text('$val $suffix', textAlign: TextAlign.center),
+                      onTap: () {
+                        controller.text = val.toString();
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

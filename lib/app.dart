@@ -14,6 +14,7 @@ import 'features/profile/data/services/profile_firestore_service.dart';
 import 'features/profile/presentation/providers/profile_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/utilities_provider.dart';
 import 'providers/workout_provider.dart';
 import 'screens/auth/auth_gate.dart';
 import 'services/local_storage_service.dart';

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
@@ -13,14 +13,19 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
+  
+  String? _usernameError;
+  String? _emailError;
   bool _isSubmitting = false;
 
   @override
   void dispose() {
     _nameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
@@ -28,12 +33,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
+    setState(() {
+      _usernameError = null;
+      _emailError = null;
+    });
+
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _isSubmitting = true);
 
     final auth = context.read<AuthProvider>();
     final error = await auth.register(
       name: _nameController.text,
+      username: _usernameController.text,
       email: _emailController.text,
       password: _passwordController.text,
     );
@@ -42,9 +53,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isSubmitting = false);
 
     if (error != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error)));
+      setState(() {
+        if (error.contains('Tên người dùng')) {
+          _usernameError = error;
+        } else if (error.contains('[Email]')) {
+          _emailError = error.replaceAll('[Email] ', '').replaceAll('[Email]', '');
+        } else if (error.contains('[Mật khẩu]')) {
+          // Show password error directly under confirm password for visibility if needed
+          // or just under password. Here we use a generic email error as fallback if unsure.
+          _emailError = error.replaceAll('[Mật khẩu] ', '').replaceAll('[Mật khẩu]', '');
+        } else {
+          _emailError = error;
+        }
+      });
       return;
     }
 
@@ -82,6 +103,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Form(
                     key: _formKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     child: Column(
                       children: [
                         TextFormField(
@@ -90,8 +112,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             labelText: 'Họ tên',
                           ),
                           validator: (value) {
-                            if ((value?.trim() ?? '').isEmpty) {
-                              return 'Nhập họ tên';
+                            if ((value?.trim() ?? '').isEmpty) return 'Nhập họ tên';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _usernameController,
+                          decoration: InputDecoration(
+                            labelText: 'Tên người dùng (Username)',
+                            hintText: 'VD: ngoctrang.22',
+                            helperText: '6-30 ký tự, chữ cái, số, dấu chấm.',
+                            errorText: _usernameError,
+                          ),
+                          onChanged: (_) {
+                            if (_usernameError != null) {
+                              setState(() => _usernameError = null);
+                            }
+                          },
+                          validator: (value) {
+                            final username = value?.trim() ?? '';
+                            if (username.isEmpty) return 'Bắt buộc nhập Username';
+                            if (username.length < 6 || username.length > 30) {
+                              return 'Username từ 6-30 ký tự';
+                            }
+                            final regex = RegExp(r'^[a-z0-9.]+$');
+                            if (!regex.hasMatch(username.toLowerCase())) {
+                              return 'Chỉ dùng chữ cái (a-z), số (0-9) và dấu chấm (.)';
                             }
                             return null;
                           },
@@ -100,14 +147,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(labelText: 'Email'),
+                          decoration: InputDecoration(
+                            labelText: 'Email',
+                            errorText: _emailError,
+                          ),
+                          onChanged: (_) {
+                            if (_emailError != null) {
+                              setState(() => _emailError = null);
+                            }
+                          },
                           validator: (value) {
                             final trimmed = value?.trim() ?? '';
-                            if (trimmed.isEmpty) {
-                              return 'Nhập email';
-                            }
-                            if (!trimmed.contains('@')) {
-                              return 'Email không hợp lệ';
+                            if (trimmed.isEmpty) return 'Bắt buộc nhập Email';
+                            final gmailRegex = RegExp(r'^[\w-\.]+@gmail\.com$');
+                            if (!gmailRegex.hasMatch(trimmed.toLowerCase())) {
+                              return 'Email phải đúng cú pháp @gmail.com';
                             }
                             return null;
                           },
@@ -148,7 +202,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton(

@@ -60,7 +60,7 @@ class _ProgressPhotosScreenState extends State<ProgressPhotosScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Progress Photos')),
+      appBar: AppBar(title: const Text('Ảnh tiến trình')),
       body: Consumer<ProgressPhotoProvider>(
         builder: (context, provider, _) {
           return ListView(
@@ -102,7 +102,7 @@ class _ProgressPhotosScreenState extends State<ProgressPhotosScreen> {
                           label: Text(
                             provider.isUploading
                                 ? 'Đang upload...'
-                                : 'Chụp và Upload',
+                                : 'Chụp và upload',
                           ),
                         ),
                       ),

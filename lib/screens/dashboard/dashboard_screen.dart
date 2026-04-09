@@ -9,10 +9,7 @@ import '../../providers/workout_provider.dart';
 class DashboardScreen extends StatelessWidget {
   final VoidCallback onStartExercisesTap;
 
-  const DashboardScreen({
-    super.key,
-    required this.onStartExercisesTap,
-  });
+  const DashboardScreen({super.key, required this.onStartExercisesTap});
 
   @override
   Widget build(BuildContext context) {
@@ -46,8 +43,6 @@ class DashboardScreen extends StatelessWidget {
             children: [
               _buildHeroImage(),
               const SizedBox(height: 16),
-              _buildWelcomeCard(context),
-              const SizedBox(height: 16),
               _buildWeeklyProgress(context, weeklyCount, weeklyTarget),
               const SizedBox(height: 16),
               _buildStreakAndQuickStart(
@@ -57,7 +52,7 @@ class DashboardScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Quick Overview',
+                'Tổng quan tập luyện',
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -67,7 +62,7 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _DashboardStatCard(
-                      title: 'Recent workouts',
+                      title: 'Buổi tập gần đây',
                       value: '$recentCount',
                       icon: Icons.calendar_month,
                     ),
@@ -75,7 +70,7 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _DashboardStatCard(
-                      title: 'Total volume',
+                      title: 'Tổng khối lượng',
                       value: totalVolume.toStringAsFixed(0),
                       icon: Icons.timer,
                     ),
@@ -83,7 +78,7 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _DashboardStatCard(
-                      title: 'PR (kg)',
+                      title: 'Kỷ lục PR (kg)',
                       value: personalRecord.toStringAsFixed(1),
                       icon: Icons.local_fire_department,
                     ),
@@ -119,8 +114,8 @@ Widget _buildHeroImage() {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.black.withValues(alpha: 0.55),
-                Colors.black.withValues(alpha: 0.08),
+                Colors.black.withOpacity(0.55),
+                Colors.black.withOpacity(0.08),
               ],
               begin: Alignment.bottomCenter,
               end: Alignment.topCenter,
@@ -130,7 +125,7 @@ Widget _buildHeroImage() {
         const Padding(
           padding: EdgeInsets.all(16),
           child: Text(
-            'Gym Focus',
+            'Động lực mỗi ngày',
             style: TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -147,7 +142,6 @@ Widget _buildWeeklyProgress(BuildContext context, int current, int target) {
   final colorScheme = Theme.of(context).colorScheme;
   final textTheme = Theme.of(context).textTheme;
   final progress = (current / target).clamp(0.0, 1.0);
-
   return Card(
     elevation: 0,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -160,13 +154,13 @@ Widget _buildWeeklyProgress(BuildContext context, int current, int target) {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Weekly Goal Progress',
+                'Tiến độ mục tiêu tuần',
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               Text(
-                '$current / $target sessions',
+                '$current / $target buổi',
                 style: textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: colorScheme.primary,
@@ -187,64 +181,12 @@ Widget _buildWeeklyProgress(BuildContext context, int current, int target) {
           const SizedBox(height: 8),
           Text(
             progress >= 1.0
-                ? 'Goal achieved! Amazing work this week.'
-                : 'You are ${target - current} sessions away from your weekly goal.',
+                ? 'Tuyệt vời! Bạn đã hoàn thành mục tiêu tuần.'
+                : 'Bạn còn ${target - current} buổi tập nữa để đạt mục tiêu.',
             style: textTheme.bodySmall,
           ),
         ],
       ),
-    ),
-  );
-}
-
-Widget _buildWelcomeCard(BuildContext context) {
-  final colorScheme = Theme.of(context).colorScheme;
-  final textTheme = Theme.of(context).textTheme;
-
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [colorScheme.primary, colorScheme.primaryContainer],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(18),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.insights, color: Colors.white),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Workout Dashboard',
-                style: textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Text(
-          'Track your strength progress and get a quick summary of your latest workout.',
-          style: textTheme.bodyMedium?.copyWith(
-            color: Colors.white.withValues(alpha: 0.94),
-          ),
-        ),
-      ],
     ),
   );
 }
@@ -270,19 +212,22 @@ Widget _buildStreakAndQuickStart(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Workout Streak',
+                'Chuỗi ngày tập',
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '$streakDays day${streakDays == 1 ? '' : 's'}',
+                  '$streakDays ngày',
                   style: textTheme.labelLarge?.copyWith(
                     color: colorScheme.primary,
                     fontWeight: FontWeight.w700,
@@ -303,8 +248,8 @@ Widget _buildStreakAndQuickStart(
               Expanded(
                 child: Text(
                   hasStreak
-                      ? 'Great consistency! Keep your momentum going.'
-                      : 'Start a workout today to build your streak.',
+                      ? 'Bạn đang duy trì rất tốt, hãy tiếp tục giữ nhịp tập luyện.'
+                      : 'Hãy bắt đầu một buổi tập hôm nay để tạo chuỗi ngày tập.',
                   style: textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -318,7 +263,7 @@ Widget _buildStreakAndQuickStart(
             child: ElevatedButton.icon(
               onPressed: onStartExercisesTap,
               icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Start Exercises'),
+              label: const Text('Bắt đầu buổi tập nhanh'),
             ),
           ),
         ],
@@ -346,7 +291,7 @@ class _DashboardStatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+        color: colorScheme.surfaceContainerHighest.withOpacity(0.6),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -391,14 +336,14 @@ class _StrengthChartCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Strength Growth Chart',
+              'Biểu đồ tăng trưởng sức mạnh',
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Recent 7 workouts (total volume)',
+              '7 buổi tập gần đây (tổng khối lượng)',
               style: textTheme.bodySmall,
             ),
             const SizedBox(height: 14),
@@ -429,9 +374,7 @@ class _StrengthChartCard extends StatelessWidget {
                     horizontalInterval: _resolveGridInterval(data),
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
-                        color: colorScheme.outlineVariant.withValues(
-                          alpha: 0.3,
-                        ),
+                        color: colorScheme.outlineVariant.withOpacity(0.3),
                         strokeWidth: 1,
                       );
                     },
@@ -446,8 +389,8 @@ class _StrengthChartCard extends StatelessWidget {
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        interval: 20,
-                        reservedSize: 34,
+                        interval: 200, // Adjusted for volume
+                        reservedSize: 40,
                         getTitlesWidget: (value, meta) {
                           return Text(
                             value.toInt().toString(),
@@ -469,7 +412,7 @@ class _StrengthChartCard extends StatelessWidget {
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              'S${idx + 1}',
+                              'B${idx + 1}',
                               style: textTheme.labelSmall,
                             ),
                           );
@@ -484,7 +427,7 @@ class _StrengthChartCard extends StatelessWidget {
                         return spots
                             .map(
                               (spot) => LineTooltipItem(
-                                spot.y.toStringAsFixed(0),
+                                '${spot.y.toStringAsFixed(0)} kg',
                                 TextStyle(
                                   color: colorScheme.onInverseSurface,
                                   fontWeight: FontWeight.w700,
@@ -516,8 +459,8 @@ class _StrengthChartCard extends StatelessWidget {
                         show: true,
                         gradient: LinearGradient(
                           colors: [
-                            colorScheme.primary.withValues(alpha: 0.35),
-                            colorScheme.primary.withValues(alpha: 0.02),
+                            colorScheme.primary.withOpacity(0.35),
+                            colorScheme.primary.withOpacity(0.02),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -555,7 +498,7 @@ class _LatestWorkoutCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Latest Workout',
+                    'Buổi tập gần nhất',
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -565,13 +508,13 @@ class _LatestWorkoutCard extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest.withValues(
-                        alpha: 0.5,
+                      color: colorScheme.surfaceContainerHighest.withOpacity(
+                        0.5,
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      'No workout data yet. Complete a workout to see a summary here.',
+                      'Chưa có dữ liệu bài tập nào. Hãy hoàn thành một buổi tập để xem tóm tắt tại đây.',
                       style: textTheme.bodyMedium,
                     ),
                   ),
@@ -581,7 +524,7 @@ class _LatestWorkoutCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Latest Workout',
+                    'Buổi tập gần nhất',
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -591,8 +534,8 @@ class _LatestWorkoutCard extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest.withValues(
-                        alpha: 0.5,
+                      color: colorScheme.surfaceContainerHighest.withOpacity(
+                        0.5,
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -607,12 +550,12 @@ class _LatestWorkoutCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Date: ${_formatDate(workout!.date)}',
+                          'Ngày: ${_formatDate(workout!.date)}',
                           style: textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Duration: ${workout!.durationInMinutes} min • ${workout!.exercises.length} exercises',
+                          'Thời gian: ${workout!.durationInMinutes} phút • ${workout!.exercises.length} bài tập',
                           style: textTheme.bodyMedium,
                         ),
                       ],
@@ -679,20 +622,17 @@ double _calculateWorkoutVolume(Workout workout) {
 double _resolveMaxY(List<double> data) {
   final maxValue = data.reduce((a, b) => a > b ? a : b);
   if (maxValue <= 0) {
-    return 100;
+    return 1000; // Increased base for volume
   }
   return maxValue * 1.25;
 }
 
 double _resolveGridInterval(List<double> data) {
   final maxValue = data.reduce((a, b) => a > b ? a : b);
-  if (maxValue <= 100) {
-    return 20;
-  }
-  if (maxValue <= 500) {
-    return 50;
-  }
-  return 100;
+  if (maxValue <= 100) return 20;
+  if (maxValue <= 1000) return 200;
+  if (maxValue <= 5000) return 1000;
+  return 2000;
 }
 
 String _formatDate(DateTime date) {
@@ -709,11 +649,9 @@ int _calculateWorkoutStreak(List<Workout> history) {
 
   DateTime dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
 
-  final workoutDates = history
-      .map((workout) => dateOnly(workout.date))
-      .toSet()
-      .toList()
-    ..sort((a, b) => b.compareTo(a));
+  final workoutDates =
+      history.map((workout) => dateOnly(workout.date)).toSet().toList()
+        ..sort((a, b) => b.compareTo(a));
 
   if (workoutDates.isEmpty) {
     return 0;

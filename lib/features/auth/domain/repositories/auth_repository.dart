@@ -12,9 +12,12 @@ abstract class AuthRepository {
 
   Future<AppUser> registerWithEmail({
     required String name,
+    required String username,
     required String email,
     required String password,
   });
+
+  Future<bool> isUsernameUnique(String username);
 
   Future<AppUser?> loginWithGoogle();
 

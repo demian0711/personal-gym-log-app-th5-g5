@@ -1,5 +1,5 @@
-import 'dart:io';
 import '../../../progress_photos/data/services/cloudinary_service.dart';
+import '../../domain/constants/profile_goal_options.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../models/user_model.dart';
 import '../services/profile_firestore_service.dart';
@@ -27,9 +27,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
       email: email,
       displayName: fallbackDisplayName.trim().isNotEmpty
           ? fallbackDisplayName.trim()
-          : 'User',
+          : 'Người dùng',
       photoUrl: photoUrl,
-      goal: 'duy trì',
+      goal: ProfileGoalOptions.defaultGoal,
       unit: 'kg',
       weeklyTarget: 3,
       targetWeight: null,
@@ -46,13 +46,14 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<UserModel> updateProfilePhoto(String userId, String imagePath) async {
-    final file = File(imagePath);
+  Future<UserModel> updateProfilePhoto(
+    String userId,
+    List<int> bytes,
+    String fileName,
+  ) async {
     final photoUrl = await _cloudinary.uploadImageBytes(
-      bytes: await file.readAsBytes(),
-      fileName: file.uri.pathSegments.isNotEmpty
-          ? file.uri.pathSegments.last
-          : 'profile_$userId.jpg',
+      bytes: bytes,
+      fileName: fileName,
     );
     final existing = await _service.fetchUser(userId);
     if (existing == null) {

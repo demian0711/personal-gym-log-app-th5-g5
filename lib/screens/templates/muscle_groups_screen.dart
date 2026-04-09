@@ -22,12 +22,12 @@ class _MuscleGroupsScreenState extends State<MuscleGroupsScreen> {
           _buildHeroImage(),
           const SizedBox(height: 16),
           const Text(
-            'Chuong trinh tap luyện theo nhóm co',
+            'Chương trình tập luyện theo nhóm cơ',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Chon nhom co de xem cac bai tap',
+            'Chọn nhóm cơ để xem các bài tập',
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
           const SizedBox(height: 16),
@@ -171,7 +171,7 @@ class _MuscleGroupsScreenState extends State<MuscleGroupsScreen> {
               child: Icon(
                 Icons.fitness_center,
                 size: 100,
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Colors.white.withOpacity(0.1),
               ),
             ),
             Column(
@@ -180,7 +180,7 @@ class _MuscleGroupsScreenState extends State<MuscleGroupsScreen> {
                 const Icon(Icons.school, size: 40, color: Colors.white),
                 const SizedBox(height: 8),
                 const Text(
-                  'Huong dan tap luyện',
+                  'Hướng dẫn tập luyện',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

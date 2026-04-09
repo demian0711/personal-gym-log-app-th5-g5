@@ -73,7 +73,7 @@ class AnalyticsProvider extends ChangeNotifier {
       _workouts = await _service.fetchWorkouts(userId);
       _rebuildChartData();
     } catch (_) {
-      _errorMessage = 'Không thể tải dữ liệu analytics từ Firestore.';
+      _errorMessage = 'Không thể tải dữ liệu phân tích từ Firestore.';
       _chartData = [];
     } finally {
       _isLoading = false;

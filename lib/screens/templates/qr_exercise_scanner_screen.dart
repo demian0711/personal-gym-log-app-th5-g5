@@ -77,7 +77,7 @@ class _QrExerciseScannerScreenState extends State<QrExerciseScannerScreen> {
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.65),
+                color: Colors.black.withOpacity(0.65),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(

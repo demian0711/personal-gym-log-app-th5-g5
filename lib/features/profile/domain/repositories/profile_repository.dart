@@ -11,5 +11,9 @@ abstract class ProfileRepository {
 
   Future<UserModel> updateProfile(UserModel user);
 
-  Future<UserModel> updateProfilePhoto(String userId, String imagePath);
+  Future<UserModel> updateProfilePhoto(
+    String userId,
+    List<int> bytes,
+    String fileName,
+  );
 }

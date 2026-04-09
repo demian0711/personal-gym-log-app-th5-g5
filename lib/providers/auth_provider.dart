@@ -10,7 +10,8 @@ import '../models/app_user.dart';
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _authRepository;
   AppUser? _currentUser;
-  bool _isLoading = true;
+  bool _isLoading = false;
+  bool _isInitialLoading = true;
   String? _lastError;
 
   AuthProvider({AuthRepository? authRepository})
@@ -24,27 +25,37 @@ class AuthProvider extends ChangeNotifier {
   }
 
   bool get isLoading => _isLoading;
+  bool get isInitialLoading => _isInitialLoading;
   AppUser? get currentUser => _currentUser;
   bool get isAuthenticated => _currentUser != null;
   String? get lastError => _lastError;
 
   Future<void> _initialize() async {
-    _isLoading = true;
+    _isInitialLoading = true;
     notifyListeners();
 
     _currentUser = _authRepository.currentUser;
     _authRepository.authStateChanges().listen((user) {
       _currentUser = user;
-      _isLoading = false;
+      _isInitialLoading = false;
       notifyListeners();
     });
 
-    _isLoading = false;
+    _isInitialLoading = false;
     notifyListeners();
   }
 
+  // Chỉ bật mock auth khi chủ động truyền:
+  // flutter run --dart-define=USE_MOCK_AUTH=true
+  static const bool _defaultUseMockAuth = bool.fromEnvironment(
+    'USE_MOCK_AUTH',
+    defaultValue: false,
+  );
+  bool _useMockAuth = _defaultUseMockAuth;
+
   Future<String?> register({
     required String name,
+    required String username,
     required String email,
     required String password,
   }) async {
@@ -63,8 +74,26 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (_useMockAuth) {
+        // GIẢ LẬP ĐĂNG KÝ THÀNH CÔNG
+        await Future.delayed(const Duration(milliseconds: 500));
+        _currentUser = AppUser(
+          id: 'mock_user_${DateTime.now().millisecondsSinceEpoch}',
+          name: trimmedName,
+          username: username.trim().toLowerCase(),
+          email: normalizedEmail,
+          createdAt: DateTime.now(),
+        );
+        return null;
+      }
+
+      final isUsernameUnique = await _isUsernameUniqueSafely(username);
+      if (!isUsernameUnique) {
+        return 'Tên người dùng đã tồn tại.';
+      }
       _currentUser = await _authRepository.registerWithEmail(
         name: trimmedName,
+        username: username.trim().toLowerCase(),
         email: normalizedEmail,
         password: trimmedPassword,
       );
@@ -73,8 +102,12 @@ class AuthProvider extends ChangeNotifier {
       final message = _mapFirebaseAuthError(error);
       _lastError = message;
       return message;
-    } catch (_) {
-      const message = 'Không thể tạo tài khoản. Vui lòng thử lại.';
+    } on FirebaseException catch (error) {
+      final message = 'Lỗi dữ liệu: ${error.message ?? error.code}';
+      _lastError = message;
+      return message;
+    } catch (e) {
+      final message = 'Lỗi không xác định: $e';
       _lastError = message;
       return message;
     } finally {
@@ -99,6 +132,19 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (_useMockAuth) {
+        // GIẢ LẬP ĐĂNG NHẬP THÀNH CÔNG
+        await Future.delayed(const Duration(milliseconds: 500));
+        _currentUser = AppUser(
+          id: 'mock_user_123',
+          name: 'Người dùng Thử nghiệm',
+          username: 'tester',
+          email: normalizedEmail,
+          createdAt: DateTime.now(),
+        );
+        return null;
+      }
+
       _currentUser = await _authRepository.loginWithEmail(
         email: normalizedEmail,
         password: trimmedPassword,
@@ -108,8 +154,12 @@ class AuthProvider extends ChangeNotifier {
       final message = _mapFirebaseAuthError(error);
       _lastError = message;
       return message;
-    } catch (_) {
-      const message = 'Không thể đăng nhập. Vui lòng thử lại.';
+    } on FirebaseException catch (error) {
+      final message = 'Lỗi đăng nhập: ${error.message ?? error.code}';
+      _lastError = message;
+      return message;
+    } catch (e) {
+      final message = 'Lỗi không xác định: $e';
       _lastError = message;
       return message;
     } finally {
@@ -166,20 +216,34 @@ class AuthProvider extends ChangeNotifier {
       case 'user-disabled':
         return 'Tài khoản đã bị vô hiệu hóa.';
       case 'user-not-found':
-        return 'Không tìm thấy tài khoản.';
+        return '[Email] này chưa được đăng ký tài khoản.';
       case 'wrong-password':
       case 'invalid-credential':
-        return 'Email hoặc mật khẩu không đúng.';
+        return '[Mật khẩu] không chính xác hoặc Email chưa tồn tại.';
       case 'email-already-in-use':
-        return 'Email đã được đăng ký.';
+        return '[Email] này đã được đăng ký tài khoản khác.';
       case 'weak-password':
-        return 'Mật khẩu quá yếu (ít nhất 6 ký tự).';
+        return '[Mật khẩu] quá yếu (tối thiểu 6 ký tự).';
       case 'operation-not-allowed':
         return 'Phương thức đăng nhập chưa được bật trên Firebase.';
       case 'network-request-failed':
         return 'Lỗi mạng. Vui lòng kiểm tra kết nối internet.';
       default:
-        return error.message ?? 'Có lỗi xác thực xảy ra.';
+        return '[Email] Lỗi: ${error.message ?? error.code} (Vui lòng kiểm tra tab Authentication trên Firebase)';
+    }
+  }
+
+  Future<bool> _isUsernameUniqueSafely(String username) async {
+    try {
+      return await _authRepository.isUsernameUnique(username);
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied') {
+        debugPrint(
+          'Skip username uniqueness pre-check due Firestore rules: ${error.message}',
+        );
+        return true;
+      }
+      rethrow;
     }
   }
 }

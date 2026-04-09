@@ -64,7 +64,7 @@ class ProgressPhotosProvider extends ChangeNotifier {
           },
           onError: (_) {
             _isLoading = false;
-            _errorMessage = 'Không thể tải Progress Photos.';
+            _errorMessage = 'Không thể tải ảnh tiến trình.';
             _photos = [];
             notifyListeners();
           },

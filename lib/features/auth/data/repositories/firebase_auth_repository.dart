@@ -55,6 +55,7 @@ class FirebaseAuthRepository implements AuthRepository {
   @override
   Future<AppUser> registerWithEmail({
     required String name,
+    required String username,
     required String email,
     required String password,
   }) async {
@@ -76,6 +77,7 @@ class FirebaseAuthRepository implements AuthRepository {
 
     await _userFirestoreService.upsertUserDocument(
       uid: appUser.id,
+      username: username,
       email: appUser.email,
       displayName: appUser.name,
       photoUrl: appUser.photoUrl,
@@ -114,6 +116,11 @@ class FirebaseAuthRepository implements AuthRepository {
     return _authService.signOut();
   }
 
+  @override
+  Future<bool> isUsernameUnique(String username) {
+    return _userFirestoreService.isUsernameUnique(username);
+  }
+
   AppUser? _mapUser(User? user) {
     if (user == null) return null;
 
@@ -123,6 +130,7 @@ class FirebaseAuthRepository implements AuthRepository {
 
     return AppUser(
       id: user.uid,
+      username: null, // Sẽ được load từ Firestore qua ProfileProvider
       name: normalizedDisplayName,
       email: user.email ?? '',
       photoUrl: user.photoURL,
