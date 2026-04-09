@@ -1,6 +1,6 @@
 import 'dart:io' show File;
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html;
 
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -8,6 +8,9 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
 import '../models/workout.dart';
+import 'web_file_downloader_stub.dart'
+    if (dart.library.html) 'web_file_downloader_web.dart'
+    as web_downloader;
 
 class WorkoutExportService {
   Future<void> exportToPdf(List<Workout> history) async {
@@ -59,11 +62,17 @@ class WorkoutExportService {
               children: [
                 pw.Text(
                   'Generated on: ${_formatDateTime(DateTime.now())}',
-                  style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+                  style: const pw.TextStyle(
+                    fontSize: 10,
+                    color: PdfColors.grey600,
+                  ),
                 ),
                 pw.Text(
                   'Page ${context.pageNumber} of ${context.pagesCount}',
-                  style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+                  style: const pw.TextStyle(
+                    fontSize: 10,
+                    color: PdfColors.grey600,
+                  ),
                 ),
               ],
             ),
@@ -116,7 +125,10 @@ class WorkoutExportService {
               child: pw.Center(
                 child: pw.Text(
                   'No workout history recorded.',
-                  style: pw.TextStyle(fontStyle: pw.FontStyle.italic, color: PdfColors.grey600),
+                  style: pw.TextStyle(
+                    fontStyle: pw.FontStyle.italic,
+                    color: PdfColors.grey600,
+                  ),
                 ),
               ),
             ),
@@ -124,24 +136,22 @@ class WorkoutExportService {
       ),
     );
 
+    final fileName =
+        'workout_history_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    final bytes = await document.save();
+
     if (kIsWeb) {
-      final bytes = await document.save();
-      final blob = html.Blob([bytes], 'application/pdf');
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      final anchor = html.AnchorElement()
-        ..href = url
-        ..style.display = 'none'
-        ..download = 'workout_history_${DateTime.now().millisecondsSinceEpoch}.pdf';
-      html.document.body?.children.add(anchor);
-      anchor.click();
-      html.document.body?.children.remove(anchor);
-      html.Url.revokeObjectUrl(url);
-    } else {
-      final file = await _createFile(
-        'workout_history_${DateTime.now().millisecondsSinceEpoch}.pdf',
+      await web_downloader.downloadBytes(
+        Uint8List.fromList(bytes),
+        fileName,
+        'application/pdf',
       );
-      await file.writeAsBytes(await document.save(), flush: true);
-      await Share.shareXFiles([XFile(file.path)], text: 'Workout History (PDF)');
+    } else {
+      final file = await _createFile(fileName);
+      await file.writeAsBytes(bytes, flush: true);
+      await Share.shareXFiles([
+        XFile(file.path),
+      ], text: 'Workout History (PDF)');
     }
   }
 

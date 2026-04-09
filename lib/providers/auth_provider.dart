@@ -45,8 +45,13 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Chế độ Mock Auth để khắc phục sự cố Firebase
-  bool _useMockAuth = true; 
+  // Chỉ bật mock auth khi chủ động truyền:
+  // flutter run --dart-define=USE_MOCK_AUTH=true
+  static const bool _defaultUseMockAuth = bool.fromEnvironment(
+    'USE_MOCK_AUTH',
+    defaultValue: false,
+  );
+  bool _useMockAuth = _defaultUseMockAuth;
 
   Future<String?> register({
     required String name,
