@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../data/models/progress_photo_model.dart';
 import '../providers/progress_photo_provider.dart';
+import 'photo_detail_screen.dart';
+import '../../../progress/presentation/widgets/photo_capture_widget.dart';
 
 class ProgressPhotosScreen extends StatefulWidget {
   const ProgressPhotosScreen({super.key});
@@ -12,47 +15,47 @@ class ProgressPhotosScreen extends StatefulWidget {
 }
 
 class _ProgressPhotosScreenState extends State<ProgressPhotosScreen> {
-  final ImagePicker _picker = ImagePicker();
-  final TextEditingController _noteController = TextEditingController();
-
   @override
   void dispose() {
-    _noteController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickAndUpload(BuildContext context) async {
-    final file = await _picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 85,
-    );
+  /// Nhóm ảnh theo ngày
+  Map<String, List<ProgressPhotoModel>> _groupPhotosByDate(
+    List<ProgressPhotoModel> photos,
+  ) {
+    final grouped = <String, List<ProgressPhotoModel>>{};
 
-    if (file == null) {
-      return;
+    for (final photo in photos) {
+      final dateKey = _getDateKey(photo.createdAt);
+      grouped.putIfAbsent(dateKey, () => []);
+      grouped[dateKey]!.add(photo);
     }
 
-    final bytes = await file.readAsBytes();
-    if (!mounted) {
-      return;
+    return grouped;
+  }
+
+  /// Tạo khóa ngày dạng "dd/MM/yyyy"
+  String _getDateKey(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  /// Định dạng ngày đầy đủ với khôi phục tiếng Việt
+  String _formatDateFull(DateTime date) {
+    final formatter = DateFormat('EEEE, dd/MM/yyyy', 'vi_VN');
+    try {
+      return formatter.format(date);
+    } catch (_) {
+      // Fallback nếu locale không khả dụng
+      final days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+      final dayName = days[(date.weekday - 1) % 7];
+      return '$dayName, ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
     }
+  }
 
-    final message = await context.read<ProgressPhotoProvider>().uploadPhoto(
-      imageBytes: bytes,
-      fileName: file.name,
-      note: _noteController.text,
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message ?? 'Upload ảnh thành công.')),
-    );
-
-    if (message == null) {
-      _noteController.clear();
-    }
+  /// Định dạng thời gian
+  String _formatTime(DateTime date) {
+    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -66,126 +69,44 @@ class _ProgressPhotosScreenState extends State<ProgressPhotosScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Chụp ảnh tiến độ',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Ảnh sẽ được lưu trên Cloudinary và đồng bộ URL vào Firestore.',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: _noteController,
-                        decoration: const InputDecoration(
-                          labelText: 'Ghi chú (tuỳ chọn)',
-                          border: OutlineInputBorder(),
-                        ),
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: provider.isUploading
-                              ? null
-                              : () => _pickAndUpload(context),
-                          icon: const Icon(Icons.camera_alt_outlined),
-                          label: Text(
-                            provider.isUploading
-                                ? 'Đang upload...'
-                                : 'Chụp và upload',
-                          ),
-                        ),
-                      ),
-                      if ((provider.errorMessage ?? '').isNotEmpty)
-                        Container(
-                          margin: const EdgeInsets.only(top: 10),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: colorScheme.errorContainer,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            provider.errorMessage!,
-                            style: TextStyle(
-                              color: colorScheme.onErrorContainer,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+              // Section: Upload ảnh - Sử dụng PhotoCaptureWidget
+              PhotoCaptureWidget(
+                onPhotoUploaded: (message) {
+                  // Optional: Xử lý sau khi upload thành công
+                },
               ),
-              const SizedBox(height: 12),
-              if (provider.photos.isEmpty)
-                const Card(
+              const SizedBox(height: 20),
+
+              // Section: Album ảnh theo ngày
+              if (provider.photos.isEmpty && !provider.isUploading)
+                Card(
                   child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      'Chưa có ảnh nào. Chụp ảnh đầu tiên để bắt đầu theo dõi tiến độ.',
-                    ),
-                  ),
-                )
-              else
-                ...provider.photos.map(
-                  (photo) => Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    clipBehavior: Clip.antiAlias,
+                    padding: const EdgeInsets.all(24),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        AspectRatio(
-                          aspectRatio: 1,
-                          child: Image.network(
-                            photo.imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Center(
-                                child: Text('Không tải được ảnh.'),
-                              );
-                            },
-                          ),
+                        Icon(
+                          Icons.image_not_supported_outlined,
+                          size: 48,
+                          color: colorScheme.outline,
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _formatDate(photo.createdAt),
-                                style: Theme.of(context).textTheme.titleSmall,
-                              ),
-                              if ((photo.note ?? '').isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(photo.note!),
-                              ],
-                              const SizedBox(height: 8),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton.icon(
-                                  onPressed: () async {
-                                    await provider.deletePhoto(photo.id);
-                                  },
-                                  icon: const Icon(Icons.delete_outline),
-                                  label: const Text('Xoá'),
-                                ),
-                              ),
-                            ],
-                          ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Chưa có ảnh nào',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Chụp ảnh đầu tiên để bắt đầu theo dõi tiến độ',
+                          style: Theme.of(context).textTheme.bodySmall,
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
                   ),
-                ),
+                )
+              else
+                ..._buildPhotoAlbums(context, provider.photos, colorScheme),
             ],
           );
         },
@@ -193,12 +114,229 @@ class _ProgressPhotosScreenState extends State<ProgressPhotosScreen> {
     );
   }
 
-  String _formatDate(DateTime date) {
-    final d = date.day.toString().padLeft(2, '0');
-    final m = date.month.toString().padLeft(2, '0');
-    final y = date.year;
-    final hh = date.hour.toString().padLeft(2, '0');
-    final mm = date.minute.toString().padLeft(2, '0');
-    return '$d/$m/$y $hh:$mm';
+  /// Xây dựng album ảnh được nhóm theo ngày
+  List<Widget> _buildPhotoAlbums(
+    BuildContext context,
+    List<ProgressPhotoModel> photos,
+    ColorScheme colorScheme,
+  ) {
+    final grouped = _groupPhotosByDate(photos);
+    final sortedDates = grouped.keys.toList();
+
+    return sortedDates.map((dateKey) {
+      final photosInDate = grouped[dateKey]!;
+      final firstPhoto = photosInDate.first;
+
+      return Column(
+        key: ValueKey(dateKey),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: Tiêu đề ngày
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _formatDateFull(firstPhoto.createdAt),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${photosInDate.length} ảnh',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: colorScheme.outline),
+                ),
+              ],
+            ),
+          ),
+
+          // Photo List: Hiển thị ảnh dưới dạng list
+          ...photosInDate.map(
+            (photo) => _buildPhotoListItem(context, photo, colorScheme),
+          ),
+
+          const SizedBox(height: 24),
+        ],
+      );
+    }).toList();
+  }
+
+  /// Xây dựng item trong list ảnh
+  Widget _buildPhotoListItem(
+    BuildContext context,
+    ProgressPhotoModel photo,
+    ColorScheme colorScheme,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => PhotoDetailScreen(photo: photo),
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header: Giờ chụp to
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: colorScheme.primaryContainer,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _formatTime(photo.createdAt),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                  if ((photo.note ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      photo.note!,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // Ảnh chụp
+            Image.network(
+              photo.imageUrl,
+              fit: BoxFit.cover,
+              height: 300, // Fixed height for a consistent look in the list
+              width: double.infinity,
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return Container(
+                  height: 300,
+                  color: colorScheme.surfaceContainer,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      value: progress.expectedTotalBytes != null
+                          ? progress.cumulativeBytesLoaded /
+                                progress.expectedTotalBytes!
+                          : null,
+                    ),
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 300,
+                  color: colorScheme.errorContainer.withOpacity(0.5),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.broken_image_outlined,
+                          size: 48,
+                          color: colorScheme.error,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Lỗi tải hình ảnh',
+                          style: TextStyle(
+                            color: colorScheme.error,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Sử dụng dữ liệu di động hoặc Wi-Fi để xem',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            // Thông tin chi tiết
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildInfoRow(
+                    context,
+                    icon: Icons.flag_outlined,
+                    label: 'Mục tiêu',
+                    value: photo.goal,
+                  ),
+                  _buildInfoRow(
+                    context,
+                    icon: Icons.star_outline,
+                    label: 'Tiêu chuẩn',
+                    value: photo.standard,
+                  ),
+                  _buildInfoRow(
+                    context,
+                    icon: Icons.monitor_weight_outlined,
+                    label: 'Cân nặng',
+                    value: photo.weight != null ? '${photo.weight} kg' : null,
+                  ),
+                  _buildInfoRow(
+                    context,
+                    icon: Icons.note_outlined,
+                    label: 'Ghi chú',
+                    value: photo.note,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String? value,
+  }) {
+    if (value == null || value.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: colorScheme.primary),
+          const SizedBox(width: 12),
+          Text(
+            '$label: ',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          Expanded(
+            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
+          ),
+        ],
+      ),
+    );
   }
 }

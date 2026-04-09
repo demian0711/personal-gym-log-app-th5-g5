@@ -30,13 +30,33 @@ class LocalStorageService {
   static const String _workoutPrefix = 'workout_data_';
 
   SharedPreferences? _prefs;
+  Box? _workoutsBoxCached;
+  Box? _templatesBoxCached;
+  Box? _settingsBoxCached;
 
   Future<void> init() async {
+    // Only initialize Hive and SharedPreferences - defer box opening until needed
     await Hive.initFlutter();
-    await Hive.openBox(_workoutsBoxName);
-    await Hive.openBox(_templatesBoxName);
-    await Hive.openBox(_settingsBoxName);
     _prefs = await SharedPreferences.getInstance();
+  }
+
+  // Lazy-load boxes on first access to reduce initialization time
+  Future<Box> get _workoutsBox async {
+    if (_workoutsBoxCached != null) return _workoutsBoxCached!;
+    _workoutsBoxCached = await Hive.openBox(_workoutsBoxName);
+    return _workoutsBoxCached!;
+  }
+
+  Future<Box> get _templatesBox async {
+    if (_templatesBoxCached != null) return _templatesBoxCached!;
+    _templatesBoxCached = await Hive.openBox(_templatesBoxName);
+    return _templatesBoxCached!;
+  }
+
+  Future<Box> get _settingsBox async {
+    if (_settingsBoxCached != null) return _settingsBoxCached!;
+    _settingsBoxCached = await Hive.openBox(_settingsBoxName);
+    return _settingsBoxCached!;
   }
 
   SharedPreferences get _prefsInstance {
@@ -48,12 +68,12 @@ class LocalStorageService {
   }
 
   Future<void> saveWorkoutLog(Workout workout) async {
-    final box = Hive.box(_workoutsBoxName);
+    final box = await _workoutsBox;
     await box.put(workout.id, workout.toMap());
   }
 
   Future<List<Workout>> getAllWorkoutLogs() async {
-    final box = Hive.box(_workoutsBoxName);
+    final box = await _workoutsBox;
     final logs = box.values
         .map((map) => Workout.fromMap(Map<String, dynamic>.from(map)))
         .toList();
@@ -62,35 +82,35 @@ class LocalStorageService {
   }
 
   Future<void> deleteWorkoutLog(String id) async {
-    final box = Hive.box(_workoutsBoxName);
+    final box = await _workoutsBox;
     await box.delete(id);
   }
 
   Future<void> saveTemplate(Workout template) async {
-    final box = Hive.box(_templatesBoxName);
+    final box = await _templatesBox;
     await box.put(template.id, template.toMap());
   }
 
   Future<List<Workout>> getAllTemplates() async {
-    final box = Hive.box(_templatesBoxName);
+    final box = await _templatesBox;
     return box.values
         .map((map) => Workout.fromMap(Map<String, dynamic>.from(map)))
         .toList();
   }
 
   Future<void> deleteTemplate(String id) async {
-    final box = Hive.box(_templatesBoxName);
+    final box = await _templatesBox;
     await box.delete(id);
   }
 
   Future<void> saveUnit(String unit) async {
-    final settingsBox = Hive.box(_settingsBoxName);
+    final settingsBox = await _settingsBox;
     await settingsBox.put('unit', unit);
     await _prefsInstance.setString(_unitKey, unit);
   }
 
   Future<String> getUnit() async {
-    final settingsBox = Hive.box(_settingsBoxName);
+    final settingsBox = await _settingsBox;
     final fromHive = settingsBox.get('unit');
     if (fromHive is String && fromHive.isNotEmpty) {
       return fromHive;

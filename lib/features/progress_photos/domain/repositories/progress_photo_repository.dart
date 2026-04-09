@@ -5,6 +5,9 @@ abstract class ProgressPhotoRepository {
     required String userId,
     required List<int> imageBytes,
     required String fileName,
+    String? goal,
+    String? standard,
+    double? weight,
     String? note,
   });
 

@@ -65,7 +65,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     if (workout == null) return;
 
     if (!_validateCompletedSets(workout)) {
-      _showMessage('Please complete weight and reps before checking a set.');
+      _showMessage(
+        'Vui lòng hoàn thành cân nặng và số lần trước khi đánh dấu xong.',
+      );
       return;
     }
 
@@ -88,7 +90,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
       _startTime = null;
     });
 
-    _showMessage('Workout saved.');
+    _showMessage('Đã lưu bài tập.');
   }
 
   void _backToStartWorkout() {
@@ -318,7 +320,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
-                tooltip: 'Back to start',
+                tooltip: 'Quay lại',
                 onPressed: _backToStartWorkout,
                 icon: const Icon(Icons.arrow_back),
               ),
@@ -336,7 +338,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             FilledButton.icon(
               onPressed: _finishWorkout,
               icon: const Icon(Icons.flag),
-              label: const Text('Finish Workout'),
+              label: const Text('Kết thúc buổi tập'),
             ),
           ],
         ],
@@ -349,9 +351,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(16),
-          child: Text(
-            'No templates yet. Create one in Templates to start a workout.',
-          ),
+          child: Text('Chưa có mẫu tập nào. Hãy tạo một mẫu tập để bắt đầu.'),
         ),
       );
     }
@@ -363,7 +363,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Start Workout',
+              'Bắt đầu buổi tập',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
@@ -375,7 +375,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                   enableFilter: true,
                   enableSearch: true,
                   requestFocusOnTap: true,
-                  label: const Text('Template'),
+                  label: const Text('Mẫu tập'),
                   leadingIcon: const Icon(Icons.search),
                   trailingIcon: const Icon(Icons.arrow_drop_down),
                   dropdownMenuEntries: templates
@@ -407,7 +407,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                         _startWorkout(template);
                       },
                 icon: const Icon(Icons.play_arrow),
-                label: const Text('Start'),
+                label: const Text('Bắt đầu'),
               ),
             ),
           ],
@@ -444,7 +444,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'Active Workout',
+              'Đang tập luyện',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -473,10 +473,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            Text('Exercises: ${workout.exercises.length}'),
-            Text('Sets completed: $completedSets / $totalSets'),
+            Text('Bài tập: ${workout.exercises.length}'),
+            Text('Hiệp đã xong: $completedSets / $totalSets'),
             if (startTime != null)
-              Text('Started at: ${_formatStartTime(startTime)}'),
+              Text('Bắt đầu lúc: ${_formatStartTime(startTime)}'),
           ],
         ),
       ),
@@ -524,10 +524,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
               child: DataTable(
                 columnSpacing: 12,
                 columns: const [
-                  DataColumn(label: Text('Set')),
-                  DataColumn(label: Text('Weight (kg)')),
-                  DataColumn(label: Text('Reps')),
-                  DataColumn(label: Text('Check')),
+                  DataColumn(label: Text('Hiệp')),
+                  DataColumn(label: Text('Cân nặng (kg)')),
+                  DataColumn(label: Text('Số lần')),
+                  DataColumn(label: Text('Xong')),
                 ],
                 rows: exercise.sets.asMap().entries.map((entry) {
                   final setIndex = entry.key;

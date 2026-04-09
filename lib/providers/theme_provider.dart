@@ -9,7 +9,10 @@ class ThemeProvider extends ChangeNotifier {
   bool _isLoading = true;
 
   ThemeProvider(this._storage) {
-    _load();
+    // Load theme preference asynchronously
+    Future.delayed(const Duration(milliseconds: 300)).then((_) {
+      if (_isLoading) _load();
+    });
   }
 
   bool get isDarkMode => _isDarkMode;
@@ -18,6 +21,8 @@ class ThemeProvider extends ChangeNotifier {
   ThemeMode get themeMode => _isDarkMode ? ThemeMode.dark : ThemeMode.light;
 
   Future<void> _load() async {
+    _isLoading = true;
+    notifyListeners();
     _isDarkMode = await _storage.getDarkModeEnabled();
     _isLoading = false;
     notifyListeners();

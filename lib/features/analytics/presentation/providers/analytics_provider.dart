@@ -90,6 +90,12 @@ class AnalyticsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateFromWorkouts(List<WorkoutModel> workouts) {
+    _workouts = workouts;
+    _rebuildChartData();
+    notifyListeners();
+  }
+
   void _rebuildChartData() {
     _chartData = _service.mapToChartData(workouts: _workouts, metric: _metric);
   }
