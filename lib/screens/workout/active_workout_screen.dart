@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_set.dart';
 import '../../models/workout.dart';
+import '../../providers/utilities_provider.dart';
 import '../../providers/workout_provider.dart';
 
 class ActiveWorkoutScreen extends StatefulWidget {
@@ -59,7 +60,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     });
   }
 
-  void _finishWorkout() {
+  Future<void> _finishWorkout() async {
     final workout = _activeWorkout;
     if (workout == null) return;
 
@@ -74,7 +75,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
           : DateTime.now().difference(_startTime!).inMinutes,
     );
 
-    context.read<WorkoutProvider>().addWorkoutLog(completedWorkout);
+    context.read<UtilitiesProvider>().stopRestTimer();
+    await context.read<WorkoutProvider>().addWorkoutLog(completedWorkout);
+
+    if (!mounted) return;
 
     _clearControllers();
 
@@ -88,6 +92,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   }
 
   void _backToStartWorkout() {
+    context.read<UtilitiesProvider>().stopRestTimer();
     _clearControllers();
 
     setState(() {
@@ -163,6 +168,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     setState(() {
       _activeWorkout = workout.copyWith(exercises: updatedExercises);
     });
+
+    if (!set.isCompleted && updatedSet.isCompleted) {
+      context.read<UtilitiesProvider>().startRestTimer();
+    }
   }
 
   bool _validateCompletedSets(Workout workout) {
@@ -245,9 +254,56 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     return '$hour:$minute';
   }
 
+  String _formatShortDate(DateTime dateTime) {
+    final day = dateTime.day.toString().padLeft(2, '0');
+    final month = dateTime.month.toString().padLeft(2, '0');
+    return '$day/$month';
+  }
+
+  _PreviousExercisePerformance? _findPreviousPerformance(
+    List<Workout> history,
+    Exercise exercise,
+  ) {
+    final targetName = exercise.name.trim().toLowerCase();
+
+    for (final workout in history) {
+      for (final previousExercise in workout.exercises) {
+        if (previousExercise.name.trim().toLowerCase() != targetName) {
+          continue;
+        }
+
+        final hasTrackedSet = previousExercise.sets.any(
+          (set) => set.isCompleted && (set.weight > 0 || set.reps > 0),
+        );
+        if (!hasTrackedSet) {
+          continue;
+        }
+
+        return _PreviousExercisePerformance(
+          workoutDate: workout.date,
+          exercise: previousExercise,
+        );
+      }
+    }
+
+    return null;
+  }
+
+  ExerciseSet? _findSetByOrder(List<ExerciseSet> sets, int order) {
+    for (final set in sets) {
+      if (set.order == order && (set.weight > 0 || set.reps > 0)) {
+        return set;
+      }
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final templates = context.watch<WorkoutProvider>().templates;
+    final workoutProvider = context.watch<WorkoutProvider>();
+    final templates = workoutProvider.templates;
+    final history = workoutProvider.history;
+    final utilities = context.watch<UtilitiesProvider>();
     final workout = _activeWorkout;
 
     return Form(
@@ -270,8 +326,12 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             const SizedBox(height: 8),
             _buildWorkoutHeader(workout),
             const SizedBox(height: 16),
+            if (utilities.isRestTimerRunning) ...[
+              _buildRestTimerCard(utilities),
+              const SizedBox(height: 16),
+            ],
             for (var i = 0; i < workout.exercises.length; i++)
-              _buildExerciseCard(workout, i),
+              _buildExerciseCard(workout, i, history),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: _finishWorkout,
@@ -423,9 +483,14 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     );
   }
 
-  Widget _buildExerciseCard(Workout workout, int exerciseIndex) {
+  Widget _buildExerciseCard(
+    Workout workout,
+    int exerciseIndex,
+    List<Workout> history,
+  ) {
     final exercise = workout.exercises[exerciseIndex];
     final controllers = _setControllers[exercise.id] ?? [];
+    final previousPerformance = _findPreviousPerformance(history, exercise);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -443,6 +508,16 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
               exercise.muscleGroup,
               style: TextStyle(color: Colors.grey.shade700),
             ),
+            if (previousPerformance != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Last session: ${_formatShortDate(previousPerformance.workoutDate)}',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -459,51 +534,88 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                   final set = entry.value;
                   final input = controllers[setIndex];
                   final isCompleted = set.isCompleted;
+                  final previousSet = previousPerformance == null
+                      ? null
+                      : _findSetByOrder(
+                          previousPerformance.exercise.sets,
+                          set.order,
+                        );
 
                   return DataRow(
                     cells: [
                       DataCell(Text(set.order.toString())),
                       DataCell(
                         SizedBox(
-                          width: 96,
-                          child: TextFormField(
-                            key: input.weightKey,
-                            controller: input.weightController,
-                            enabled: !isCompleted,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d*\.?\d*'),
+                          width: 108,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextFormField(
+                                key: input.weightKey,
+                                controller: input.weightController,
+                                enabled: !isCompleted,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'^\d*\.?\d*'),
+                                  ),
+                                ],
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                  hintText: 'kg',
+                                ),
+                                validator: _validateWeight,
                               ),
+                              if (previousSet != null && previousSet.weight > 0)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    'Last: ${_formatWeight(previousSet.weight)} kg',
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ),
                             ],
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              border: OutlineInputBorder(),
-                              hintText: 'kg',
-                            ),
-                            validator: _validateWeight,
                           ),
                         ),
                       ),
                       DataCell(
                         SizedBox(
-                          width: 72,
-                          child: TextFormField(
-                            key: input.repsKey,
-                            controller: input.repsController,
-                            enabled: !isCompleted,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
+                          width: 80,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextFormField(
+                                key: input.repsKey,
+                                controller: input.repsController,
+                                enabled: !isCompleted,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                  hintText: 'reps',
+                                ),
+                                validator: _validateReps,
+                              ),
+                              if (previousSet != null && previousSet.reps > 0)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    'Last: ${previousSet.reps}',
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ),
                             ],
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              border: OutlineInputBorder(),
-                              hintText: 'reps',
-                            ),
-                            validator: _validateReps,
                           ),
                         ),
                       ),
@@ -525,6 +637,37 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                   );
                 }).toList(),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRestTimerCard(UtilitiesProvider utilities) {
+    return Card(
+      color: Theme.of(context).colorScheme.primaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(
+              Icons.timer_outlined,
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Rest timer: ${utilities.remainingRestSeconds}s remaining',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: utilities.stopRestTimer,
+              child: const Text('Stop'),
             ),
           ],
         ),
@@ -572,4 +715,14 @@ class _SetInputControllers {
     weightController.dispose();
     repsController.dispose();
   }
+}
+
+class _PreviousExercisePerformance {
+  final DateTime workoutDate;
+  final Exercise exercise;
+
+  const _PreviousExercisePerformance({
+    required this.workoutDate,
+    required this.exercise,
+  });
 }
