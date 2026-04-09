@@ -29,7 +29,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   void initState() {
     super.initState();
     _scannerController = MobileScannerController(
-      facing: CameraFacing.back,
+      facing: CameraFacing.front,
       detectionSpeed: DetectionSpeed.normal,
     );
   }
@@ -195,7 +195,7 @@ class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
           mute: false,
           loop: true,
           disableDragSeek: true,
-          useHybridComposition: true,
+          useHybridComposition: false,
         ),
       );
       _controller!.addListener(_onYoutubeStateChanged);
@@ -216,13 +216,14 @@ class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
   }
 
   String _buildSearchUrl() {
-    final query = Uri.encodeComponent('${widget.exercise.name} exercise tutorial');
+    final query = Uri.encodeComponent(
+      '${widget.exercise.name} exercise tutorial',
+    );
     return 'https://www.youtube.com/results?search_query=$query';
   }
 
   Uri _buildWebVideoUri({String? fallbackVideoId}) {
-    final videoId =
-        widget.exercise.videoId?.trim().isNotEmpty == true
+    final videoId = widget.exercise.videoId?.trim().isNotEmpty == true
         ? widget.exercise.videoId!.trim()
         : fallbackVideoId;
     return videoId != null
@@ -256,14 +257,17 @@ class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
       'barbell row': 'vT2GjY_Umpw',
       'đòn tạ kéo thân': 'vT2GjY_Umpw',
       'deadlift': 'op9kVnSso6Q',
-      'bench press': 'gRVjAtPip0Y',
-      'đẩy ngực phẳng': 'gRVjAtPip0Y',
+      'kéo tạ': 'op9kVnSso6Q',
+      'bench press': 'rT7DgVIA-7Y',
+      'đẩy ngực phẳng': 'rT7DgVIA-7Y',
       'squat': 'ultWZbUMPL8',
       'gánh tạ': 'ultWZbUMPL8',
       'lat pulldown': 'CAwf7n6Luuc',
       'military press': '2yjwXTZQDDI',
       'dumbbell curl': 'ykJmrZ5v0Oo',
       'hammer curl': 'zC3nLlEvin4',
+      'cable fly': 'ecS7mH_N_34',
+      'ép ngực với cáp': 'ecS7mH_N_34',
     };
 
     final directMatch = knownVideoMap[key];
@@ -281,7 +285,9 @@ class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
       }
     }
 
-    final beforeBracket = openBracket > 0 ? key.substring(0, openBracket).trim() : key;
+    final beforeBracket = openBracket > 0
+        ? key.substring(0, openBracket).trim()
+        : key;
     return knownVideoMap[beforeBracket];
   }
 
