@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import '../services/notification_service.dart';
 import '../services/local_storage_service.dart';
@@ -25,10 +26,12 @@ class UtilitiesProvider extends ChangeNotifier {
   TimeOfDay get workoutReminderTime => _workoutReminderTime;
 
   UtilitiesProvider() {
-    _loadReminderPreferences();
+    _loadPreferences();
   }
 
-  Future<void> _loadReminderPreferences() async {
+  Future<void> _loadPreferences() async {
+    _autoRestTimerEnabled = await _storage.getAutoRestTimerEnabled();
+    _restDurationSeconds = await _storage.getRestDurationSeconds();
     _workoutReminderEnabled = await _storage.getReminderEnabled();
     final hour = await _storage.getReminderHour();
     final minute = await _storage.getReminderMinute();
@@ -46,6 +49,7 @@ class UtilitiesProvider extends ChangeNotifier {
 
   void setAutoRestTimerEnabled(bool value) {
     _autoRestTimerEnabled = value;
+    unawaited(_storage.setAutoRestTimerEnabled(value));
     if (!value) {
       stopRestTimer();
       return;
@@ -55,6 +59,7 @@ class UtilitiesProvider extends ChangeNotifier {
 
   void setRestDurationSeconds(int value) {
     _restDurationSeconds = value.clamp(15, 300);
+    unawaited(_storage.setRestDurationSeconds(_restDurationSeconds));
     notifyListeners();
   }
 
@@ -68,9 +73,11 @@ class UtilitiesProvider extends ChangeNotifier {
     _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingRestSeconds <= 1) {
         timer.cancel();
+        _restTimer = null;
         _remainingRestSeconds = 0;
         notifyListeners();
-        NotificationService.instance.showRestTimerCompleted();
+        unawaited(NotificationService.instance.showRestTimerCompleted());
+        unawaited(_triggerRestCompletedFeedback());
         return;
       }
       _remainingRestSeconds -= 1;
@@ -119,6 +126,16 @@ class UtilitiesProvider extends ChangeNotifier {
 
   Future<void> sendTestNotification() {
     return NotificationService.instance.sendTestNotification();
+  }
+
+  Future<void> _triggerRestCompletedFeedback() async {
+    if (kIsWeb) {
+      return;
+    }
+
+    try {
+      await HapticFeedback.vibrate();
+    } catch (_) {}
   }
 
   @override

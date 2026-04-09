@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as timezone_data;
@@ -11,13 +14,18 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
   bool _isTimezoneInitialized = false;
+  static const int _restNotificationId = 5001;
+  static const int _reminderNotificationId = 5002;
+  static const int _testNotificationId = 5003;
 
-  static const AndroidNotificationChannel _restChannel =
+  static final AndroidNotificationChannel _restChannel =
       AndroidNotificationChannel(
-        'rest_timer_channel',
+        'rest_timer_channel_v2',
         'Rest Timer',
         description: 'Rest timer completion alerts',
         importance: Importance.high,
+        enableVibration: true,
+        vibrationPattern: Int64List.fromList([0, 350, 200, 350]),
       );
 
   static const AndroidNotificationChannel _reminderChannel =
@@ -29,6 +37,10 @@ class NotificationService {
       );
 
   Future<void> initialize() async {
+    if (kIsWeb) {
+      return;
+    }
+
     const initializationSettings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       iOS: DarwinInitializationSettings(),
@@ -40,7 +52,12 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
+    final iosPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
     await androidPlugin?.requestNotificationsPermission();
+    await iosPlugin?.requestPermissions(alert: true, badge: true, sound: true);
     await androidPlugin?.createNotificationChannel(_restChannel);
     await androidPlugin?.createNotificationChannel(_reminderChannel);
 
@@ -63,6 +80,10 @@ class NotificationService {
   }
 
   Future<void> showRestTimerCompleted() async {
+    if (kIsWeb) {
+      return;
+    }
+
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
         _restChannel.id,
@@ -70,12 +91,20 @@ class NotificationService {
         channelDescription: _restChannel.description,
         priority: Priority.high,
         importance: Importance.high,
+        category: AndroidNotificationCategory.alarm,
+        enableVibration: true,
+        playSound: true,
+        vibrationPattern: Int64List.fromList([0, 350, 200, 350]),
       ),
-      iOS: const DarwinNotificationDetails(),
+      iOS: const DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
     );
 
     await _plugin.show(
-      id: 5001,
+      id: _restNotificationId,
       title: 'Rest completed',
       body: 'Start your next set now.',
       notificationDetails: details,
@@ -87,8 +116,12 @@ class NotificationService {
     required int hour,
     required int minute,
   }) async {
+    if (kIsWeb) {
+      return;
+    }
+
     if (!enabled) {
-      await _plugin.cancel(id: 5002);
+      await _plugin.cancel(id: _reminderNotificationId);
       return;
     }
 
@@ -104,7 +137,7 @@ class NotificationService {
     );
 
     await _plugin.zonedSchedule(
-      id: 5002,
+      id: _reminderNotificationId,
       title: 'Workout Reminder',
       body: 'Time to train and log your session.',
       scheduledDate: _nextDailyDate(hour: hour, minute: minute),
@@ -133,17 +166,25 @@ class NotificationService {
   }
 
   Future<void> sendTestNotification() async {
+    if (kIsWeb) {
+      return;
+    }
+
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
         _reminderChannel.id,
         _reminderChannel.name,
         channelDescription: _reminderChannel.description,
       ),
-      iOS: const DarwinNotificationDetails(),
+      iOS: const DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
     );
 
     await _plugin.show(
-      id: 5003,
+      id: _testNotificationId,
       title: 'Personal Gym Log',
       body: 'Local notification is working.',
       notificationDetails: details,

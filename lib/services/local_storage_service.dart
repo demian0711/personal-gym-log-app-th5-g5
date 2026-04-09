@@ -24,6 +24,8 @@ class LocalStorageService {
   static const String _reminderEnabledKey = 'workout_reminder_enabled';
   static const String _reminderHourKey = 'workout_reminder_hour';
   static const String _reminderMinuteKey = 'workout_reminder_minute';
+  static const String _autoRestTimerEnabledKey = 'auto_rest_timer_enabled';
+  static const String _restDurationSecondsKey = 'rest_duration_seconds';
   static const String _isDarkModeKey = 'theme_is_dark_mode';
   static const String _workoutPrefix = 'workout_data_';
 
@@ -159,6 +161,22 @@ class LocalStorageService {
 
   Future<void> setReminderMinute(int value) async {
     await _prefsInstance.setInt(_reminderMinuteKey, value.clamp(0, 59));
+  }
+
+  Future<bool> getAutoRestTimerEnabled() async {
+    return _prefsInstance.getBool(_autoRestTimerEnabledKey) ?? true;
+  }
+
+  Future<void> setAutoRestTimerEnabled(bool value) async {
+    await _prefsInstance.setBool(_autoRestTimerEnabledKey, value);
+  }
+
+  Future<int> getRestDurationSeconds() async {
+    return _prefsInstance.getInt(_restDurationSecondsKey) ?? 90;
+  }
+
+  Future<void> setRestDurationSeconds(int value) async {
+    await _prefsInstance.setInt(_restDurationSecondsKey, value.clamp(15, 300));
   }
 
   Future<bool> getDarkModeEnabled() async {
