@@ -16,36 +16,6 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
   final WorkoutExportService _exportService = WorkoutExportService();
   bool _isExporting = false;
 
-  Future<void> _exportExcel(List<Workout> history) async {
-    if (history.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Chưa có dữ liệu để xuất file.')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isExporting = true;
-    });
-
-    try {
-      await _exportService.exportToExcel(history);
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Xuất Excel thất bại.')));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isExporting = false;
-        });
-      }
-    }
-  }
-
   Future<void> _exportPdf(List<Workout> history) async {
     if (history.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -92,25 +62,24 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      FilledButton.icon(
-                        onPressed: _isExporting
-                            ? null
-                            : () => _exportExcel(sortedHistory),
-                        icon: const Icon(Icons.table_chart_outlined),
-                        label: const Text('Xuất Excel'),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _isExporting
+                          ? null
+                          : () => _exportPdf(sortedHistory),
+                      icon: _isExporting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.picture_as_pdf_outlined),
+                      label: const Text('Xuất báo cáo PDF'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      OutlinedButton.icon(
-                        onPressed: _isExporting
-                            ? null
-                            : () => _exportPdf(sortedHistory),
-                        icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: const Text('Xuất PDF'),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -147,25 +116,24 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
               return Card(
                 child: Padding(
                   padding: const EdgeInsets.all(14),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      FilledButton.icon(
-                        onPressed: _isExporting
-                            ? null
-                            : () => _exportExcel(sortedHistory),
-                        icon: const Icon(Icons.table_chart_outlined),
-                        label: const Text('Xuất Excel'),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _isExporting
+                          ? null
+                          : () => _exportPdf(sortedHistory),
+                      icon: _isExporting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.picture_as_pdf_outlined),
+                      label: const Text('Xuất báo cáo PDF'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      OutlinedButton.icon(
-                        onPressed: _isExporting
-                            ? null
-                            : () => _exportPdf(sortedHistory),
-                        icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: const Text('Xuất PDF'),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               );

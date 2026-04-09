@@ -29,6 +29,33 @@ class UserFirestoreService {
     }, SetOptions(merge: true));
   }
 
+  Future<void> ensureUserDocument({
+    required String uid,
+    String? username,
+    required String email,
+    required String displayName,
+    String? photoUrl,
+    required String authProvider,
+  }) async {
+    await upsertUserDocument(
+      uid: uid,
+      username: username,
+      email: email,
+      displayName: displayName,
+      photoUrl: photoUrl,
+      authProvider: authProvider,
+    );
+
+    final doc = await _usersCollection.doc(uid).get();
+    if (!doc.exists) {
+      throw FirebaseException(
+        plugin: 'cloud_firestore',
+        code: 'user-doc-missing',
+        message: 'Không thể xác nhận dữ liệu user trên Firestore sau khi đăng ký.',
+      );
+    }
+  }
+
   Future<bool> isUsernameUnique(String username) async {
     final query = await _usersCollection
         .where('username', isEqualTo: username.toLowerCase())

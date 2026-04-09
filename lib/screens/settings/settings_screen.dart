@@ -22,6 +22,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _repsController = TextEditingController();
   double? _oneRmResult;
+  int _smartTargetReps = 8;
+  String? _selectedExerciseName;
 
   @override
   void dispose() {
@@ -40,6 +42,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
+  }
+
+  String _confidenceLabel(int score) {
+    if (score >= 80) return 'Cao';
+    if (score >= 60) return 'Tốt';
+    if (score >= 40) return 'Trung bình';
+    return 'Thấp';
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -56,6 +71,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Consumer<UtilitiesProvider>(
       builder: (context, utilities, _) {
+        final smartSuggestions = utilities.buildSmartOneRmSuggestions(
+          workout.history,
+          targetReps: _smartTargetReps,
+          maxItems: 8,
+        );
+
+        final effectiveSelectedExercise =
+            smartSuggestions.any(
+              (item) => item.exerciseName == _selectedExerciseName,
+            )
+            ? _selectedExerciseName
+            : (smartSuggestions.isNotEmpty
+                  ? smartSuggestions.first.exerciseName
+                  : null);
+
+        final selectedSuggestion = effectiveSelectedExercise == null
+            ? null
+            : utilities.buildExerciseOneRmSuggestion(
+                workout.history,
+                effectiveSelectedExercise,
+                targetReps: _smartTargetReps,
+              );
+
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -235,6 +273,136 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Smart 1RM Coach',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(width: 8),
+                        const Tooltip(
+                          message:
+                              'Dự đoán tự động từ lịch sử tập có đánh dấu hoàn thành.',
+                          child: Icon(Icons.info_outline, size: 18),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Gợi ý mức tạ an toàn cho số reps mục tiêu dựa trên dữ liệu thật của bạn.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 14),
+                    if (smartSuggestions.isEmpty)
+                      const Text(
+                        'Chưa đủ dữ liệu set hoàn thành. Hãy tập thêm vài buổi để mở khóa gợi ý thông minh.',
+                      ),
+                    if (smartSuggestions.isNotEmpty) ...[
+                      DropdownButtonFormField<String>(
+                        initialValue: effectiveSelectedExercise,
+                        decoration: const InputDecoration(
+                          labelText: 'Bài tập',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: smartSuggestions
+                            .map(
+                              (item) => DropdownMenuItem<String>(
+                                value: item.exerciseName,
+                                child: Text(item.exerciseName),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedExerciseName = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      Text('Reps mục tiêu: $_smartTargetReps'),
+                      Slider(
+                        min: 3,
+                        max: 12,
+                        divisions: 9,
+                        value: _smartTargetReps.toDouble(),
+                        label: '$_smartTargetReps reps',
+                        onChanged: (value) {
+                          setState(() {
+                            _smartTargetReps = value.toInt();
+                          });
+                        },
+                      ),
+                    ],
+                    if (selectedSuggestion != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _MetricTile(
+                              label: '1RM dự đoán',
+                              value:
+                                  '${selectedSuggestion.estimatedOneRm.toStringAsFixed(1)} kg',
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _MetricTile(
+                              label: 'Mức tạ đề xuất',
+                              value:
+                                  '${selectedSuggestion.suggestedWeight.toStringAsFixed(1)} kg',
+                              subtitle: 'cho $_smartTargetReps reps',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          Chip(
+                            avatar: const Icon(Icons.verified, size: 16),
+                            label: Text(
+                              'Độ tin cậy ${selectedSuggestion.confidenceScore}% (${_confidenceLabel(selectedSuggestion.confidenceScore)})',
+                            ),
+                          ),
+                          Chip(
+                            avatar: const Icon(Icons.dataset_outlined, size: 16),
+                            label: Text('Mẫu dữ liệu ${selectedSuggestion.sampleCount}'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Set tốt nhất: ${selectedSuggestion.bestSample.weight.toStringAsFixed(1)} kg × ${selectedSuggestion.bestSample.reps} reps (${_formatDate(selectedSuggestion.bestSample.workoutDate)})',
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: selectedSuggestion.recommendationByReps.entries
+                            .map(
+                              (entry) => Chip(
+                                label: Text(
+                                  '${entry.key} reps: ${entry.value.toStringAsFixed(1)} kg',
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
                       'Sức mạnh tối đa (1RM)',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -346,6 +514,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? subtitle;
+
+  const _MetricTile({
+    required this.label,
+    required this.value,
+    this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.45),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.labelMedium),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
+            Text(subtitle!, style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ],
+      ),
     );
   }
 }

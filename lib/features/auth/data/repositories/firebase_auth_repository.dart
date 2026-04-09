@@ -41,7 +41,7 @@ class FirebaseAuthRepository implements AuthRepository {
       );
     }
 
-    await _userFirestoreService.upsertUserDocument(
+    await _userFirestoreService.ensureUserDocument(
       uid: appUser.id,
       email: appUser.email,
       displayName: appUser.name,
@@ -75,7 +75,7 @@ class FirebaseAuthRepository implements AuthRepository {
       );
     }
 
-    await _userFirestoreService.upsertUserDocument(
+    await _userFirestoreService.ensureUserDocument(
       uid: appUser.id,
       username: username,
       email: appUser.email,
@@ -100,7 +100,7 @@ class FirebaseAuthRepository implements AuthRepository {
       );
     }
 
-    await _userFirestoreService.upsertUserDocument(
+    await _userFirestoreService.ensureUserDocument(
       uid: appUser.id,
       email: appUser.email,
       displayName: appUser.name,
