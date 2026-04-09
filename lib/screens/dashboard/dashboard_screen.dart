@@ -32,6 +32,7 @@ class DashboardScreen extends StatelessWidget {
         final weeklyCount = sortedHistory
             .where((workout) => workout.date.isAfter(startOfWeek))
             .length;
+        final streakDays = _calculateWorkoutStreak(sortedHistory);
         final totalVolume = _sumTotalVolume(sortedHistory);
         final personalRecord = _findPersonalRecord(sortedHistory);
 
@@ -45,6 +46,8 @@ class DashboardScreen extends StatelessWidget {
               _buildWelcomeCard(context),
               const SizedBox(height: 16),
               _buildWeeklyProgress(context, weeklyCount, weeklyTarget),
+              const SizedBox(height: 16),
+              _buildStreakAndQuickAction(context, streakDays, onStartExercisesTap),
               const SizedBox(height: 16),
               Text(
                 'Tổng quan nhanh',
@@ -120,7 +123,7 @@ Widget _buildHeroImage() {
         const Padding(
           padding: EdgeInsets.all(16),
           child: Text(
-            'Gym Focus',
+            'Sẵn sàng bứt phá hôm nay',
             style: TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -130,6 +133,63 @@ Widget _buildHeroImage() {
         ),
       ],
     ),
+  );
+}
+
+Widget _buildStreakAndQuickAction(
+  BuildContext context,
+  int streakDays,
+  VoidCallback? onStartExercisesTap,
+) {
+  final colorScheme = Theme.of(context).colorScheme;
+  final textTheme = Theme.of(context).textTheme;
+
+  return Row(
+    children: [
+      Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.local_fire_department,
+                color: colorScheme.primary,
+                size: 22,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Chuỗi tập hiện tại',
+                      style: textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$streakDays ngày liên tiếp',
+                      style: textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(width: 10),
+      FilledButton.icon(
+        onPressed: onStartExercisesTap,
+        icon: const Icon(Icons.play_arrow_rounded),
+        label: const Text('Bắt đầu tập nhanh'),
+      ),
+    ],
   );
 }
 
@@ -287,6 +347,8 @@ class _StrengthChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final yInterval = _resolveGridInterval(data);
+    final maxY = _resolveMaxY(data);
 
     final spots = data
         .asMap()
@@ -303,14 +365,14 @@ class _StrengthChartCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Strength Growth Chart',
+              'Biểu đồ tăng trưởng sức mạnh',
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Recent 7 workouts (total volume)',
+              '7 buổi gần nhất (tổng khối lượng)',
               style: textTheme.bodySmall,
             ),
             const SizedBox(height: 14),
@@ -321,7 +383,7 @@ class _StrengthChartCard extends StatelessWidget {
                   minX: 0,
                   maxX: (data.length - 1).toDouble(),
                   minY: 0,
-                  maxY: _resolveMaxY(data),
+                  maxY: maxY,
                   borderData: FlBorderData(
                     show: true,
                     border: Border(
@@ -338,7 +400,7 @@ class _StrengthChartCard extends StatelessWidget {
                     ),
                   ),
                   gridData: FlGridData(
-                    horizontalInterval: _resolveGridInterval(data),
+                    horizontalInterval: yInterval,
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
                         color: colorScheme.outlineVariant.withValues(
@@ -358,11 +420,11 @@ class _StrengthChartCard extends StatelessWidget {
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        interval: 20,
-                        reservedSize: 34,
+                        interval: yInterval,
+                        reservedSize: 44,
                         getTitlesWidget: (value, meta) {
                           return Text(
-                            value.toInt().toString(),
+                            _formatChartAxisLabel(value),
                             style: textTheme.labelSmall,
                           );
                         },
@@ -381,7 +443,7 @@ class _StrengthChartCard extends StatelessWidget {
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              'S${idx + 1}',
+                              'B${idx + 1}',
                               style: textTheme.labelSmall,
                             ),
                           );
@@ -467,7 +529,7 @@ class _LatestWorkoutCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Latest Workout',
+                    'Buổi tập gần nhất',
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -483,7 +545,7 @@ class _LatestWorkoutCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      'No workout data yet. Complete a workout to see a summary here.',
+                      'Chưa có dữ liệu buổi tập. Hoàn thành một buổi để xem tóm tắt tại đây.',
                       style: textTheme.bodyMedium,
                     ),
                   ),
@@ -493,7 +555,7 @@ class _LatestWorkoutCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Latest Workout',
+                    'Buổi tập gần nhất',
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -519,12 +581,12 @@ class _LatestWorkoutCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Date: ${_formatDate(workout!.date)}',
+                          'Ngày: ${_formatDate(workout!.date)}',
                           style: textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Duration: ${workout!.durationInMinutes} min • ${workout!.exercises.length} exercises',
+                          'Thời lượng: ${workout!.durationInMinutes} phút • ${workout!.exercises.length} bài tập',
                           style: textTheme.bodyMedium,
                         ),
                       ],
@@ -593,18 +655,84 @@ double _resolveMaxY(List<double> data) {
   if (maxValue <= 0) {
     return 100;
   }
-  return maxValue * 1.25;
+  final interval = _resolveGridInterval(data);
+  final roundedTop = (maxValue / interval).ceil() * interval;
+  return roundedTop + interval;
 }
 
 double _resolveGridInterval(List<double> data) {
   final maxValue = data.reduce((a, b) => a > b ? a : b);
-  if (maxValue <= 100) {
+  if (maxValue <= 0) {
     return 20;
   }
-  if (maxValue <= 500) {
-    return 50;
+
+  final roughInterval = maxValue / 4;
+  return _roundToNiceInterval(roughInterval);
+}
+
+double _roundToNiceInterval(double value) {
+  if (value <= 1) {
+    return 1;
   }
-  return 100;
+
+  final exponent = value.toStringAsExponential(0).split('e');
+  final base = double.parse(exponent[0]);
+  final power = int.parse(exponent[1]);
+  final factor = base <= 2
+      ? 2
+      : base <= 5
+      ? 5
+      : 10;
+
+  return factor * (power >= 0 ? _pow10(power) : 1 / _pow10(-power));
+}
+
+double _pow10(int power) {
+  double result = 1;
+  for (var index = 0; index < power; index++) {
+    result *= 10;
+  }
+  return result;
+}
+
+String _formatChartAxisLabel(double value) {
+  if (value >= 1000) {
+    final compact = value / 1000;
+    return compact == compact.roundToDouble()
+        ? '${compact.toInt()}k'
+        : '${compact.toStringAsFixed(1)}k';
+  }
+  return value.toInt().toString();
+}
+
+int _calculateWorkoutStreak(List<Workout> history) {
+  if (history.isEmpty) {
+    return 0;
+  }
+
+  final workoutDays = history
+      .map((workout) => DateTime(workout.date.year, workout.date.month, workout.date.day))
+      .toSet()
+      .toList()
+    ..sort((a, b) => b.compareTo(a));
+
+  final today = DateTime.now();
+  DateTime pointer = DateTime(today.year, today.month, today.day);
+
+  if (!workoutDays.contains(pointer)) {
+    pointer = pointer.subtract(const Duration(days: 1));
+    if (!workoutDays.contains(pointer)) {
+      return 0;
+    }
+  }
+
+  var streak = 0;
+  while (workoutDays.contains(pointer)) {
+    streak++;
+    pointer = pointer.subtract(const Duration(days: 1));
+  }
+
+  return streak;
 }
 
 String _formatDate(DateTime date) {
