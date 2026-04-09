@@ -645,31 +645,111 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   }
 
   Widget _buildRestTimerCard(UtilitiesProvider utilities) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final totalSeconds = utilities.restDurationSeconds;
+    final remainingSeconds = utilities.remainingRestSeconds;
+    final progress = totalSeconds <= 0
+        ? 0.0
+        : (remainingSeconds / totalSeconds).clamp(0.0, 1.0);
+
     return Card(
-      color: Theme.of(context).colorScheme.primaryContainer,
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(
-              Icons.timer_outlined,
-              color: Theme.of(context).colorScheme.onPrimaryContainer,
+        padding: EdgeInsets.zero,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                colorScheme.primary,
+                colorScheme.primaryContainer,
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Rest timer: ${utilities.remainingRestSeconds}s remaining',
+          ),
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: colorScheme.onPrimary.withOpacity(0.14),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      Icons.timer_outlined,
+                      color: colorScheme.onPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Rest Timer Running',
+                          style: TextStyle(
+                            color: colorScheme.onPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Get ready for your next set',
+                          style: TextStyle(
+                            color: colorScheme.onPrimary.withOpacity(0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: utilities.stopRestTimer,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: colorScheme.surface.withOpacity(0.92),
+                      foregroundColor: colorScheme.primary,
+                    ),
+                    child: const Text('Stop'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Text(
+                '$remainingSeconds s',
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onPrimary,
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
                 ),
               ),
-            ),
-            TextButton(
-              onPressed: utilities.stopRestTimer,
-              child: const Text('Stop'),
-            ),
-          ],
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 10,
+                  backgroundColor: colorScheme.onPrimary.withOpacity(0.2),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    colorScheme.onPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '$remainingSeconds / $totalSeconds seconds remaining',
+                style: TextStyle(
+                  color: colorScheme.onPrimary.withOpacity(0.92),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
