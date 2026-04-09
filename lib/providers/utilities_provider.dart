@@ -1,13 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 
+import '../models/workout.dart';
 import '../services/notification_service.dart';
 import '../services/local_storage_service.dart';
+import '../services/one_rm_service.dart';
 
 class UtilitiesProvider extends ChangeNotifier {
   final LocalStorageService _storage = LocalStorageService();
+  final OneRmService _oneRmService = const OneRmService();
 
   bool _autoRestTimerEnabled = true;
   int _restDurationSeconds = 90;
@@ -86,8 +88,39 @@ class UtilitiesProvider extends ChangeNotifier {
   }
 
   double calculateOneRepMax(double weight, int reps) {
-    if (weight <= 0 || reps <= 0) return 0;
-    return weight * (1 + reps / 30);
+    return _oneRmService.calculateOneRm(weight: weight, reps: reps);
+  }
+
+  double calculateRecommendedTrainingWeight(double oneRm, int targetReps) {
+    final raw = _oneRmService.calculateTrainingWeight(
+      oneRm: oneRm,
+      targetReps: targetReps,
+    );
+    return _oneRmService.roundLoad(raw);
+  }
+
+  List<SmartOneRmSuggestion> buildSmartOneRmSuggestions(
+    List<Workout> history, {
+    int targetReps = 8,
+    int maxItems = 6,
+  }) {
+    return _oneRmService.buildSmartSuggestions(
+      history,
+      targetReps: targetReps,
+      maxItems: maxItems,
+    );
+  }
+
+  SmartOneRmSuggestion? buildExerciseOneRmSuggestion(
+    List<Workout> history,
+    String exerciseName, {
+    int targetReps = 8,
+  }) {
+    return _oneRmService.buildExerciseSuggestion(
+      history,
+      exerciseName,
+      targetReps: targetReps,
+    );
   }
 
   Future<void> setWorkoutReminderEnabled(bool value) async {

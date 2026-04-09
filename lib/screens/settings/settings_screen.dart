@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../features/analytics/presentation/screens/analytics_screen.dart';
-import '../../features/progress_photos/presentation/screens/progress_photos_screen.dart';
-import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/providers/profile_provider.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/progress_photos/presentation/screens/progress_photos_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/utilities_provider.dart';
@@ -20,7 +20,10 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _repsController = TextEditingController();
+
   double? _oneRmResult;
+  int _smartTargetReps = 8;
+  String? _selectedExerciseName;
 
   @override
   void dispose() {
@@ -39,22 +42,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
+  }
+
+  String _confidenceLabel(int score) {
+    if (score >= 80) return 'High';
+    if (score >= 60) return 'Good';
+    if (score >= 40) return 'Medium';
+    return 'Low';
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final profileProvider = context.watch<ProfileProvider>();
     final workout = context.watch<WorkoutProvider>();
     final themeProvider = context.watch<ThemeProvider>();
-    
+
     final profile = profileProvider.profile;
     final user = auth.currentUser;
-    
-    final displayName = profile?.displayName ?? user?.name ?? 'Tài khoản';
-    final email = profile?.email ?? user?.email ?? 'Không có email';
+    final displayName = profile?.displayName ?? user?.name ?? 'Account';
+    final email = profile?.email ?? user?.email ?? 'No email';
     final photoUrl = profile?.photoUrl;
 
     return Consumer<UtilitiesProvider>(
       builder: (context, utilities, _) {
+        final smartSuggestions = utilities.buildSmartOneRmSuggestions(
+          workout.history,
+          targetReps: _smartTargetReps,
+          maxItems: 8,
+        );
+        final effectiveSelectedExercise =
+            (smartSuggestions.any(
+                  (item) => item.exerciseName == _selectedExerciseName,
+                ))
+            ? _selectedExerciseName
+            : (smartSuggestions.isNotEmpty
+                  ? smartSuggestions.first.exerciseName
+                  : null);
+        final selectedSuggestion =
+            effectiveSelectedExercise == null
+            ? null
+            : utilities.buildExerciseOneRmSuggestion(
+                workout.history,
+                effectiveSelectedExercise,
+                targetReps: _smartTargetReps,
+              );
+
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -69,9 +106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const ProfileScreen(),
-                    ),
+                    MaterialPageRoute<void>(builder: (_) => const ProfileScreen()),
                   );
                 },
               ),
@@ -80,9 +115,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.bar_chart),
-                title: const Text('Dữ liệu cá nhân'),
+                title: const Text('Personal data'),
                 subtitle: Text(
-                  'Mẫu tập: ${workout.templates.length} • Lịch sử: ${workout.history.length}',
+                  'Templates: ${workout.templates.length} - History: ${workout.history.length}',
                 ),
               ),
             ),
@@ -90,14 +125,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.analytics_outlined),
-                title: const Text('Phân tích chuyên sâu'),
-                subtitle: const Text('Volume và 1RM theo thời gian'),
+                title: const Text('Advanced analytics'),
+                subtitle: const Text('Volume and 1RM trend over time'),
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const AnalyticsScreen(),
-                    ),
+                    MaterialPageRoute<void>(builder: (_) => const AnalyticsScreen()),
                   );
                 },
               ),
@@ -106,10 +139,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.photo_camera_back_outlined),
-                title: const Text('Ảnh tiến trình (Cloudinary)'),
-                subtitle: const Text(
-                  'Theo dõi sự thay đổi hình thể qua ảnh',
-                ),
+                title: const Text('Progress photos (Cloudinary)'),
+                subtitle: const Text('Track physique changes by photo timeline'),
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
                 onTap: () {
                   Navigator.of(context).push(
@@ -128,12 +159,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   vertical: 6,
                 ),
                 secondary: const Icon(Icons.dark_mode_outlined),
-                title: const Text('Chế độ tối'),
-                subtitle: const Text('Giao diện tối giúp bảo vệ mắt'),
+                title: const Text('Dark mode'),
+                subtitle: const Text('Use a darker theme for low-light viewing'),
                 value: themeProvider.isDarkMode,
-                onChanged: (value) {
-                  themeProvider.setDarkMode(value);
-                },
+                onChanged: themeProvider.setDarkMode,
               ),
             ),
             const SizedBox(height: 12),
@@ -143,18 +172,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context: context,
                   builder: (dialogContext) {
                     return AlertDialog(
-                      title: const Text('Xóa dữ liệu'),
+                      title: const Text('Delete data'),
                       content: const Text(
-                        'Bạn có chắc chắn muốn xóa toàn bộ mẫu tập và lịch sử cho tài khoản này?',
+                        'Delete all templates and workout history for this account?',
                       ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(dialogContext).pop(false),
-                          child: const Text('Hủy'),
+                          child: const Text('Cancel'),
                         ),
                         FilledButton(
                           onPressed: () => Navigator.of(dialogContext).pop(true),
-                          child: const Text('Xóa'),
+                          child: const Text('Delete'),
                         ),
                       ],
                     );
@@ -165,19 +194,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   await workout.clearAll();
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đã xóa toàn bộ dữ liệu.')),
+                      const SnackBar(content: Text('All workout data deleted.')),
                     );
                   }
                 }
               },
               icon: const Icon(Icons.delete_outline),
-              label: const Text('Xóa dữ liệu cá nhân'),
+              label: const Text('Delete personal data'),
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: () => auth.logout(),
+              onPressed: auth.logout,
               icon: const Icon(Icons.logout),
-              label: const Text('Đăng xuất'),
+              label: const Text('Logout'),
             ),
             const SizedBox(height: 16),
             Card(
@@ -187,23 +216,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hẹn giờ nghỉ',
+                      'Rest timer',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Tự động hẹn giờ'),
+                      title: const Text('Auto start timer'),
                       subtitle: const Text(
-                        'Bắt đầu đếm ngược ngay khi hoàn thành một hiệp.',
+                        'Start countdown right after a completed set.',
                       ),
                       value: utilities.autoRestTimerEnabled,
                       onChanged: utilities.setAutoRestTimerEnabled,
                     ),
                     const SizedBox(height: 8),
-                    Text('Thời gian: ${utilities.restDurationSeconds} giây'),
+                    Text('Duration: ${utilities.restDurationSeconds} seconds'),
                     Slider(
                       min: 15,
                       max: 300,
@@ -216,7 +245,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     if (utilities.isRestTimerRunning)
                       Text(
-                        'Còn lại: ${utilities.remainingRestSeconds} giây',
+                        'Remaining: ${utilities.remainingRestSeconds} seconds',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                   ],
@@ -231,10 +260,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Sức mạnh tối đa (1RM)',
+                      'One Rep Max (manual)',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -243,29 +272,160 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         decimal: true,
                       ),
                       decoration: const InputDecoration(
-                        labelText: 'Khối lượng (kg)',
+                        labelText: 'Weight (kg)',
                       ),
                     ),
                     const SizedBox(height: 10),
                     TextField(
                       controller: _repsController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Số lần (reps)'),
+                      decoration: const InputDecoration(labelText: 'Reps'),
                     ),
                     const SizedBox(height: 12),
                     FilledButton.icon(
                       onPressed: () => _calculateOneRm(utilities),
                       icon: const Icon(Icons.calculate),
-                      label: const Text('Tính toán'),
+                      label: const Text('Calculate'),
                     ),
                     if (_oneRmResult != null) ...[
                       const SizedBox(height: 12),
                       Text(
-                        'Ước tính 1RM: ${_oneRmResult!.toStringAsFixed(1)} kg',
+                        'Estimated 1RM: ${_oneRmResult!.toStringAsFixed(1)} kg',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 4),
-                      const Text('Công thức: khối lượng × (1 + reps/30)'),
+                      const Text('Formula: weight x (1 + reps/30)'),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Smart 1RM Coach',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Tooltip(
+                          message:
+                              'Auto prediction from completed workout logs using Epley.',
+                          child: Icon(Icons.info_outline, size: 18),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Reads training history and suggests safe working weight for your target reps.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 14),
+                    if (smartSuggestions.isEmpty)
+                      const Text(
+                        'Not enough completed sets yet. Finish a few workouts to unlock smart suggestions.',
+                      ),
+                    if (smartSuggestions.isNotEmpty) ...[
+                      DropdownButtonFormField<String>(
+                        initialValue: effectiveSelectedExercise,
+                        decoration: const InputDecoration(
+                          labelText: 'Exercise',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: smartSuggestions
+                            .map(
+                              (item) => DropdownMenuItem<String>(
+                                value: item.exerciseName,
+                                child: Text(item.exerciseName),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedExerciseName = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      Text('Target reps: $_smartTargetReps'),
+                      Slider(
+                        min: 3,
+                        max: 12,
+                        divisions: 9,
+                        value: _smartTargetReps.toDouble(),
+                        label: '$_smartTargetReps reps',
+                        onChanged: (value) {
+                          setState(() {
+                            _smartTargetReps = value.toInt();
+                          });
+                        },
+                      ),
+                    ],
+                    if (selectedSuggestion != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _MetricTile(
+                              label: 'Predicted 1RM',
+                              value:
+                                  '${selectedSuggestion.estimatedOneRm.toStringAsFixed(1)} kg',
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _MetricTile(
+                              label: 'Suggested load',
+                              value:
+                                  '${selectedSuggestion.suggestedWeight.toStringAsFixed(1)} kg',
+                              subtitle: 'for $_smartTargetReps reps',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Chip(
+                            avatar: const Icon(Icons.verified, size: 16),
+                            label: Text(
+                              'Confidence ${selectedSuggestion.confidenceScore}% (${_confidenceLabel(selectedSuggestion.confidenceScore)})',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Chip(
+                            avatar: const Icon(Icons.dataset_outlined, size: 16),
+                            label: Text('Samples ${selectedSuggestion.sampleCount}'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Best logged set: ${selectedSuggestion.bestSample.weight.toStringAsFixed(1)} kg x ${selectedSuggestion.bestSample.reps} reps '
+                        '(${_formatDate(selectedSuggestion.bestSample.workoutDate)})',
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: selectedSuggestion.recommendationByReps.entries
+                            .map(
+                              (entry) => Chip(
+                                label: Text(
+                                  '${entry.key} reps: ${entry.value.toStringAsFixed(1)} kg',
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
                     ],
                   ],
                 ),
@@ -279,17 +439,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Thông báo địa phương',
+                      'Local notifications',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Nhắc nhở tập luyện (hàng ngày)'),
+                      title: const Text('Daily workout reminder'),
                       subtitle: Text(
-                        'Giờ nhắc: ${utilities.workoutReminderTime.format(context)}',
+                        'Reminder time: ${utilities.workoutReminderTime.format(context)}',
                       ),
                       value: utilities.workoutReminderEnabled,
                       onChanged: (value) async {
@@ -310,19 +470,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Đã đặt giờ nhắc: ${selected.format(context)}',
+                                'Reminder set to ${selected.format(context)}',
                               ),
                             ),
                           );
                         }
                       },
                       icon: const Icon(Icons.schedule_outlined),
-                      label: const Text('Đặt giờ nhắc nhở'),
+                      label: const Text('Set reminder time'),
                     ),
                     OutlinedButton.icon(
                       onPressed: utilities.sendTestNotification,
                       icon: const Icon(Icons.notifications_active_outlined),
-                      label: const Text('Gửi thông báo thử nghiệm'),
+                      label: const Text('Send test notification'),
                     ),
                   ],
                 ),
@@ -331,6 +491,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? subtitle;
+
+  const _MetricTile({
+    required this.label,
+    required this.value,
+    this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(
+            context,
+          ).colorScheme.outline.withValues(alpha: 0.45),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.labelMedium),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
+            Text(subtitle!, style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ],
+      ),
     );
   }
 }
