@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_set.dart';
 import '../../models/workout.dart';
-import '../../providers/utilities_provider.dart';
 import '../../providers/workout_provider.dart';
 
 class ActiveWorkoutScreen extends StatefulWidget {
@@ -60,7 +59,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     });
   }
 
-  Future<void> _finishWorkout() async {
+  void _finishWorkout() {
     final workout = _activeWorkout;
     if (workout == null) return;
 
@@ -77,10 +76,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
           : DateTime.now().difference(_startTime!).inMinutes,
     );
 
-    context.read<UtilitiesProvider>().stopRestTimer();
-    await context.read<WorkoutProvider>().addWorkoutLog(completedWorkout);
-
-    if (!mounted) return;
+    context.read<WorkoutProvider>().addWorkoutLog(completedWorkout);
 
     _clearControllers();
 
@@ -94,7 +90,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   }
 
   void _backToStartWorkout() {
-    context.read<UtilitiesProvider>().stopRestTimer();
     _clearControllers();
 
     setState(() {
@@ -170,10 +165,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     setState(() {
       _activeWorkout = workout.copyWith(exercises: updatedExercises);
     });
-
-    if (!set.isCompleted && updatedSet.isCompleted) {
-      context.read<UtilitiesProvider>().startRestTimer();
-    }
   }
 
   bool _validateCompletedSets(Workout workout) {
@@ -256,56 +247,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     return '$hour:$minute';
   }
 
-  String _formatShortDate(DateTime dateTime) {
-    final day = dateTime.day.toString().padLeft(2, '0');
-    final month = dateTime.month.toString().padLeft(2, '0');
-    return '$day/$month';
-  }
-
-  _PreviousExercisePerformance? _findPreviousPerformance(
-    List<Workout> history,
-    Exercise exercise,
-  ) {
-    final targetName = exercise.name.trim().toLowerCase();
-
-    for (final workout in history) {
-      for (final previousExercise in workout.exercises) {
-        if (previousExercise.name.trim().toLowerCase() != targetName) {
-          continue;
-        }
-
-        final hasTrackedSet = previousExercise.sets.any(
-          (set) => set.isCompleted && (set.weight > 0 || set.reps > 0),
-        );
-        if (!hasTrackedSet) {
-          continue;
-        }
-
-        return _PreviousExercisePerformance(
-          workoutDate: workout.date,
-          exercise: previousExercise,
-        );
-      }
-    }
-
-    return null;
-  }
-
-  ExerciseSet? _findSetByOrder(List<ExerciseSet> sets, int order) {
-    for (final set in sets) {
-      if (set.order == order && (set.weight > 0 || set.reps > 0)) {
-        return set;
-      }
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final workoutProvider = context.watch<WorkoutProvider>();
-    final templates = workoutProvider.templates;
-    final history = workoutProvider.history;
-    final utilities = context.watch<UtilitiesProvider>();
+    final templates = context.watch<WorkoutProvider>().templates;
     final workout = _activeWorkout;
 
     return Form(
@@ -328,12 +272,8 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             const SizedBox(height: 8),
             _buildWorkoutHeader(workout),
             const SizedBox(height: 16),
-            if (utilities.isRestTimerRunning) ...[
-              _buildRestTimerCard(utilities),
-              const SizedBox(height: 16),
-            ],
             for (var i = 0; i < workout.exercises.length; i++)
-              _buildExerciseCard(workout, i, history),
+              _buildExerciseCard(workout, i),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: _finishWorkout,
@@ -433,8 +373,8 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.black.withOpacity(0.55),
-                  Colors.black.withOpacity(0.05),
+                  Colors.black.withValues(alpha: 0.55),
+                  Colors.black.withValues(alpha: 0.05),
                 ],
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
@@ -483,14 +423,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     );
   }
 
-  Widget _buildExerciseCard(
-    Workout workout,
-    int exerciseIndex,
-    List<Workout> history,
-  ) {
+  Widget _buildExerciseCard(Workout workout, int exerciseIndex) {
     final exercise = workout.exercises[exerciseIndex];
     final controllers = _setControllers[exercise.id] ?? [];
-    final previousPerformance = _findPreviousPerformance(history, exercise);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -508,16 +443,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
               exercise.muscleGroup,
               style: TextStyle(color: Colors.grey.shade700),
             ),
-            if (previousPerformance != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Last session: ${_formatShortDate(previousPerformance.workoutDate)}',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
             const SizedBox(height: 12),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -534,88 +459,51 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                   final set = entry.value;
                   final input = controllers[setIndex];
                   final isCompleted = set.isCompleted;
-                  final previousSet = previousPerformance == null
-                      ? null
-                      : _findSetByOrder(
-                          previousPerformance.exercise.sets,
-                          set.order,
-                        );
 
                   return DataRow(
                     cells: [
                       DataCell(Text(set.order.toString())),
                       DataCell(
                         SizedBox(
-                          width: 108,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              TextFormField(
-                                key: input.weightKey,
-                                controller: input.weightController,
-                                enabled: !isCompleted,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                      decimal: true,
-                                    ),
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.allow(
-                                    RegExp(r'^\d*\.?\d*'),
-                                  ),
-                                ],
-                                decoration: const InputDecoration(
-                                  isDense: true,
-                                  border: OutlineInputBorder(),
-                                  hintText: 'kg',
-                                ),
-                                validator: _validateWeight,
+                          width: 96,
+                          child: TextFormField(
+                            key: input.weightKey,
+                            controller: input.weightController,
+                            enabled: !isCompleted,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'^\d*\.?\d*'),
                               ),
-                              if (previousSet != null && previousSet.weight > 0)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    'Last: ${_formatWeight(previousSet.weight)} kg',
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                ),
                             ],
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              border: OutlineInputBorder(),
+                              hintText: 'kg',
+                            ),
+                            validator: _validateWeight,
                           ),
                         ),
                       ),
                       DataCell(
                         SizedBox(
-                          width: 80,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              TextFormField(
-                                key: input.repsKey,
-                                controller: input.repsController,
-                                enabled: !isCompleted,
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                ],
-                                decoration: const InputDecoration(
-                                  isDense: true,
-                                  border: OutlineInputBorder(),
-                                  hintText: 'reps',
-                                ),
-                                validator: _validateReps,
-                              ),
-                              if (previousSet != null && previousSet.reps > 0)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    'Last: ${previousSet.reps}',
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                ),
+                          width: 72,
+                          child: TextFormField(
+                            key: input.repsKey,
+                            controller: input.repsController,
+                            enabled: !isCompleted,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
                             ],
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              border: OutlineInputBorder(),
+                              hintText: 'reps',
+                            ),
+                            validator: _validateReps,
                           ),
                         ),
                       ),
@@ -639,117 +527,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRestTimerCard(UtilitiesProvider utilities) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final totalSeconds = utilities.restDurationSeconds;
-    final remainingSeconds = utilities.remainingRestSeconds;
-    final progress = totalSeconds <= 0
-        ? 0.0
-        : (remainingSeconds / totalSeconds).clamp(0.0, 1.0);
-
-    return Card(
-      elevation: 0,
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: EdgeInsets.zero,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                colorScheme.primary,
-                colorScheme.primaryContainer,
-              ],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-          ),
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: colorScheme.onPrimary.withOpacity(0.14),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(
-                      Icons.timer_outlined,
-                      color: colorScheme.onPrimary,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Rest Timer Running',
-                          style: TextStyle(
-                            color: colorScheme.onPrimary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Get ready for your next set',
-                          style: TextStyle(
-                            color: colorScheme.onPrimary.withOpacity(0.9),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  FilledButton.tonal(
-                    onPressed: utilities.stopRestTimer,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: colorScheme.surface.withOpacity(0.92),
-                      foregroundColor: colorScheme.primary,
-                    ),
-                    child: const Text('Stop'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Text(
-                '$remainingSeconds s',
-                style: TextStyle(
-                  color: colorScheme.onPrimary,
-                  fontSize: 34,
-                  fontWeight: FontWeight.w800,
-                  height: 1,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(999),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 10,
-                  backgroundColor: colorScheme.onPrimary.withOpacity(0.2),
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    colorScheme.onPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '$remainingSeconds / $totalSeconds seconds remaining',
-                style: TextStyle(
-                  color: colorScheme.onPrimary.withOpacity(0.92),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -795,14 +572,4 @@ class _SetInputControllers {
     weightController.dispose();
     repsController.dispose();
   }
-}
-
-class _PreviousExercisePerformance {
-  final DateTime workoutDate;
-  final Exercise exercise;
-
-  const _PreviousExercisePerformance({
-    required this.workoutDate,
-    required this.exercise,
-  });
 }

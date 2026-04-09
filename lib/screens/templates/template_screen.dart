@@ -6,7 +6,7 @@ import '../../models/exercise_set.dart';
 import '../../models/workout.dart';
 import '../../providers/workout_provider.dart';
 import 'muscle_groups_screen.dart';
-import 'qr_exercise_scanner_screen.dart';
+import 'qr_scanner_screen.dart';
 
 class TemplateScreen extends StatefulWidget {
   const TemplateScreen({super.key});
@@ -35,12 +35,17 @@ class _TemplateScreenState extends State<TemplateScreen>
   void _showTemplateDialog({Workout? template}) {
     final formKey = GlobalKey<FormState>();
     final titleController = TextEditingController(text: template?.title ?? '');
+    const violetBlue = Color(0xFF3D5A80);
 
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(template == null ? 'Mẫu tập mới' : 'Chỉnh sửa mẫu tập'),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: Text(template == null ? 'Mẫu mới' : 'Sửa mẫu tập'),
           content: Form(
             key: formKey,
             child: TextFormField(
@@ -48,10 +53,13 @@ class _TemplateScreenState extends State<TemplateScreen>
               decoration: const InputDecoration(
                 labelText: 'Tên mẫu tập',
                 border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: violetBlue),
+                ),
               ),
               validator: (value) {
                 final trimmed = value?.trim() ?? '';
-                if (trimmed.isEmpty) return 'Không được để trống';
+                if (trimmed.isEmpty) return 'Bắt buộc';
                 return null;
               },
             ),
@@ -59,9 +67,10 @@ class _TemplateScreenState extends State<TemplateScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Hủy'),
+              child: const Text('Hủy', style: TextStyle(color: violetBlue)),
             ),
             FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: violetBlue),
               onPressed: () {
                 if (!(formKey.currentState?.validate() ?? false)) return;
 
@@ -97,11 +106,16 @@ class _TemplateScreenState extends State<TemplateScreen>
     final nameController = TextEditingController();
     final muscleController = TextEditingController();
     final setsController = TextEditingController();
+    const violetBlue = Color(0xFF3D5A80);
 
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           title: const Text('Thêm bài tập'),
           content: Form(
             key: formKey,
@@ -113,10 +127,13 @@ class _TemplateScreenState extends State<TemplateScreen>
                   decoration: const InputDecoration(
                     labelText: 'Tên bài tập',
                     border: OutlineInputBorder(),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: violetBlue),
+                    ),
                   ),
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
-                    if (trimmed.isEmpty) return 'Không được để trống';
+                    if (trimmed.isEmpty) return 'Bắt buộc';
                     return null;
                   },
                 ),
@@ -126,10 +143,13 @@ class _TemplateScreenState extends State<TemplateScreen>
                   decoration: const InputDecoration(
                     labelText: 'Nhóm cơ',
                     border: OutlineInputBorder(),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: violetBlue),
+                    ),
                   ),
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
-                    if (trimmed.isEmpty) return 'Không được để trống';
+                    if (trimmed.isEmpty) return 'Bắt buộc';
                     return null;
                   },
                 ),
@@ -139,13 +159,15 @@ class _TemplateScreenState extends State<TemplateScreen>
                   decoration: const InputDecoration(
                     labelText: 'Số hiệp',
                     border: OutlineInputBorder(),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: violetBlue),
+                    ),
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
                     final parsed = int.tryParse(trimmed);
-                    if (parsed == null || parsed <= 0)
-                      return 'Giá trị không hợp lệ';
+                    if (parsed == null || parsed <= 0) return 'Không hợp lệ';
                     return null;
                   },
                 ),
@@ -155,9 +177,10 @@ class _TemplateScreenState extends State<TemplateScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Hủy'),
+              child: const Text('Hủy', style: TextStyle(color: violetBlue)),
             ),
             FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: violetBlue),
               onPressed: () {
                 if (!(formKey.currentState?.validate() ?? false)) return;
                 final setsCount = int.parse(setsController.text.trim());
@@ -194,12 +217,17 @@ class _TemplateScreenState extends State<TemplateScreen>
     final setsController = TextEditingController(
       text: exercise.sets.length.toString(),
     );
+    const violetBlue = Color(0xFF3D5A80);
 
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Chỉnh sửa bài tập'),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text('Edit Exercise'),
           content: Form(
             key: formKey,
             child: Column(
@@ -208,12 +236,15 @@ class _TemplateScreenState extends State<TemplateScreen>
                 TextFormField(
                   controller: nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Tên bài tập',
+                    labelText: 'Exercise name',
                     border: OutlineInputBorder(),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: violetBlue),
+                    ),
                   ),
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
-                    if (trimmed.isEmpty) return 'Không được để trống';
+                    if (trimmed.isEmpty) return 'Required';
                     return null;
                   },
                 ),
@@ -221,12 +252,15 @@ class _TemplateScreenState extends State<TemplateScreen>
                 TextFormField(
                   controller: muscleController,
                   decoration: const InputDecoration(
-                    labelText: 'Nhóm cơ',
+                    labelText: 'Muscle group',
                     border: OutlineInputBorder(),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: violetBlue),
+                    ),
                   ),
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
-                    if (trimmed.isEmpty) return 'Không được để trống';
+                    if (trimmed.isEmpty) return 'Required';
                     return null;
                   },
                 ),
@@ -234,15 +268,17 @@ class _TemplateScreenState extends State<TemplateScreen>
                 TextFormField(
                   controller: setsController,
                   decoration: const InputDecoration(
-                    labelText: 'Số hiệp',
+                    labelText: 'Number of sets',
                     border: OutlineInputBorder(),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: violetBlue),
+                    ),
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
                     final parsed = int.tryParse(trimmed);
-                    if (parsed == null || parsed <= 0)
-                      return 'Giá trị không hợp lệ';
+                    if (parsed == null || parsed <= 0) return 'Invalid';
                     return null;
                   },
                 ),
@@ -252,9 +288,10 @@ class _TemplateScreenState extends State<TemplateScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Hủy'),
+              child: const Text('Cancel', style: TextStyle(color: violetBlue)),
             ),
             FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: violetBlue),
               onPressed: () {
                 if (!(formKey.currentState?.validate() ?? false)) return;
 
@@ -279,7 +316,7 @@ class _TemplateScreenState extends State<TemplateScreen>
                 context.read<WorkoutProvider>().updateTemplate(updated);
                 Navigator.of(dialogContext).pop();
               },
-              child: const Text('Lưu'),
+              child: const Text('Save'),
             ),
           ],
         );
@@ -297,20 +334,30 @@ class _TemplateScreenState extends State<TemplateScreen>
   }
 
   Future<bool> _confirmDeleteTemplate(Workout template) async {
+    const violetBlue = Color(0xFF3D5A80);
     final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Xác nhận xóa mẫu tập'),
-          content: Text('Bạn có chắc muốn xóa mẫu tập "${template.title}"?'),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text('Confirm template deletion'),
+          content: Text(
+            'Are you sure you want to delete template "${template.title}"?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Hủy'),
+              child: const Text('Cancel', style: TextStyle(color: violetBlue)),
             ),
             FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.red.shade400,
+              ),
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Xóa'),
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -330,245 +377,272 @@ class _TemplateScreenState extends State<TemplateScreen>
 
   @override
   Widget build(BuildContext context) {
+    const violetBlue = Color(0xFF3D5A80);
+
+    final templates = context.watch<WorkoutProvider>().templates.where((t) {
+      return t.title.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mẫu tập'),
+        title: const Text('Mẫu tập của tôi'),
         actions: [
           IconButton(
+            tooltip: 'Quét mã QR',
+            icon: const Icon(Icons.qr_code_scanner_rounded),
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const QrExerciseScannerScreen(),
+                MaterialPageRoute(
+                  builder: (context) => const QRScannerScreen(),
                 ),
               );
             },
-            icon: const Icon(Icons.qr_code_scanner),
-            tooltip: 'Quét QR bài tập',
           ),
+          const SizedBox(width: 8),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Mẫu của tôi'),
-            Tab(text: 'Hướng dẫn tập'),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight + 16),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              indicator: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: const Color(0xFF0F6B6E),
+              ),
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.grey.shade500,
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.normal,
+                fontSize: 13,
+              ),
+              tabs: const [
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.list_alt, size: 18),
+                      SizedBox(width: 8),
+                      Text('Mẫu của tôi'),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.fitness_center, size: 18),
+                      SizedBox(width: 8),
+                      Text('Hướng dẫn'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [_buildTemplatesTab(), const MuscleGroupsScreen()],
+        children: [_buildTemplatesList(templates), const MuscleGroupsScreen()],
       ),
-    );
-  }
-
-  Widget _buildTemplatesTab() {
-    final templates = context.watch<WorkoutProvider>().templates;
-    final filteredTemplates = templates.where((template) {
-      if (_searchQuery.trim().isEmpty) return true;
-      return template.title.toLowerCase().contains(
-        _searchQuery.trim().toLowerCase(),
-      );
-    }).toList();
-
-    return Stack(
-      children: [
-        ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _buildHeroImage(),
-            const SizedBox(height: 16),
-            SearchBar(
-              hintText: 'Tìm mẫu tập theo tên...',
-              leading: const Icon(Icons.search),
-              trailing: _searchQuery.isNotEmpty
-                  ? [
-                      IconButton(
-                        tooltip: 'Xóa tìm kiếm',
-                        onPressed: () {
-                          setState(() {
-                            _searchQuery = '';
-                          });
-                        },
-                        icon: const Icon(Icons.close),
-                      ),
-                    ]
-                  : null,
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-            ),
-            const SizedBox(height: 14),
-            if (templates.isEmpty)
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    'Bạn chưa có mẫu tập nào. Hãy tạo mẫu để bắt đầu luyện tập.',
-                  ),
-                ),
-              ),
-            if (templates.isNotEmpty && filteredTemplates.isEmpty)
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('Không có mẫu tập nào khớp từ khóa tìm kiếm.'),
-                ),
-              ),
-            for (final template in filteredTemplates)
-              Dismissible(
-                key: ValueKey('template_${template.id}'),
-                direction: DismissDirection.endToStart,
-                confirmDismiss: (_) => _confirmDeleteTemplate(template),
-                onDismissed: (_) => _deleteTemplate(template),
-                background: Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade400,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.centerRight,
-                  child: const Icon(Icons.delete, color: Colors.white),
-                ),
-                child: Card(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                template.title,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: 'Chỉnh sửa',
-                              onPressed: () =>
-                                  _showTemplateDialog(template: template),
-                              icon: const Icon(Icons.edit),
-                            ),
-                            IconButton(
-                              tooltip: 'Xóa',
-                              onPressed: () async {
-                                final confirmed = await _confirmDeleteTemplate(
-                                  template,
-                                );
-                                if (!confirmed) return;
-                                await _deleteTemplate(template);
-                              },
-                              icon: const Icon(Icons.delete_outline),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text('Số bài tập: ${template.exercises.length}'),
-                        const SizedBox(height: 12),
-                        if (template.exercises.isEmpty)
-                          const Text('Chưa có bài tập nào. Hãy thêm bên dưới.'),
-                        for (final exercise in template.exercises)
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(exercise.name),
-                            subtitle: Text(
-                              '${exercise.muscleGroup} • ${exercise.sets.length} hiệp',
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  tooltip: 'Chỉnh sửa',
-                                  onPressed: () => _showEditExerciseDialog(
-                                    template,
-                                    exercise,
-                                  ),
-                                  icon: const Icon(Icons.edit),
-                                ),
-                                IconButton(
-                                  tooltip: 'Xóa khỏi mẫu',
-                                  onPressed: () =>
-                                      _removeExercise(template, exercise),
-                                  icon: const Icon(Icons.close),
-                                ),
-                              ],
-                            ),
-                          ),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: OutlinedButton.icon(
-                            onPressed: () => _showExerciseDialog(template),
-                            icon: const Icon(Icons.fitness_center),
-                            label: const Text('Thêm bài tập'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            const SizedBox(height: 80),
-          ],
-        ),
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: FloatingActionButton.extended(
-            onPressed: () => _showTemplateDialog(),
-            icon: const Icon(Icons.add),
-            label: const Text('Mẫu mới'),
-          ),
-        ),
-      ],
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showTemplateDialog(),
+        backgroundColor: violetBlue,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
 
   Widget _buildHeroImage() {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Stack(
-        alignment: Alignment.bottomLeft,
-        children: [
-          Image.asset(
-            'assets/images/gym_banner.png',
-            height: 150,
-            width: double.infinity,
-            fit: BoxFit.cover,
-          ),
-          Container(
-            height: 150,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.black.withOpacity(0.5),
-                  Colors.black.withOpacity(0.05),
-                ],
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-              ),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'Mẫu tập luyện',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
+      borderRadius: BorderRadius.circular(12),
+      child: Image.asset(
+        'assets/images/gym_banner.png',
+        height: 150,
+        fit: BoxFit.cover,
       ),
+    );
+  }
+
+  Widget _buildTemplatesList(List<Workout> templates) {
+    final filteredTemplates = templates.where((t) {
+      return t.title.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+    const violetBlue = Color(0xFF3D5A80);
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildHeroImage(),
+        const SizedBox(height: 16),
+        SearchBar(
+          backgroundColor: MaterialStateProperty.all(
+            violetBlue.withOpacity(0.1),
+          ),
+          elevation: MaterialStateProperty.all(0),
+          hintText: 'Tìm kiếm mẫu tập...',
+          leading: const Icon(Icons.search),
+          trailing: _searchQuery.isNotEmpty
+              ? [
+                  IconButton(
+                    tooltip: 'Xóa tìm kiếm',
+                    onPressed: () {
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                    },
+                    icon: const Icon(Icons.close),
+                  ),
+                ]
+              : null,
+          onChanged: (value) {
+            setState(() {
+              _searchQuery = value;
+            });
+          },
+        ),
+        const SizedBox(height: 14),
+        if (templates.isEmpty)
+          Card(
+            color: violetBlue.withOpacity(0.1),
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Chưa có mẫu tập nào. Hãy tạo một mẫu để bắt đầu tập luyện.',
+              ),
+            ),
+          ),
+        if (templates.isNotEmpty && filteredTemplates.isEmpty)
+          Card(
+            color: violetBlue.withOpacity(0.1),
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Không có mẫu tập nào khớp với từ khóa tìm kiếm.'),
+            ),
+          ),
+        for (final template in filteredTemplates)
+          Dismissible(
+            key: ValueKey('template_${template.id}'),
+            direction: DismissDirection.endToStart,
+            confirmDismiss: (_) => _confirmDeleteTemplate(template),
+            onDismissed: (_) => _deleteTemplate(template),
+            background: Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.red.shade400,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.centerRight,
+              child: const Icon(Icons.delete, color: Colors.white),
+            ),
+            child: Card(
+              color: violetBlue.withOpacity(0.1),
+              margin: const EdgeInsets.only(bottom: 16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            template.title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Sửa',
+                          onPressed: () =>
+                              _showTemplateDialog(template: template),
+                          icon: const Icon(Icons.edit),
+                        ),
+                        IconButton(
+                          tooltip: 'Xóa',
+                          onPressed: () async {
+                            final confirmed = await _confirmDeleteTemplate(
+                              template,
+                            );
+                            if (!confirmed) return;
+                            await _deleteTemplate(template);
+                          },
+                          icon: const Icon(Icons.delete_outline),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text('Số bài tập: ${template.exercises.length}'),
+                    const SizedBox(height: 12),
+                    if (template.exercises.isEmpty)
+                      const Text('Chưa có bài tập nào. Hãy thêm ở dưới.'),
+                    for (final exercise in template.exercises)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(exercise.name),
+                        subtitle: Text(
+                          '${exercise.muscleGroup} • ${exercise.sets.length} hiệp',
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Sửa',
+                              onPressed: () =>
+                                  _showEditExerciseDialog(template, exercise),
+                              icon: const Icon(Icons.edit),
+                            ),
+                            IconButton(
+                              tooltip: 'Xóa',
+                              onPressed: () =>
+                                  _removeExercise(template, exercise),
+                              icon: const Icon(Icons.delete_outline),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          style: TextButton.styleFrom(
+                            foregroundColor: violetBlue,
+                          ),
+                          onPressed: () => _showExerciseDialog(template),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Thêm bài tập'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
