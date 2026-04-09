@@ -10,11 +10,13 @@ import '../features/workout/data/services/workout_firestore_service.dart';
 import '../features/workout/domain/repositories/workout_repository.dart';
 import '../services/firebase_service.dart';
 import '../services/local_storage_service.dart';
+import '../services/one_rm_service.dart';
 
 class WorkoutProvider extends ChangeNotifier {
   final LocalStorageService _storage;
   final FirebaseService _firebase = FirebaseService();
   final WorkoutRepository _workoutRepository;
+  final OneRmService _oneRmService = const OneRmService();
 
   List<Workout> _templates = [];
   List<Workout> _history = [];
@@ -269,17 +271,35 @@ class WorkoutProvider extends ChangeNotifier {
   Exercise _cloneExerciseWithSuggestion(Exercise exercise) {
     return exercise.copyWith(
       sets: exercise.sets.map((set) {
-        final suggestedWeight = _suggestWeight(exercise.name, set.order);
+        final targetReps = set.reps > 0 ? set.reps : 8;
+        final suggestedWeight = _suggestWeight(
+          exercise.name,
+          targetReps: targetReps,
+          fallbackSetOrder: set.order,
+        );
         return set.copyWith(
           weight: suggestedWeight,
-          reps: 8,
+          reps: targetReps,
           isCompleted: false,
         );
       }).toList(),
     );
   }
 
-  double _suggestWeight(String exerciseName, int setOrder) {
+  double _suggestWeight(
+    String exerciseName, {
+    required int targetReps,
+    required int fallbackSetOrder,
+  }) {
+    final smartSuggestion = _oneRmService.buildExerciseSuggestion(
+      _history,
+      exerciseName,
+      targetReps: targetReps,
+    );
+    if (smartSuggestion != null && smartSuggestion.suggestedWeight > 0) {
+      return smartSuggestion.suggestedWeight;
+    }
+
     for (final workout in _history) {
       for (final exercise in workout.exercises) {
         if (exercise.name.toLowerCase() != exerciseName.toLowerCase()) {
@@ -287,7 +307,9 @@ class WorkoutProvider extends ChangeNotifier {
         }
 
         for (final set in exercise.sets) {
-          if (!set.isCompleted || set.order != setOrder || set.weight <= 0) {
+          if (!set.isCompleted ||
+              set.order != fallbackSetOrder ||
+              set.weight <= 0) {
             continue;
           }
           return set.weight + 2.5;
