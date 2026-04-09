@@ -43,7 +43,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan Exercise QR'), centerTitle: true),
+      appBar: AppBar(title: const Text('Quét QR bài tập'), centerTitle: true),
       body: Stack(
         children: [
           MobileScanner(
@@ -76,7 +76,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
             left: 0,
             right: 0,
             child: Text(
-              'Align QR code within the frame',
+              'Đưa mã QR vào giữa khung để quét',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
@@ -117,17 +117,17 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
               .join(' '),
           muscleGroupId: apiData['target'] ?? 'other',
           description:
-              'Equipment: ${apiData['equipment']}. Target Muscle: ${apiData['target']}. Secondary: ${(apiData['secondaryMuscles'] as List).join(', ')}.',
+              'Dụng cụ: ${apiData['equipment']}. Nhóm cơ chính: ${apiData['target']}. Nhóm cơ phụ: ${(apiData['secondaryMuscles'] as List).join(', ')}.',
           steps: (apiData['instructions'] as List).cast<String>(),
           benefits: [
-            'Professional form guidance',
-            'Muscle isolation',
-            'Increased strength',
+            'Chuẩn hoá kỹ thuật tập',
+            'Tăng khả năng cô lập nhóm cơ',
+            'Tăng sức mạnh tổng thể',
           ],
           tips: [
-            'Keep core engaged',
-            'Control the movement',
-            'Breath out on exertion',
+            'Giữ core siết ổn định',
+            'Kiểm soát toàn bộ biên độ',
+            'Thở ra khi gắng sức',
           ],
           defaultSets: '3',
           defaultReps: '10-12',
@@ -144,7 +144,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Exercise not found. Please scan a valid workout QR.'),
+          content: Text('Không tìm thấy bài tập. Vui lòng quét mã QR hợp lệ.'),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -182,6 +182,7 @@ class _ExerciseDetailSheet extends StatefulWidget {
 
 class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
   YoutubePlayerController? _controller;
+  bool _isYoutubeUnavailable = false;
 
   @override
   void initState() {
@@ -197,17 +198,104 @@ class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
           useHybridComposition: true,
         ),
       );
+      _controller!.addListener(_onYoutubeStateChanged);
     }
+  }
+
+  void _onYoutubeStateChanged() {
+    final controller = _controller;
+    if (!mounted || controller == null) {
+      return;
+    }
+
+    if (controller.value.hasError && !_isYoutubeUnavailable) {
+      setState(() {
+        _isYoutubeUnavailable = true;
+      });
+    }
+  }
+
+  String _buildSearchUrl() {
+    final query = Uri.encodeComponent('${widget.exercise.name} exercise tutorial');
+    return 'https://www.youtube.com/results?search_query=$query';
+  }
+
+  Uri _buildWebVideoUri({String? fallbackVideoId}) {
+    final videoId =
+        widget.exercise.videoId?.trim().isNotEmpty == true
+        ? widget.exercise.videoId!.trim()
+        : fallbackVideoId;
+    return videoId != null
+        ? Uri.parse('https://www.youtube.com/watch?v=$videoId')
+        : Uri.parse(_buildSearchUrl());
+  }
+
+  Future<void> _openVideoOnWeb({String? fallbackVideoId}) async {
+    final webUri = _buildWebVideoUri(fallbackVideoId: fallbackVideoId);
+    await launchUrl(
+      webUri,
+      mode: LaunchMode.inAppWebView,
+      webViewConfiguration: const WebViewConfiguration(
+        enableJavaScript: true,
+        enableDomStorage: true,
+      ),
+    );
+  }
+
+  String? _resolveYoutubeThumbnail() {
+    final videoId = widget.exercise.videoId;
+    if (videoId == null || videoId.isEmpty) {
+      return null;
+    }
+    return 'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
+  }
+
+  String? _suggestVideoIdByExerciseName(String exerciseName) {
+    final key = exerciseName.toLowerCase().trim();
+    const knownVideoMap = {
+      'barbell row': 'vT2GjY_Umpw',
+      'đòn tạ kéo thân': 'vT2GjY_Umpw',
+      'deadlift': 'op9kVnSso6Q',
+      'bench press': 'gRVjAtPip0Y',
+      'đẩy ngực phẳng': 'gRVjAtPip0Y',
+      'squat': 'ultWZbUMPL8',
+      'gánh tạ': 'ultWZbUMPL8',
+      'lat pulldown': 'CAwf7n6Luuc',
+      'military press': '2yjwXTZQDDI',
+      'dumbbell curl': 'ykJmrZ5v0Oo',
+      'hammer curl': 'zC3nLlEvin4',
+    };
+
+    final directMatch = knownVideoMap[key];
+    if (directMatch != null) {
+      return directMatch;
+    }
+
+    final openBracket = key.indexOf('(');
+    final closeBracket = key.indexOf(')');
+    if (openBracket >= 0 && closeBracket > openBracket) {
+      final inBracket = key.substring(openBracket + 1, closeBracket).trim();
+      final bracketMatch = knownVideoMap[inBracket];
+      if (bracketMatch != null) {
+        return bracketMatch;
+      }
+    }
+
+    final beforeBracket = openBracket > 0 ? key.substring(0, openBracket).trim() : key;
+    return knownVideoMap[beforeBracket];
   }
 
   @override
   void dispose() {
+    _controller?.removeListener(_onYoutubeStateChanged);
     _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final fallbackVideoId = _suggestVideoIdByExerciseName(widget.exercise.name);
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
@@ -245,7 +333,7 @@ class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          if (_controller != null)
+                          if (_controller != null && !_isYoutubeUnavailable)
                             YoutubePlayer(
                               controller: _controller!,
                               showVideoProgressIndicator: true,
@@ -286,20 +374,9 @@ class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
                                 Material(
                                   color: Colors.transparent,
                                   child: InkWell(
-                                    onTap: () async {
-                                      final query = Uri.encodeComponent(
-                                        '${widget.exercise.name} exercise tutorial',
-                                      );
-                                      final url = Uri.parse(
-                                        'https://www.youtube.com/results?search_query=$query',
-                                      );
-                                      if (await canLaunchUrl(url)) {
-                                        await launchUrl(
-                                          url,
-                                          mode: LaunchMode.externalApplication,
-                                        );
-                                      }
-                                    },
+                                    onTap: () => _openVideoOnWeb(
+                                      fallbackVideoId: fallbackVideoId,
+                                    ),
                                     child: Center(
                                       child: Container(
                                         padding: const EdgeInsets.all(12),
@@ -318,6 +395,60 @@ class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
                                         ),
                                       ),
                                     ),
+                                  ),
+                                ),
+                                if (_isYoutubeUnavailable)
+                                  Positioned(
+                                    top: 10,
+                                    left: 10,
+                                    right: 10,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Text(
+                                        'Video nhúng bị chặn. Đang dùng GIF minh hoạ.',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            )
+                          else if (_isYoutubeUnavailable &&
+                              _resolveYoutubeThumbnail() != null)
+                            Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Image.network(
+                                  _resolveYoutubeThumbnail()!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, _, __) {
+                                    return const Center(
+                                      child: Icon(
+                                        Icons.ondemand_video,
+                                        color: Colors.white38,
+                                        size: 64,
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Container(color: Colors.black38),
+                                Center(
+                                  child: FilledButton.icon(
+                                    onPressed: () => _openVideoOnWeb(
+                                      fallbackVideoId: fallbackVideoId,
+                                    ),
+                                    icon: const Icon(Icons.open_in_new),
+                                    label: const Text('Xem trên YouTube'),
                                   ),
                                 ),
                               ],
@@ -340,6 +471,17 @@ class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
                                 ),
                               ),
                             ),
+                          Positioned(
+                            bottom: 12,
+                            right: 12,
+                            child: FilledButton.icon(
+                              onPressed: () => _openVideoOnWeb(
+                                fallbackVideoId: fallbackVideoId,
+                              ),
+                              icon: const Icon(Icons.play_circle_outline),
+                              label: const Text('Xem trên YouTube'),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -363,14 +505,14 @@ class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
                   ),
                   const SizedBox(height: 16),
                   _buildSection(
-                    'Instructions',
+                    'Hướng dẫn',
                     widget.exercise.steps.join('\n\n'),
                   ),
                   _buildSection(
-                    'Benefits',
+                    'Lợi ích',
                     widget.exercise.benefits.join(' • '),
                   ),
-                  _buildSection('Pro Tips', widget.exercise.tips.join(' • ')),
+                  _buildSection('Mẹo tập', widget.exercise.tips.join(' • ')),
                   const SizedBox(height: 100), // Space for button
                 ],
               ),
@@ -384,7 +526,7 @@ class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Dismiss'),
+                    child: const Text('Đóng'),
                   ),
                 ),
                 // We need to resolve the widget original context to call its methods
@@ -406,7 +548,7 @@ class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
                               Navigator.pop(context); // Close sheet
                               Navigator.pop(parent!.context); // Close scanner
                             },
-                            child: const Text('Add to Template'),
+                            child: const Text('Thêm vào mẫu tập'),
                           ),
                         ),
                       );
@@ -482,7 +624,7 @@ extension _QRScannerHelpers on _QRScannerScreenState {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Added "${guideExercise.name}" to template'),
+        content: Text('Đã thêm "${guideExercise.name}" vào mẫu tập'),
         backgroundColor: _QRScannerScreenState.primaryTealColor,
       ),
     );
