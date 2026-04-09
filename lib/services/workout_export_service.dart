@@ -1,5 +1,6 @@
 import 'dart:io' show File;
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:path_provider/path_provider.dart';
@@ -13,6 +14,54 @@ import 'web_file_downloader_stub.dart'
     as web_downloader;
 
 class WorkoutExportService {
+  Future<void> exportToExcel(List<Workout> history) async {
+    final fileName =
+        'workout_history_${DateTime.now().millisecondsSinceEpoch}.csv';
+
+    final rows = <List<String>>[
+      ['Date', 'Workout Title', 'Duration (min)', 'Exercises', 'Sets', 'Volume (kg)'],
+      ...history.map((workout) {
+        final totalSets = workout.exercises.fold<int>(
+          0,
+          (sum, exercise) => sum + exercise.sets.length,
+        );
+
+        return [
+          _formatDate(workout.date),
+          workout.title,
+          workout.durationInMinutes.toString(),
+          workout.exercises.length.toString(),
+          totalSets.toString(),
+          _calculateVolume(workout).toStringAsFixed(1),
+        ];
+      }),
+    ];
+
+    final buffer = StringBuffer();
+    for (final row in rows) {
+      final escaped = row
+          .map((cell) => '"${cell.replaceAll('"', '""')}"')
+          .join(',');
+      buffer.writeln(escaped);
+    }
+
+    final bytes = utf8.encode(buffer.toString());
+
+    if (kIsWeb) {
+      await web_downloader.downloadBytes(
+        Uint8List.fromList(bytes),
+        fileName,
+        'text/csv',
+      );
+    } else {
+      final file = await _createFile(fileName);
+      await file.writeAsBytes(bytes, flush: true);
+      await Share.shareXFiles([
+        XFile(file.path),
+      ], text: 'Workout History (CSV)');
+    }
+  }
+
   Future<void> exportToPdf(List<Workout> history) async {
     final document = pw.Document();
 

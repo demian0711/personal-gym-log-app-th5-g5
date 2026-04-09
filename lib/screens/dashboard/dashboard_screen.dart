@@ -7,7 +7,9 @@ import '../../models/workout.dart';
 import '../../providers/workout_provider.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  final VoidCallback? onStartExercisesTap;
+
+  const DashboardScreen({super.key, this.onStartExercisesTap});
 
   @override
   Widget build(BuildContext context) {
