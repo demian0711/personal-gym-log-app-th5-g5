@@ -105,8 +105,8 @@ class NotificationService {
 
     await _plugin.show(
       id: _restNotificationId,
-      title: 'Rest completed',
-      body: 'Start your next set now.',
+      title: 'Nghỉ đủ rồi',
+      body: 'Vào set tiếp theo thôi, cố hơn buổi trước một chút nhé.',
       notificationDetails: details,
     );
   }
@@ -138,8 +138,8 @@ class NotificationService {
 
     await _plugin.zonedSchedule(
       id: _reminderNotificationId,
-      title: 'Workout Reminder',
-      body: 'Time to train and log your session.',
+      title: 'Đến giờ tập rồi',
+      body: 'Hôm nay cố hơn buổi trước một chút nhé.',
       scheduledDate: _nextDailyDate(hour: hour, minute: minute),
       notificationDetails: details,
       matchDateTimeComponents: DateTimeComponents.time,
@@ -185,8 +185,8 @@ class NotificationService {
 
     await _plugin.show(
       id: _testNotificationId,
-      title: 'Personal Gym Log',
-      body: 'Local notification is working.',
+      title: 'Sẵn sàng quay lại buổi tập',
+      body: 'Thông báo đang hoạt động, giữ nhịp đều mỗi ngày nhé.',
       notificationDetails: details,
     );
   }
