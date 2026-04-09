@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_set.dart';
 import '../../models/workout.dart';
+import '../../providers/utilities_provider.dart';
 import '../../providers/workout_provider.dart';
 
 class ActiveWorkoutScreen extends StatefulWidget {
@@ -59,24 +60,26 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     });
   }
 
-  void _finishWorkout() {
+  Future<void> _finishWorkout() async {
     final workout = _activeWorkout;
     if (workout == null) return;
 
     if (!_validateCompletedSets(workout)) {
-      _showMessage(
-        'Vui lòng hoàn thành cân nặng và số lần trước khi đánh dấu xong.',
-      );
+      _showMessage('Hãy nhập đủ mức tạ và số reps trước khi đánh dấu set.');
       return;
     }
 
+    final rawDuration = _startTime == null
+        ? 0
+        : DateTime.now().difference(_startTime!).inMinutes;
     final completedWorkout = _applyControllersToWorkout(workout).copyWith(
-      durationInMinutes: _startTime == null
-          ? 0
-          : DateTime.now().difference(_startTime!).inMinutes,
+      durationInMinutes: rawDuration > 0 ? rawDuration : 1,
     );
 
-    context.read<WorkoutProvider>().addWorkoutLog(completedWorkout);
+    context.read<UtilitiesProvider>().stopRestTimer();
+    await context.read<WorkoutProvider>().addWorkoutLog(completedWorkout);
+
+    if (!mounted) return;
 
     _clearControllers();
 
@@ -86,10 +89,11 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
       _startTime = null;
     });
 
-    _showMessage('Đã lưu bài tập.');
+    _showMessage('Đã lưu buổi tập.');
   }
 
   void _backToStartWorkout() {
+    context.read<UtilitiesProvider>().stopRestTimer();
     _clearControllers();
 
     setState(() {
@@ -165,6 +169,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     setState(() {
       _activeWorkout = workout.copyWith(exercises: updatedExercises);
     });
+
+    if (!set.isCompleted && updatedSet.isCompleted) {
+      context.read<UtilitiesProvider>().startRestTimer();
+    }
   }
 
   bool _validateCompletedSets(Workout workout) {
@@ -247,9 +255,56 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     return '$hour:$minute';
   }
 
+  String _formatShortDate(DateTime dateTime) {
+    final day = dateTime.day.toString().padLeft(2, '0');
+    final month = dateTime.month.toString().padLeft(2, '0');
+    return '$day/$month';
+  }
+
+  _PreviousExercisePerformance? _findPreviousPerformance(
+    List<Workout> history,
+    Exercise exercise,
+  ) {
+    final targetName = exercise.name.trim().toLowerCase();
+
+    for (final workout in history) {
+      for (final previousExercise in workout.exercises) {
+        if (previousExercise.name.trim().toLowerCase() != targetName) {
+          continue;
+        }
+
+        final hasTrackedSet = previousExercise.sets.any(
+          (set) => set.isCompleted && (set.weight > 0 || set.reps > 0),
+        );
+        if (!hasTrackedSet) {
+          continue;
+        }
+
+        return _PreviousExercisePerformance(
+          workoutDate: workout.date,
+          exercise: previousExercise,
+        );
+      }
+    }
+
+    return null;
+  }
+
+  ExerciseSet? _findSetByOrder(List<ExerciseSet> sets, int order) {
+    for (final set in sets) {
+      if (set.order == order && (set.weight > 0 || set.reps > 0)) {
+        return set;
+      }
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final templates = context.watch<WorkoutProvider>().templates;
+    final workoutProvider = context.watch<WorkoutProvider>();
+    final templates = workoutProvider.templates;
+    final history = workoutProvider.history;
+    final utilities = context.watch<UtilitiesProvider>();
     final workout = _activeWorkout;
 
     return Form(
@@ -272,13 +327,17 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             const SizedBox(height: 8),
             _buildWorkoutHeader(workout),
             const SizedBox(height: 16),
+            if (utilities.isRestTimerRunning) ...[
+              _buildRestTimerCard(utilities),
+              const SizedBox(height: 16),
+            ],
             for (var i = 0; i < workout.exercises.length; i++)
-              _buildExerciseCard(workout, i),
+              _buildExerciseCard(workout, i, history),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: _finishWorkout,
               icon: const Icon(Icons.flag),
-              label: const Text('Kết thúc buổi tập'),
+              label: const Text('Hoàn thành buổi tập'),
             ),
           ],
         ],
@@ -291,7 +350,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(16),
-          child: Text('Chưa có mẫu tập nào. Hãy tạo một mẫu tập để bắt đầu.'),
+          child: Text(
+            'Chưa có mẫu tập. Hãy tạo trong mục Templates để bắt đầu.',
+          ),
         ),
       );
     }
@@ -338,6 +399,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: FilledButton.icon(
+                key: const Key('start_workout_button'),
                 onPressed: _selectedTemplateId == null
                     ? null
                     : () {
@@ -373,8 +435,8 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.black.withValues(alpha: 0.55),
-                  Colors.black.withValues(alpha: 0.05),
+                  Colors.black.withOpacity(0.55),
+                  Colors.black.withOpacity(0.05),
                 ],
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
@@ -384,7 +446,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'Đang tập luyện',
+              'Buổi tập hiện tại',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -414,7 +476,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             ),
             const SizedBox(height: 8),
             Text('Bài tập: ${workout.exercises.length}'),
-            Text('Hiệp đã xong: $completedSets / $totalSets'),
+            Text('Set đã hoàn thành: $completedSets / $totalSets'),
             if (startTime != null)
               Text('Bắt đầu lúc: ${_formatStartTime(startTime)}'),
           ],
@@ -423,9 +485,14 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     );
   }
 
-  Widget _buildExerciseCard(Workout workout, int exerciseIndex) {
+  Widget _buildExerciseCard(
+    Workout workout,
+    int exerciseIndex,
+    List<Workout> history,
+  ) {
     final exercise = workout.exercises[exerciseIndex];
     final controllers = _setControllers[exercise.id] ?? [];
+    final previousPerformance = _findPreviousPerformance(history, exercise);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -443,6 +510,16 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
               exercise.muscleGroup,
               style: TextStyle(color: Colors.grey.shade700),
             ),
+            if (previousPerformance != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Buổi gần nhất: ${_formatShortDate(previousPerformance.workoutDate)}',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -450,8 +527,8 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                 columnSpacing: 12,
                 columns: const [
                   DataColumn(label: Text('Hiệp')),
-                  DataColumn(label: Text('Cân nặng (kg)')),
-                  DataColumn(label: Text('Số lần')),
+                  DataColumn(label: Text('Mức tạ (kg)')),
+                  DataColumn(label: Text('Số reps')),
                   DataColumn(label: Text('Xong')),
                 ],
                 rows: exercise.sets.asMap().entries.map((entry) {
@@ -459,56 +536,94 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                   final set = entry.value;
                   final input = controllers[setIndex];
                   final isCompleted = set.isCompleted;
+                  final previousSet = previousPerformance == null
+                      ? null
+                      : _findSetByOrder(
+                          previousPerformance.exercise.sets,
+                          set.order,
+                        );
 
                   return DataRow(
                     cells: [
                       DataCell(Text(set.order.toString())),
                       DataCell(
                         SizedBox(
-                          width: 96,
-                          child: TextFormField(
-                            key: input.weightKey,
-                            controller: input.weightController,
-                            enabled: !isCompleted,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d*\.?\d*'),
+                          width: 108,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextFormField(
+                                key: input.weightKey,
+                                controller: input.weightController,
+                                enabled: !isCompleted,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'^\d*\.?\d*'),
+                                  ),
+                                ],
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                  hintText: 'kg',
+                                ),
+                                validator: _validateWeight,
                               ),
+                              if (previousSet != null && previousSet.weight > 0)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    'Lần trước: ${_formatWeight(previousSet.weight)} kg',
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ),
                             ],
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              border: OutlineInputBorder(),
-                              hintText: 'kg',
-                            ),
-                            validator: _validateWeight,
                           ),
                         ),
                       ),
                       DataCell(
                         SizedBox(
-                          width: 72,
-                          child: TextFormField(
-                            key: input.repsKey,
-                            controller: input.repsController,
-                            enabled: !isCompleted,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
+                          width: 80,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextFormField(
+                                key: input.repsKey,
+                                controller: input.repsController,
+                                enabled: !isCompleted,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                  hintText: 'lần',
+                                ),
+                                validator: _validateReps,
+                              ),
+                              if (previousSet != null && previousSet.reps > 0)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    'Lần trước: ${previousSet.reps}',
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ),
                             ],
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              border: OutlineInputBorder(),
-                              hintText: 'reps',
-                            ),
-                            validator: _validateReps,
                           ),
                         ),
                       ),
                       DataCell(
                         IconButton(
+                          key: Key('toggle_set_${exercise.id}_${set.order}'),
                           icon: Icon(
                             isCompleted
                                 ? Icons.check_circle
@@ -532,14 +647,125 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     );
   }
 
+  Widget _buildRestTimerCard(UtilitiesProvider utilities) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final totalSeconds = utilities.restDurationSeconds;
+    final remainingSeconds = utilities.remainingRestSeconds;
+    final progress = totalSeconds <= 0
+        ? 0.0
+        : (remainingSeconds / totalSeconds).clamp(0.0, 1.0);
+
+    return Card(
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: EdgeInsets.zero,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                colorScheme.primary,
+                colorScheme.primaryContainer,
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+          ),
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: colorScheme.onPrimary.withOpacity(0.14),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      Icons.timer_outlined,
+                      color: colorScheme.onPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Đang nghỉ giữa hiệp',
+                          style: TextStyle(
+                            color: colorScheme.onPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Chuẩn bị cho set tiếp theo',
+                          style: TextStyle(
+                            color: colorScheme.onPrimary.withOpacity(0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: utilities.stopRestTimer,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: colorScheme.surface.withOpacity(0.92),
+                      foregroundColor: colorScheme.primary,
+                    ),
+                    child: const Text('Dừng'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Text(
+                '$remainingSeconds s',
+                style: TextStyle(
+                  color: colorScheme.onPrimary,
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 10,
+                  backgroundColor: colorScheme.onPrimary.withOpacity(0.2),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    colorScheme.onPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Còn $remainingSeconds / $totalSeconds giây',
+                style: TextStyle(
+                  color: colorScheme.onPrimary.withOpacity(0.92),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   String? _validateWeight(String? value) {
     final trimmed = value?.trim() ?? '';
     if (trimmed.isEmpty) {
-      return 'Required';
+      return 'Bắt buộc';
     }
     final weight = double.tryParse(trimmed);
     if (weight == null || weight <= 0) {
-      return 'Invalid';
+      return 'Không hợp lệ';
     }
     return null;
   }
@@ -547,11 +773,11 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   String? _validateReps(String? value) {
     final trimmed = value?.trim() ?? '';
     if (trimmed.isEmpty) {
-      return 'Required';
+      return 'Bắt buộc';
     }
     final reps = int.tryParse(trimmed);
     if (reps == null || reps <= 0) {
-      return 'Invalid';
+      return 'Không hợp lệ';
     }
     return null;
   }
@@ -572,4 +798,14 @@ class _SetInputControllers {
     weightController.dispose();
     repsController.dispose();
   }
+}
+
+class _PreviousExercisePerformance {
+  final DateTime workoutDate;
+  final Exercise exercise;
+
+  const _PreviousExercisePerformance({
+    required this.workoutDate,
+    required this.exercise,
+  });
 }

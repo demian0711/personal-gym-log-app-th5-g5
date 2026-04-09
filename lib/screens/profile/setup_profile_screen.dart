@@ -21,11 +21,12 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
   final _chestController = TextEditingController();
   final _waistController = TextEditingController();
   final _hipsController = TextEditingController();
+
   String _selectedGoal = ProfileGoalOptions.defaultGoal;
   int _weeklyTarget = 3;
   final Map<int, String> _weeklyPlan = {};
 
-  final List<String> _daysOfWeek = [
+  final List<String> _daysOfWeek = const [
     'Thứ 2',
     'Thứ 3',
     'Thứ 4',
@@ -43,7 +44,15 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
     final profile = context.read<ProfileProvider>().profile;
     if (profile != null) {
       _nameController.text = profile.displayName;
+      _heightController.text = profile.height?.toString() ?? '';
+      _weightController.text = profile.currentWeight?.toString() ?? '';
+      _targetWeightController.text = profile.targetWeight?.toString() ?? '';
+      _chestController.text = profile.chest?.toString() ?? '';
+      _waistController.text = profile.waist?.toString() ?? '';
+      _hipsController.text = profile.hips?.toString() ?? '';
       _selectedGoal = ProfileGoalOptions.normalize(profile.goal);
+      _weeklyTarget = profile.weeklyTarget;
+      _weeklyPlan.addAll(profile.weeklyPlan);
     }
   }
 
@@ -68,30 +77,33 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
       goal: _selectedGoal,
       unit: 'kg',
       weeklyTarget: _weeklyTarget,
-      height: double.tryParse(_heightController.text),
-      currentWeight: double.tryParse(_weightController.text),
-      targetWeight: double.tryParse(_targetWeightController.text),
-      chest: double.tryParse(_chestController.text),
-      waist: double.tryParse(_waistController.text),
-      hips: double.tryParse(_hipsController.text),
+      height: double.tryParse(_heightController.text.trim()),
+      currentWeight: double.tryParse(_weightController.text.trim()),
+      targetWeight: double.tryParse(_targetWeightController.text.trim()),
+      chest: double.tryParse(_chestController.text.trim()),
+      waist: double.tryParse(_waistController.text.trim()),
+      hips: double.tryParse(_hipsController.text.trim()),
       weeklyPlan: _weeklyPlan,
     );
 
-    if (error != null && mounted) {
+    if (!mounted) return;
+
+    if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error), backgroundColor: Colors.red),
       );
-    } else if (mounted) {
-      // Chuyển hướng sau khi lưu thành công
-      Navigator.of(context).pushReplacementNamed('/dashboard');
+      return;
     }
+
+    // AuthGate sẽ tự chuyển sang AppShell khi profile đã đủ thông tin.
+    FocusScope.of(context).unfocus();
   }
 
   Future<void> _pickImage(BuildContext context) async {
     final picker = ImagePicker();
     final provider = context.read<ProfileProvider>();
 
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       builder: (sheetContext) => Column(
         mainAxisSize: MainAxisSize.min,
@@ -144,7 +156,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(24),
             child: Form(
               key: _formKey,
               child: Column(
@@ -160,7 +172,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Hãy hoàn thiện hồ sơ để bắt đầu hành trình tập luyện chuyên nghiệp.',
+                    'Hãy hoàn thiện hồ sơ để bắt đầu hành trình tập luyện tốt hơn.',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: Colors.grey[700],
                     ),
@@ -174,7 +186,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                             final photoUrl = provider.profile?.photoUrl;
                             return CircleAvatar(
                               radius: 50,
-                              backgroundColor: colorScheme.surfaceVariant,
+                              backgroundColor: colorScheme.surfaceContainerHighest,
                               backgroundImage: photoUrl != null
                                   ? NetworkImage(photoUrl)
                                   : null,
@@ -208,7 +220,6 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-
                   _buildSectionTitle('Thông tin cơ bản'),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -217,8 +228,12 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                       labelText: 'Họ và tên',
                       prefixIcon: Icon(Icons.person_outline),
                     ),
-                    validator: (v) =>
-                        v == null || v.isEmpty ? 'Vui lòng nhập tên' : null,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Vui lòng nhập tên';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                   _buildMeasurementField(
@@ -227,6 +242,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                     controller: _heightController,
                     icon: Icons.height,
                     suffix: 'cm',
+                    isRequired: true,
                   ),
                   const SizedBox(height: 12),
                   _buildMeasurementField(
@@ -235,10 +251,10 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                     controller: _weightController,
                     icon: Icons.monitor_weight_outlined,
                     suffix: 'kg',
+                    isRequired: true,
                   ),
-
                   const SizedBox(height: 32),
-                  _buildSectionTitle('Số đo cơ thể (cm)'),
+                  _buildSectionTitle('Số đo cơ thể'),
                   const SizedBox(height: 16),
                   _buildMeasurementField(
                     context,
@@ -260,7 +276,6 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                     controller: _hipsController,
                     icon: Icons.unfold_more,
                   ),
-
                   const SizedBox(height: 32),
                   _buildSectionTitle('Mục tiêu của bạn'),
                   const SizedBox(height: 16),
@@ -271,25 +286,31 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                       prefixIcon: Icon(Icons.flag_outlined),
                     ),
                     items: _goals
-                        .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                        .map((goal) => DropdownMenuItem(
+                              value: goal,
+                              child: Text(goal),
+                            ))
                         .toList(),
-                    onChanged: (v) => setState(() => _selectedGoal = v!),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _selectedGoal = value);
+                      }
+                    },
                   ),
                   const SizedBox(height: 16),
                   _buildMeasurementField(
                     context,
                     label: 'Cân nặng mục tiêu',
                     controller: _targetWeightController,
-                    icon: Icons.ads_click,
+                    icon: Icons.track_changes_outlined,
                     suffix: 'kg',
                   ),
-
                   const SizedBox(height: 32),
                   _buildSectionTitle('Tần suất tập luyện'),
                   const SizedBox(height: 16),
                   Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
                           Text(
@@ -304,8 +325,9 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                             min: 1,
                             max: 7,
                             divisions: 6,
-                            onChanged: (v) =>
-                                setState(() => _weeklyTarget = v.toInt()),
+                            onChanged: (value) {
+                              setState(() => _weeklyTarget = value.toInt());
+                            },
                           ),
                           const SizedBox(height: 16),
                           const Text(
@@ -315,12 +337,10 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                           const SizedBox(height: 8),
                           Wrap(
                             spacing: 8,
-                            runSpacing: 0,
                             children: List.generate(7, (index) {
                               final dayIndex = index + 1;
-                              final isSelected = _weeklyPlan.containsKey(
-                                dayIndex,
-                              );
+                              final isSelected =
+                                  _weeklyPlan.containsKey(dayIndex);
                               return FilterChip(
                                 label: Text(_daysOfWeek[index]),
                                 selected: isSelected,
@@ -340,7 +360,6 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 48),
                   SizedBox(
                     width: double.infinity,
@@ -380,10 +399,11 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
     required TextEditingController controller,
     required IconData icon,
     String suffix = 'cm',
+    bool isRequired = false,
   }) {
     return TextFormField(
       controller: controller,
-      keyboardType: TextInputType.number,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: IconButton(
@@ -392,12 +412,24 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
             size: 22,
             color: Theme.of(context).colorScheme.primary,
           ),
-          onPressed: () =>
-              _showNumberPicker(context, label, controller, suffix),
+          onPressed: () => _showNumberPicker(context, label, controller, suffix),
           tooltip: 'Chọn nhanh $label',
         ),
         suffixText: suffix,
       ),
+      validator: (value) {
+        final trimmed = value?.trim() ?? '';
+        if (trimmed.isEmpty) {
+          return isRequired ? 'Vui lòng nhập $label' : null;
+        }
+
+        final parsed = double.tryParse(trimmed);
+        if (parsed == null || parsed <= 0) {
+          return '$label phải lớn hơn 0';
+        }
+
+        return null;
+      },
     );
   }
 
@@ -407,33 +439,36 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
     TextEditingController controller,
     String suffix,
   ) {
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+        return SizedBox(
           height: 400,
           child: Column(
             children: [
+              const SizedBox(height: 16),
               Text(
                 'Chọn $title ($suffix)',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const Divider(),
               Expanded(
                 child: ListView.builder(
                   itemCount: 500,
                   itemBuilder: (context, index) {
-                    final val = index + 1;
+                    final value = index + 1;
                     return ListTile(
-                      title: Text('$val $suffix', textAlign: TextAlign.center),
+                      title: Text(
+                        '$value $suffix',
+                        textAlign: TextAlign.center,
+                      ),
                       onTap: () {
-                        controller.text = val.toString();
+                        controller.text = value.toString();
                         Navigator.pop(context);
                       },
                     );
