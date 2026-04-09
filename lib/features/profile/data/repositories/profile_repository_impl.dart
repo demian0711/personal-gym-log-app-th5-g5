@@ -1,4 +1,5 @@
 import '../../../progress_photos/data/services/cloudinary_service.dart';
+import '../../domain/constants/profile_goal_options.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../models/user_model.dart';
 import '../services/profile_firestore_service.dart';
@@ -28,7 +29,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
           ? fallbackDisplayName.trim()
           : 'User',
       photoUrl: photoUrl,
-      goal: 'duy trì',
+      goal: ProfileGoalOptions.defaultGoal,
       unit: 'kg',
       weeklyTarget: 3,
       targetWeight: null,

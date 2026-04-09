@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../features/profile/domain/constants/profile_goal_options.dart';
 import '../../features/profile/presentation/providers/profile_provider.dart';
 
 class SetupProfileScreen extends StatefulWidget {
@@ -20,7 +21,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
   final _chestController = TextEditingController();
   final _waistController = TextEditingController();
   final _hipsController = TextEditingController();
-  String _selectedGoal = 'Duy trì vóc dáng';
+  String _selectedGoal = ProfileGoalOptions.defaultGoal;
   int _weeklyTarget = 3;
   final Map<int, String> _weeklyPlan = {};
 
@@ -34,12 +35,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
     'Chủ nhật',
   ];
 
-  final List<String> _goals = [
-    'Giảm mỡ',
-    'Tăng cơ',
-    'Duy trì vóc dáng',
-    'Tăng sức mạnh',
-  ];
+  final List<String> _goals = ProfileGoalOptions.labels;
 
   @override
   void initState() {
@@ -47,6 +43,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
     final profile = context.read<ProfileProvider>().profile;
     if (profile != null) {
       _nameController.text = profile.displayName;
+      _selectedGoal = ProfileGoalOptions.normalize(profile.goal);
     }
   }
 
@@ -93,7 +90,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
   Future<void> _pickImage(BuildContext context) async {
     final picker = ImagePicker();
     final provider = context.read<ProfileProvider>();
-    
+
     showModalBottomSheet(
       context: context,
       builder: (sheetContext) => Column(
@@ -137,7 +134,10 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [colorScheme.primaryContainer.withOpacity(0.3), colorScheme.surface],
+            colors: [
+              colorScheme.primaryContainer.withOpacity(0.3),
+              colorScheme.surface,
+            ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -161,7 +161,9 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Hãy hoàn thiện hồ sơ để bắt đầu hành trình tập luyện chuyên nghiệp.',
-                    style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[700]),
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: Colors.grey[700],
+                    ),
                   ),
                   const SizedBox(height: 40),
                   Center(
@@ -173,18 +175,16 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                             return CircleAvatar(
                               radius: 50,
                               backgroundColor: colorScheme.surfaceVariant,
-                              backgroundImage:
-                                  photoUrl != null
-                                      ? NetworkImage(photoUrl)
-                                      : null,
-                              child:
-                                  photoUrl == null
-                                      ? Icon(
-                                        Icons.person,
-                                        size: 50,
-                                        color: colorScheme.onSurfaceVariant,
-                                      )
-                                      : null,
+                              backgroundImage: photoUrl != null
+                                  ? NetworkImage(photoUrl)
+                                  : null,
+                              child: photoUrl == null
+                                  ? Icon(
+                                      Icons.person,
+                                      size: 50,
+                                      color: colorScheme.onSurfaceVariant,
+                                    )
+                                  : null,
                             );
                           },
                         ),
@@ -208,7 +208,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   _buildSectionTitle('Thông tin cơ bản'),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -217,7 +217,8 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                       labelText: 'Họ và tên',
                       prefixIcon: Icon(Icons.person_outline),
                     ),
-                    validator: (v) => v == null || v.isEmpty ? 'Vui lòng nhập tên' : null,
+                    validator: (v) =>
+                        v == null || v.isEmpty ? 'Vui lòng nhập tên' : null,
                   ),
                   const SizedBox(height: 16),
                   _buildMeasurementField(
@@ -235,7 +236,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                     icon: Icons.monitor_weight_outlined,
                     suffix: 'kg',
                   ),
-                  
+
                   const SizedBox(height: 32),
                   _buildSectionTitle('Số đo cơ thể (cm)'),
                   const SizedBox(height: 16),
@@ -259,7 +260,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                     controller: _hipsController,
                     icon: Icons.unfold_more,
                   ),
-                  
+
                   const SizedBox(height: 32),
                   _buildSectionTitle('Mục tiêu của bạn'),
                   const SizedBox(height: 16),
@@ -269,7 +270,9 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                       labelText: 'Mục tiêu chính',
                       prefixIcon: Icon(Icons.flag_outlined),
                     ),
-                    items: _goals.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                    items: _goals
+                        .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                        .toList(),
                     onChanged: (v) => setState(() => _selectedGoal = v!),
                   ),
                   const SizedBox(height: 16),
@@ -280,7 +283,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                     icon: Icons.ads_click,
                     suffix: 'kg',
                   ),
-                  
+
                   const SizedBox(height: 32),
                   _buildSectionTitle('Tần suất tập luyện'),
                   const SizedBox(height: 16),
@@ -301,7 +304,8 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                             min: 1,
                             max: 7,
                             divisions: 6,
-                            onChanged: (v) => setState(() => _weeklyTarget = v.toInt()),
+                            onChanged: (v) =>
+                                setState(() => _weeklyTarget = v.toInt()),
                           ),
                           const SizedBox(height: 16),
                           const Text(
@@ -314,7 +318,9 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                             runSpacing: 0,
                             children: List.generate(7, (index) {
                               final dayIndex = index + 1;
-                              final isSelected = _weeklyPlan.containsKey(dayIndex);
+                              final isSelected = _weeklyPlan.containsKey(
+                                dayIndex,
+                              );
                               return FilterChip(
                                 label: Text(_daysOfWeek[index]),
                                 selected: isSelected,
@@ -334,7 +340,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 48),
                   SizedBox(
                     width: double.infinity,
@@ -344,13 +350,18 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: colorScheme.primary,
                         foregroundColor: colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       child: context.watch<ProfileProvider>().isSaving
                           ? const CircularProgressIndicator(color: Colors.white)
                           : const Text(
                               'Bắt đầu ngay',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                     ),
                   ),
@@ -376,8 +387,13 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: IconButton(
-          icon: Icon(icon, size: 22, color: Theme.of(context).colorScheme.primary),
-          onPressed: () => _showNumberPicker(context, label, controller, suffix),
+          icon: Icon(
+            icon,
+            size: 22,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          onPressed: () =>
+              _showNumberPicker(context, label, controller, suffix),
           tooltip: 'Chọn nhanh $label',
         ),
         suffixText: suffix,
@@ -404,9 +420,9 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
             children: [
               Text(
                 'Chọn $title ($suffix)',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const Divider(),
               Expanded(

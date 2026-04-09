@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../domain/constants/profile_goal_options.dart';
 import '../../data/models/user_model.dart';
 import '../../domain/repositories/profile_repository.dart';
 
@@ -118,7 +119,7 @@ class ProfileProvider extends ChangeNotifier {
 
       final updated = current.copyWith(
         displayName: trimmedName,
-        goal: goal,
+        goal: ProfileGoalOptions.normalize(goal),
         unit: unit,
         weeklyTarget: weeklyTarget,
         targetWeight: targetWeight,

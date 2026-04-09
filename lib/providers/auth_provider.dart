@@ -87,7 +87,8 @@ class AuthProvider extends ChangeNotifier {
         return null;
       }
 
-      if (!await _authRepository.isUsernameUnique(username)) {
+      final isUsernameUnique = await _isUsernameUniqueSafely(username);
+      if (!isUsernameUnique) {
         return 'Tên người dùng đã tồn tại.';
       }
       _currentUser = await _authRepository.registerWithEmail(
@@ -229,6 +230,20 @@ class AuthProvider extends ChangeNotifier {
         return 'Lỗi mạng. Vui lòng kiểm tra kết nối internet.';
       default:
         return '[Email] Lỗi: ${error.message ?? error.code} (Vui lòng kiểm tra tab Authentication trên Firebase)';
+    }
+  }
+
+  Future<bool> _isUsernameUniqueSafely(String username) async {
+    try {
+      return await _authRepository.isUsernameUnique(username);
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied') {
+        debugPrint(
+          'Skip username uniqueness pre-check due Firestore rules: ${error.message}',
+        );
+        return true;
+      }
+      rethrow;
     }
   }
 }

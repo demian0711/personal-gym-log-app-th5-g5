@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../domain/constants/profile_goal_options.dart';
 import '../providers/profile_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -22,10 +23,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _waistController = TextEditingController();
   final _hipsController = TextEditingController();
 
-  static const List<String> _goalOptions = ['tăng cơ', 'giảm mỡ', 'duy trì'];
+  static const List<String> _goalOptions = ProfileGoalOptions.labels;
   static const List<String> _unitOptions = ['kg', 'lbs'];
 
-  String _selectedGoal = 'duy trì';
+  String _selectedGoal = ProfileGoalOptions.defaultGoal;
   String _selectedUnit = 'kg';
   String _email = '';
   String? _photoUrl;
@@ -62,9 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _chestController.text = profile.chest?.toString() ?? '';
     _waistController.text = profile.waist?.toString() ?? '';
     _hipsController.text = profile.hips?.toString() ?? '';
-    _selectedGoal = _goalOptions.contains(profile.goal)
-        ? profile.goal
-        : 'duy trì';
+    _selectedGoal = ProfileGoalOptions.normalize(profile.goal);
     _selectedUnit = _unitOptions.contains(profile.unit) ? profile.unit : 'kg';
     _email = profile.email;
     _photoUrl = profile.photoUrl;
@@ -127,7 +126,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: const Text('Chụp ảnh'),
               onTap: () async {
                 Navigator.pop(sheetContext);
-                final image = await picker.pickImage(source: ImageSource.camera);
+                final image = await picker.pickImage(
+                  source: ImageSource.camera,
+                );
                 if (image != null) {
                   final bytes = await image.readAsBytes();
                   await provider.updateProfilePhoto(bytes, image.name);
@@ -195,7 +196,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 44,
-                        backgroundImage: _photoUrl != null && _photoUrl!.isNotEmpty
+                        backgroundImage:
+                            _photoUrl != null && _photoUrl!.isNotEmpty
                             ? NetworkImage(_photoUrl!)
                             : null,
                         child: (_photoUrl == null || _photoUrl!.isEmpty)
@@ -209,7 +211,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onTap: () => _showPhotoOptions(context, provider),
                           child: CircleAvatar(
                             radius: 16,
-                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
                             child: const Icon(
                               Icons.camera_alt,
                               size: 16,
@@ -365,9 +369,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Text(
       label,
       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).colorScheme.primary,
+      ),
     );
   }
 
@@ -384,8 +388,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: IconButton(
-          icon: Icon(icon, size: 22, color: Theme.of(context).colorScheme.primary),
-          onPressed: () => _showNumberPicker(context, label, controller, suffix),
+          icon: Icon(
+            icon,
+            size: 22,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          onPressed: () =>
+              _showNumberPicker(context, label, controller, suffix),
           tooltip: 'Chọn nhanh $label',
         ),
         suffixText: suffix,
@@ -412,9 +421,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Text(
                 'Chọn $title ($suffix)',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const Divider(),
               Expanded(

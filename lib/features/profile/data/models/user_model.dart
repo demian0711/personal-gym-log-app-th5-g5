@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../domain/constants/profile_goal_options.dart';
+
 /// User model dùng cho module Profile & Goals.
 ///
 /// Lưu ý: `targetWeight` là optional theo yêu cầu.
@@ -17,7 +19,8 @@ class UserModel {
   final double? chest;
   final double? waist;
   final double? hips;
-  final Map<int, String> weeklyPlan; // Map<Ngày trong tuần (1-7), Tên bài tập/Mục tiêu>
+  final Map<int, String>
+  weeklyPlan; // Map<Ngày trong tuần (1-7), Tên bài tập/Mục tiêu>
 
   const UserModel({
     required this.userId,
@@ -62,7 +65,9 @@ class UserModel {
       goal: goal ?? this.goal,
       unit: unit ?? this.unit,
       weeklyTarget: weeklyTarget ?? this.weeklyTarget,
-      targetWeight: clearTargetWeight ? null : (targetWeight ?? this.targetWeight),
+      targetWeight: clearTargetWeight
+          ? null
+          : (targetWeight ?? this.targetWeight),
       height: height ?? this.height,
       currentWeight: currentWeight ?? this.currentWeight,
       chest: chest ?? this.chest,
@@ -86,7 +91,9 @@ class UserModel {
       'chest': chest,
       'waist': waist,
       'hips': hips,
-      'weeklyPlan': weeklyPlan.map((key, value) => MapEntry(key.toString(), value)),
+      'weeklyPlan': weeklyPlan.map(
+        (key, value) => MapEntry(key.toString(), value),
+      ),
     };
   }
 
@@ -99,7 +106,7 @@ class UserModel {
       email: (data['email'] ?? '') as String,
       displayName: (data['displayName'] ?? '') as String,
       photoUrl: data['photoUrl'] as String?,
-      goal: (data['goal'] ?? 'duy trì') as String,
+      goal: ProfileGoalOptions.normalize(data['goal'] as String?),
       unit: (data['unit'] ?? 'kg') as String,
       weeklyTarget: _toInt(data['weeklyTarget'], defaultValue: 3),
       targetWeight: _toDoubleOrNull(data['targetWeight']),
@@ -114,7 +121,9 @@ class UserModel {
 
   static Map<int, String> _toWeeklyPlan(dynamic value) {
     if (value is Map<String, dynamic>) {
-      return value.map((key, val) => MapEntry(int.tryParse(key) ?? 0, val.toString()));
+      return value.map(
+        (key, val) => MapEntry(int.tryParse(key) ?? 0, val.toString()),
+      );
     }
     return {};
   }
