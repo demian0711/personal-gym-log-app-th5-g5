@@ -368,8 +368,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           ),
                           Chip(
-                            avatar: const Icon(Icons.dataset_outlined, size: 16),
-                            label: Text('Mẫu dữ liệu ${selectedSuggestion.sampleCount}'),
+                            avatar: const Icon(
+                              Icons.dataset_outlined,
+                              size: 16,
+                            ),
+                            label: Text(
+                              'Mẫu dữ liệu ${selectedSuggestion.sampleCount}',
+                            ),
                           ),
                         ],
                       ),
@@ -381,7 +386,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: selectedSuggestion.recommendationByReps.entries
+                        children: selectedSuggestion
+                            .recommendationByReps
+                            .entries
                             .map(
                               (entry) => Chip(
                                 label: Text(
@@ -523,11 +530,7 @@ class _MetricTile extends StatelessWidget {
   final String value;
   final String? subtitle;
 
-  const _MetricTile({
-    required this.label,
-    required this.value,
-    this.subtitle,
-  });
+  const _MetricTile({required this.label, required this.value, this.subtitle});
 
   @override
   Widget build(BuildContext context) {

@@ -51,7 +51,8 @@ class UserFirestoreService {
       throw FirebaseException(
         plugin: 'cloud_firestore',
         code: 'user-doc-missing',
-        message: 'Không thể xác nhận dữ liệu user trên Firestore sau khi đăng ký.',
+        message:
+            'Không thể xác nhận dữ liệu user trên Firestore sau khi đăng ký.',
       );
     }
   }
