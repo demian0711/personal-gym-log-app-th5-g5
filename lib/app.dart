@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
@@ -152,10 +153,16 @@ class _PersonalGymLogAppState extends State<PersonalGymLogApp> {
         builder: (context, themeProvider, _) {
           return MaterialApp(
             title: 'Personal Gym Log',
-            debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [Locale('vi', 'VN'), Locale('en', 'US')],
+            locale: const Locale('vi', 'VN'),
             home: const AuthGate(),
           );
         },

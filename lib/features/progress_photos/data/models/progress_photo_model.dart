@@ -5,6 +5,9 @@ class ProgressPhotoModel {
   final String userId;
   final String imageUrl;
   final DateTime createdAt;
+  final String? goal;
+  final String? standard;
+  final double? weight;
   final String? note;
 
   const ProgressPhotoModel({
@@ -12,6 +15,9 @@ class ProgressPhotoModel {
     required this.userId,
     required this.imageUrl,
     required this.createdAt,
+    this.goal,
+    this.standard,
+    this.weight,
     this.note,
   });
 
@@ -20,6 +26,9 @@ class ProgressPhotoModel {
       'userId': userId,
       'imageUrl': imageUrl,
       'createdAt': Timestamp.fromDate(createdAt),
+      'goal': goal,
+      'standard': standard,
+      'weight': weight,
       'note': note,
     };
   }
@@ -44,6 +53,9 @@ class ProgressPhotoModel {
       userId: (data['userId'] ?? '') as String,
       imageUrl: (data['imageUrl'] ?? '') as String,
       createdAt: createdAt,
+      goal: data['goal'] as String?,
+      standard: data['standard'] as String?,
+      weight: (data['weight'] as num?)?.toDouble(),
       note: data['note'] as String?,
     );
   }

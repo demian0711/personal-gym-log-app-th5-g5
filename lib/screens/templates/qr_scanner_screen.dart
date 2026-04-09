@@ -22,7 +22,7 @@ class QRScannerScreen extends StatefulWidget {
 
 class _QRScannerScreenState extends State<QRScannerScreen> {
   bool _isScanned = false;
-  static const Color primaryTeal = Color(0xFF0F6B6E);
+  static const Color primaryTealColor = Color(0xFF0F6B6E);
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +50,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
               width: 250,
               height: 250,
               decoration: BoxDecoration(
-                border: Border.all(color: primaryTeal, width: 4),
+                border: Border.all(color: primaryTealColor, width: 4),
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
@@ -150,19 +150,48 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   }
 
   Widget _buildPreviewSheet(GuideExercise exercise, {String? gifUrl}) {
-    // If the exercise has a videoId, we can show a YouTube player in-app
-    YoutubePlayerController? controller;
-    if (exercise.videoId != null) {
-      controller = YoutubePlayerController(
-        initialVideoId: exercise.videoId!,
+    return _ExerciseDetailSheet(exercise: exercise, gifUrl: gifUrl);
+  }
+}
+
+class _ExerciseDetailSheet extends StatefulWidget {
+  final GuideExercise exercise;
+  final String? gifUrl;
+
+  const _ExerciseDetailSheet({required this.exercise, this.gifUrl});
+
+  @override
+  State<_ExerciseDetailSheet> createState() => _ExerciseDetailSheetState();
+}
+
+class _ExerciseDetailSheetState extends State<_ExerciseDetailSheet> {
+  YoutubePlayerController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.exercise.videoId != null) {
+      _controller = YoutubePlayerController(
+        initialVideoId: widget.exercise.videoId!,
         flags: const YoutubePlayerFlags(
           autoPlay: true,
           mute: false,
           loop: true,
+          disableDragSeek: true,
+          useHybridComposition: true,
         ),
       );
     }
+  }
 
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
@@ -200,22 +229,22 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          if (controller != null)
+                          if (_controller != null)
                             YoutubePlayer(
-                              controller: controller,
+                              controller: _controller!,
                               showVideoProgressIndicator: true,
                               progressIndicatorColor: Colors.teal,
-                              onReady: () {
-                                // Add any onReady logic here
-                              },
                             )
-                          else if (gifUrl != null && gifUrl.isNotEmpty)
+                          else if (widget.gifUrl != null &&
+                              widget.gifUrl!.isNotEmpty)
                             Stack(
                               alignment: Alignment.center,
                               children: [
                                 Image.network(
-                                  gifUrl,
+                                  widget.gifUrl!,
                                   fit: BoxFit.contain,
+                                  cacheWidth:
+                                      800, // Optimize memory consumption
                                   loadingBuilder:
                                       (context, child, loadingProgress) {
                                         if (loadingProgress == null)
@@ -223,6 +252,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                                         return const Center(
                                           child: CircularProgressIndicator(
                                             color: Colors.teal,
+                                            strokeWidth: 2,
                                           ),
                                         );
                                       },
@@ -236,13 +266,13 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                                     );
                                   },
                                 ),
-                                // Play Video Overlay
+                                // Play Video Search Overlay (Fallback)
                                 Material(
                                   color: Colors.transparent,
                                   child: InkWell(
                                     onTap: () async {
                                       final query = Uri.encodeComponent(
-                                        '${exercise.name} exercise tutorial',
+                                        '${widget.exercise.name} exercise tutorial',
                                       );
                                       final url = Uri.parse(
                                         'https://www.youtube.com/results?search_query=$query',
@@ -262,26 +292,13 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                                           shape: BoxShape.circle,
                                           border: Border.all(
                                             color: Colors.white70,
-                                            width: 2,
+                                            width: 1,
                                           ),
                                         ),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(
-                                              Icons.play_arrow_rounded,
-                                              color: Colors.white,
-                                              size: 48,
-                                            ),
-                                            const Text(
-                                              'Watch Video',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
+                                        child: const Icon(
+                                          Icons.play_arrow_rounded,
+                                          color: Colors.white,
+                                          size: 40,
                                         ),
                                       ),
                                     ),
@@ -294,41 +311,18 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                               child: Opacity(
                                 opacity: 0.6,
                                 child: Icon(
-                                  _getCategoryIcon(exercise.muscleGroupId),
+                                  (context
+                                          .findAncestorStateOfType<
+                                            _QRScannerScreenState
+                                          >()
+                                          ?._getCategoryIcon(
+                                            widget.exercise.muscleGroupId,
+                                          )) ??
+                                      Icons.fitness_center,
                                   size: 100,
                                   color: Colors.white24,
                                 ),
                               ),
-                            ),
-                          if (gifUrl == null && controller == null)
-                            Positioned(
-                              top: 20,
-                              right: 20,
-                              child: _getCategoryIconWidget(
-                                exercise.muscleGroupId,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                            const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.play_circle_fill,
-                                  size: 64,
-                                  color: primaryTeal,
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Watch Exercise Video',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
                             ),
                         ],
                       ),
@@ -336,15 +330,15 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    exercise.name,
+                    widget.exercise.name,
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: primaryTeal,
+                      color: _QRScannerScreenState.primaryTealColor,
                     ),
                   ),
                   Text(
-                    exercise.muscleGroupId.toUpperCase(),
+                    widget.exercise.muscleGroupId.toUpperCase(),
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontWeight: FontWeight.w500,
@@ -352,9 +346,15 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildSection('Instructions', exercise.steps.join('\n\n')),
-                  _buildSection('Benefits', exercise.benefits.join(' • ')),
-                  _buildSection('Pro Tips', exercise.tips.join(' • ')),
+                  _buildSection(
+                    'Instructions',
+                    widget.exercise.steps.join('\n\n'),
+                  ),
+                  _buildSection(
+                    'Benefits',
+                    widget.exercise.benefits.join(' • '),
+                  ),
+                  _buildSection('Pro Tips', widget.exercise.tips.join(' • ')),
                   const SizedBox(height: 100), // Space for button
                 ],
               ),
@@ -371,22 +371,33 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                     child: const Text('Dismiss'),
                   ),
                 ),
-                if (widget.template != null) ...[
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: primaryTeal,
-                      ),
-                      onPressed: () {
-                        _addExerciseToTemplate(exercise);
-                        Navigator.pop(context); // Close sheet
-                        Navigator.pop(context); // Close scanner
-                      },
-                      child: const Text('Add to Template'),
-                    ),
-                  ),
-                ],
+                // We need to resolve the widget original context to call its methods
+                Builder(
+                  builder: (context) {
+                    final parent = context
+                        .findAncestorStateOfType<_QRScannerScreenState>();
+                    if (parent?.widget.template != null) {
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 12),
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor:
+                                  _QRScannerScreenState.primaryTealColor,
+                            ),
+                            onPressed: () {
+                              parent?._addExerciseToTemplate(widget.exercise);
+                              Navigator.pop(context); // Close sheet
+                              Navigator.pop(parent!.context); // Close scanner
+                            },
+                            child: const Text('Add to Template'),
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
               ],
             ),
           ),
@@ -413,8 +424,8 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           Text(
             content,
             style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
+              fontSize: 15,
+              color: Colors.grey[800],
               height: 1.5,
             ),
           ),
@@ -422,7 +433,10 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       ),
     );
   }
+}
 
+// Keep helper methods below inside _QRScannerScreenState scope if needed
+extension _QRScannerHelpers on _QRScannerScreenState {
   void _addExerciseToTemplate(GuideExercise guideExercise) {
     final now = DateTime.now();
     int setsCount =
@@ -453,7 +467,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Added "${guideExercise.name}" to template'),
-        backgroundColor: primaryTeal,
+        backgroundColor: _QRScannerScreenState.primaryTealColor,
       ),
     );
   }

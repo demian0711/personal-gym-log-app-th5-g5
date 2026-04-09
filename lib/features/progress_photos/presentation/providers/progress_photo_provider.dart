@@ -53,6 +53,9 @@ class ProgressPhotoProvider extends ChangeNotifier {
   Future<String?> uploadPhoto({
     required List<int> imageBytes,
     required String fileName,
+    String? goal,
+    String? standard,
+    double? weight,
     String? note,
   }) async {
     final userId = _userId;
@@ -69,6 +72,9 @@ class ProgressPhotoProvider extends ChangeNotifier {
         userId: userId,
         imageBytes: imageBytes,
         fileName: fileName,
+        goal: goal,
+        standard: standard,
+        weight: weight,
         note: note,
       );
       return null;

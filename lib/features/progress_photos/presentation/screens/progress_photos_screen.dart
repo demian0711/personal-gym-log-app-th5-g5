@@ -216,61 +216,88 @@ class _ProgressPhotosScreenState extends State<ProgressPhotosScreen> {
             ),
 
             // Ảnh chụp
-            AspectRatio(
-              aspectRatio: 1,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.network(
-                    photo.imageUrl,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, progress) {
-                      if (progress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: progress.expectedTotalBytes != null
-                              ? progress.cumulativeBytesLoaded /
-                                    progress.expectedTotalBytes!
-                              : null,
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: colorScheme.surfaceContainer,
-                        child: Center(
-                          child: Icon(
-                            Icons.image_not_supported_outlined,
-                            size: 48,
-                            color: colorScheme.outline,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  // Nút xoá
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => _showDeleteDialog(context, photo),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: colorScheme.error.withOpacity(0.85),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.close,
-                            size: 20,
-                            color: colorScheme.onError,
-                          ),
-                        ),
-                      ),
+            Image.network(
+              photo.imageUrl,
+              fit: BoxFit.cover,
+              height: 300, // Fixed height for a consistent look in the list
+              width: double.infinity,
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return Container(
+                  height: 300,
+                  color: colorScheme.surfaceContainer,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      value: progress.expectedTotalBytes != null
+                          ? progress.cumulativeBytesLoaded /
+                                progress.expectedTotalBytes!
+                          : null,
                     ),
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 300,
+                  color: colorScheme.errorContainer.withOpacity(0.5),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.broken_image_outlined,
+                          size: 48,
+                          color: colorScheme.error,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Lỗi tải hình ảnh',
+                          style: TextStyle(
+                            color: colorScheme.error,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Sử dụng dữ liệu di động hoặc Wi-Fi để xem',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            // Thông tin chi tiết
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildInfoRow(
+                    context,
+                    icon: Icons.flag_outlined,
+                    label: 'Mục tiêu',
+                    value: photo.goal,
+                  ),
+                  _buildInfoRow(
+                    context,
+                    icon: Icons.star_outline,
+                    label: 'Tiêu chuẩn',
+                    value: photo.standard,
+                  ),
+                  _buildInfoRow(
+                    context,
+                    icon: Icons.monitor_weight_outlined,
+                    label: 'Cân nặng',
+                    value: photo.weight != null ? '${photo.weight} kg' : null,
+                  ),
+                  _buildInfoRow(
+                    context,
+                    icon: Icons.note_outlined,
+                    label: 'Ghi chú',
+                    value: photo.note,
                   ),
                 ],
               ),
@@ -281,29 +308,32 @@ class _ProgressPhotosScreenState extends State<ProgressPhotosScreen> {
     );
   }
 
-  /// Hiển thị dialog xác nhận xoá
-  void _showDeleteDialog(BuildContext context, ProgressPhotoModel photo) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Xoá ảnh'),
-        content: const Text('Bạn chắc chắn muốn xoá ảnh này?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Huỷ'),
+  Widget _buildInfoRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String? value,
+  }) {
+    if (value == null || value.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: colorScheme.primary),
+          const SizedBox(width: 12),
+          Text(
+            '$label: ',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await context.read<ProgressPhotoProvider>().deletePhoto(photo.id);
-              if (mounted) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('Đã xoá ảnh')));
-              }
-            },
-            child: const Text('Xoá'),
+          Expanded(
+            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
           ),
         ],
       ),

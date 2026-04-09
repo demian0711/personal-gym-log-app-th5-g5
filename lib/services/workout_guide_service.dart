@@ -110,6 +110,7 @@ class WorkoutGuideService {
       ],
       defaultSets: '3',
       defaultReps: '8-10',
+      videoId: '0G2_XV7SR3M',
     ),
     GuideExercise(
       id: 'cable_fly',
@@ -132,6 +133,7 @@ class WorkoutGuideService {
       tips: ['Slight elbow bend', 'Focus on the squeeze', 'Control the return'],
       defaultSets: '3',
       defaultReps: '10-12',
+      videoId: 'ecS7mH_N_34',
     ),
     // BACK
     GuideExercise(
