@@ -1,10 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../features/analytics/presentation/screens/analytics_screen.dart';
-import '../../features/progress_photos/presentation/screens/progress_photos_screen.dart';
-import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/providers/profile_provider.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/progress_photos/presentation/screens/progress_photos_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/utilities_provider.dart';
@@ -45,10 +46,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final profileProvider = context.watch<ProfileProvider>();
     final workout = context.watch<WorkoutProvider>();
     final themeProvider = context.watch<ThemeProvider>();
-    
+
     final profile = profileProvider.profile;
     final user = auth.currentUser;
-    
+    final supportsLocalNotifications = !kIsWeb;
+
     final displayName = profile?.displayName ?? user?.name ?? 'Tài khoản';
     final email = profile?.email ?? user?.email ?? 'Không có email';
     final photoUrl = profile?.photoUrl;
@@ -131,9 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: const Text('Chế độ tối'),
                 subtitle: const Text('Giao diện tối giúp bảo vệ mắt'),
                 value: themeProvider.isDarkMode,
-                onChanged: (value) {
-                  themeProvider.setDarkMode(value);
-                },
+                onChanged: themeProvider.setDarkMode,
               ),
             ),
             const SizedBox(height: 12),
@@ -175,7 +175,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: () => auth.logout(),
+              onPressed: auth.logout,
               icon: const Icon(Icons.logout),
               label: const Text('Đăng xuất'),
             ),
@@ -289,38 +289,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Nhắc nhở tập luyện (hàng ngày)'),
                       subtitle: Text(
-                        'Giờ nhắc: ${utilities.workoutReminderTime.format(context)}',
+                        supportsLocalNotifications
+                            ? 'Giờ nhắc: ${utilities.workoutReminderTime.format(context)}'
+                            : 'Tính năng này hiện chỉ hỗ trợ trên mobile.',
                       ),
                       value: utilities.workoutReminderEnabled,
-                      onChanged: (value) async {
-                        await utilities.setWorkoutReminderEnabled(value);
-                      },
+                      onChanged: supportsLocalNotifications
+                          ? (value) async {
+                              await utilities.setWorkoutReminderEnabled(value);
+                            }
+                          : null,
                     ),
                     OutlinedButton.icon(
-                      onPressed: () async {
-                        final selected = await showTimePicker(
-                          context: context,
-                          initialTime: utilities.workoutReminderTime,
-                        );
-                        if (selected == null) {
-                          return;
-                        }
-                        await utilities.setWorkoutReminderTime(selected);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Đã đặt giờ nhắc: ${selected.format(context)}',
-                              ),
-                            ),
-                          );
-                        }
-                      },
+                      onPressed: supportsLocalNotifications
+                          ? () async {
+                              final selected = await showTimePicker(
+                                context: context,
+                                initialTime: utilities.workoutReminderTime,
+                              );
+                              if (selected == null) {
+                                return;
+                              }
+                              await utilities.setWorkoutReminderTime(selected);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Đã đặt giờ nhắc: ${selected.format(context)}',
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          : null,
                       icon: const Icon(Icons.schedule_outlined),
                       label: const Text('Đặt giờ nhắc nhở'),
                     ),
                     OutlinedButton.icon(
-                      onPressed: utilities.sendTestNotification,
+                      onPressed: supportsLocalNotifications
+                          ? utilities.sendTestNotification
+                          : null,
                       icon: const Icon(Icons.notifications_active_outlined),
                       label: const Text('Gửi thông báo thử nghiệm'),
                     ),

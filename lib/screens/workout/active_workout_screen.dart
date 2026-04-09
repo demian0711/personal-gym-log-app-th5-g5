@@ -65,14 +65,15 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     if (workout == null) return;
 
     if (!_validateCompletedSets(workout)) {
-      _showMessage('Please complete weight and reps before checking a set.');
+      _showMessage('Hãy nhập đủ mức tạ và số reps trước khi đánh dấu set.');
       return;
     }
 
+    final rawDuration = _startTime == null
+        ? 0
+        : DateTime.now().difference(_startTime!).inMinutes;
     final completedWorkout = _applyControllersToWorkout(workout).copyWith(
-      durationInMinutes: _startTime == null
-          ? 0
-          : DateTime.now().difference(_startTime!).inMinutes,
+      durationInMinutes: rawDuration > 0 ? rawDuration : 1,
     );
 
     context.read<UtilitiesProvider>().stopRestTimer();
@@ -88,7 +89,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
       _startTime = null;
     });
 
-    _showMessage('Workout saved.');
+    _showMessage('Đã lưu buổi tập.');
   }
 
   void _backToStartWorkout() {
@@ -318,7 +319,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
-                tooltip: 'Back to start',
+                tooltip: 'Quay lại',
                 onPressed: _backToStartWorkout,
                 icon: const Icon(Icons.arrow_back),
               ),
@@ -336,7 +337,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             FilledButton.icon(
               onPressed: _finishWorkout,
               icon: const Icon(Icons.flag),
-              label: const Text('Finish Workout'),
+              label: const Text('Hoàn thành buổi tập'),
             ),
           ],
         ],
@@ -350,7 +351,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
         child: Padding(
           padding: EdgeInsets.all(16),
           child: Text(
-            'No templates yet. Create one in Templates to start a workout.',
+            'Chưa có mẫu tập. Hãy tạo trong mục Templates để bắt đầu.',
           ),
         ),
       );
@@ -363,7 +364,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Start Workout',
+              'Bắt đầu buổi tập',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
@@ -375,7 +376,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                   enableFilter: true,
                   enableSearch: true,
                   requestFocusOnTap: true,
-                  label: const Text('Template'),
+                  label: const Text('Mẫu tập'),
                   leadingIcon: const Icon(Icons.search),
                   trailingIcon: const Icon(Icons.arrow_drop_down),
                   dropdownMenuEntries: templates
@@ -398,6 +399,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: FilledButton.icon(
+                key: const Key('start_workout_button'),
                 onPressed: _selectedTemplateId == null
                     ? null
                     : () {
@@ -407,7 +409,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                         _startWorkout(template);
                       },
                 icon: const Icon(Icons.play_arrow),
-                label: const Text('Start'),
+                label: const Text('Bắt đầu'),
               ),
             ),
           ],
@@ -444,7 +446,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'Active Workout',
+              'Buổi tập hiện tại',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -473,10 +475,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            Text('Exercises: ${workout.exercises.length}'),
-            Text('Sets completed: $completedSets / $totalSets'),
+            Text('Bài tập: ${workout.exercises.length}'),
+            Text('Set đã hoàn thành: $completedSets / $totalSets'),
             if (startTime != null)
-              Text('Started at: ${_formatStartTime(startTime)}'),
+              Text('Bắt đầu lúc: ${_formatStartTime(startTime)}'),
           ],
         ),
       ),
@@ -511,7 +513,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             if (previousPerformance != null) ...[
               const SizedBox(height: 4),
               Text(
-                'Last session: ${_formatShortDate(previousPerformance.workoutDate)}',
+                'Buổi gần nhất: ${_formatShortDate(previousPerformance.workoutDate)}',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w500,
@@ -524,10 +526,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
               child: DataTable(
                 columnSpacing: 12,
                 columns: const [
-                  DataColumn(label: Text('Set')),
-                  DataColumn(label: Text('Weight (kg)')),
-                  DataColumn(label: Text('Reps')),
-                  DataColumn(label: Text('Check')),
+                  DataColumn(label: Text('Hiệp')),
+                  DataColumn(label: Text('Mức tạ (kg)')),
+                  DataColumn(label: Text('Số reps')),
+                  DataColumn(label: Text('Xong')),
                 ],
                 rows: exercise.sets.asMap().entries.map((entry) {
                   final setIndex = entry.key;
@@ -575,7 +577,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                                 Padding(
                                   padding: const EdgeInsets.only(top: 4),
                                   child: Text(
-                                    'Last: ${_formatWeight(previousSet.weight)} kg',
+                                    'Lần trước: ${_formatWeight(previousSet.weight)} kg',
                                     style:
                                         Theme.of(context).textTheme.bodySmall,
                                   ),
@@ -602,7 +604,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                                 decoration: const InputDecoration(
                                   isDense: true,
                                   border: OutlineInputBorder(),
-                                  hintText: 'reps',
+                                  hintText: 'lần',
                                 ),
                                 validator: _validateReps,
                               ),
@@ -610,7 +612,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                                 Padding(
                                   padding: const EdgeInsets.only(top: 4),
                                   child: Text(
-                                    'Last: ${previousSet.reps}',
+                                    'Lần trước: ${previousSet.reps}',
                                     style:
                                         Theme.of(context).textTheme.bodySmall,
                                   ),
@@ -621,6 +623,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                       ),
                       DataCell(
                         IconButton(
+                          key: Key('toggle_set_${exercise.id}_${set.order}'),
                           icon: Icon(
                             isCompleted
                                 ? Icons.check_circle
@@ -691,7 +694,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Rest Timer Running',
+                          'Đang nghỉ giữa hiệp',
                           style: TextStyle(
                             color: colorScheme.onPrimary,
                             fontSize: 16,
@@ -700,7 +703,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Get ready for your next set',
+                          'Chuẩn bị cho set tiếp theo',
                           style: TextStyle(
                             color: colorScheme.onPrimary.withOpacity(0.9),
                           ),
@@ -714,7 +717,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                       backgroundColor: colorScheme.surface.withOpacity(0.92),
                       foregroundColor: colorScheme.primary,
                     ),
-                    child: const Text('Stop'),
+                    child: const Text('Dừng'),
                   ),
                 ],
               ),
@@ -742,7 +745,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                '$remainingSeconds / $totalSeconds seconds remaining',
+                'Còn $remainingSeconds / $totalSeconds giây',
                 style: TextStyle(
                   color: colorScheme.onPrimary.withOpacity(0.92),
                   fontWeight: FontWeight.w500,
@@ -758,11 +761,11 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   String? _validateWeight(String? value) {
     final trimmed = value?.trim() ?? '';
     if (trimmed.isEmpty) {
-      return 'Required';
+      return 'Bắt buộc';
     }
     final weight = double.tryParse(trimmed);
     if (weight == null || weight <= 0) {
-      return 'Invalid';
+      return 'Không hợp lệ';
     }
     return null;
   }
@@ -770,11 +773,11 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   String? _validateReps(String? value) {
     final trimmed = value?.trim() ?? '';
     if (trimmed.isEmpty) {
-      return 'Required';
+      return 'Bắt buộc';
     }
     final reps = int.tryParse(trimmed);
     if (reps == null || reps <= 0) {
-      return 'Invalid';
+      return 'Không hợp lệ';
     }
     return null;
   }
