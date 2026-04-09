@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'core/config/cloudinary_config.dart';
 import 'core/theme/app_theme.dart';
+import 'features/analytics/data/models/workout_model_mapper.dart';
 import 'features/analytics/domain/services/analytics_service.dart';
 import 'features/analytics/presentation/providers/analytics_provider.dart';
 import 'features/progress_photos/data/repositories/progress_photo_repository_impl.dart';
@@ -16,17 +19,48 @@ import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/workout_provider.dart';
 import 'screens/auth/auth_gate.dart';
+import 'screens/splash_screen.dart';
 import 'services/local_storage_service.dart';
 
-class PersonalGymLogApp extends StatelessWidget {
+class PersonalGymLogApp extends StatefulWidget {
   const PersonalGymLogApp({super.key});
 
   @override
+  State<PersonalGymLogApp> createState() => _PersonalGymLogAppState();
+}
+
+class _PersonalGymLogAppState extends State<PersonalGymLogApp> {
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize date formatting for Vietnamese locale
+    initializeDateFormatting('vi_VN', null);
+    // Allow current frame to render splash screen before checking initialization
+    Future.microtask(() {
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return MaterialApp(
+        home: const SplashScreen(),
+        theme: ThemeData(useMaterial3: true),
+      );
+    }
+
     final storage = LocalStorageService();
 
     return MultiProvider(
       providers: [
+        // Critical providers - load immediately
         ChangeNotifierProvider(create: (_) => ThemeProvider(storage)),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProxyProvider<AuthProvider, WorkoutProvider>(
@@ -37,6 +71,8 @@ class PersonalGymLogApp extends StatelessWidget {
             return provider;
           },
         ),
+
+        // Non-critical providers - load lazily
         ChangeNotifierProxyProvider<AuthProvider, ProfileProvider>(
           create: (_) => ProfileProvider(
             ProfileRepositoryImpl(
@@ -59,7 +95,7 @@ class PersonalGymLogApp extends StatelessWidget {
                     ),
                   ),
                 );
-            provider.bindUser(
+            profile?.bindUser(
               userId: auth.currentUser?.id,
               email: auth.currentUser?.email ?? '',
               fallbackDisplayName: auth.currentUser?.name ?? '',
@@ -79,27 +115,37 @@ class PersonalGymLogApp extends StatelessWidget {
         ChangeNotifierProxyProvider<AuthProvider, ProgressPhotoProvider>(
           create: (_) => ProgressPhotoProvider(
             ProgressPhotoRepositoryImpl(
+              firestoreService: ProgressPhotoFirestoreService(),
               cloudinaryService: CloudinaryService(
                 cloudName: CloudinaryConfig.cloudName,
                 uploadPreset: CloudinaryConfig.uploadPreset,
               ),
-              firestoreService: ProgressPhotoFirestoreService(),
             ),
           ),
-          update: (_, auth, photos) {
-            final provider =
-                photos ??
+          update: (_, auth, provider) {
+            final p =
+                provider ??
                 ProgressPhotoProvider(
                   ProgressPhotoRepositoryImpl(
+                    firestoreService: ProgressPhotoFirestoreService(),
                     cloudinaryService: CloudinaryService(
                       cloudName: CloudinaryConfig.cloudName,
                       uploadPreset: CloudinaryConfig.uploadPreset,
                     ),
-                    firestoreService: ProgressPhotoFirestoreService(),
                   ),
                 );
-            provider.bindUser(auth.currentUser?.id);
-            return provider;
+            p.bindUser(auth.currentUser?.id);
+            return p;
+          },
+        ),
+        ChangeNotifierProxyProvider<WorkoutProvider, AnalyticsProvider>(
+          create: (_) => AnalyticsProvider(AnalyticsService()),
+          update: (_, workout, analytics) {
+            final a = analytics ?? AnalyticsProvider(AnalyticsService());
+            a.updateFromWorkouts(
+              workout.history.map((w) => w.toAnalyticsModel()).toList(),
+            );
+            return a;
           },
         ),
       ],
@@ -107,10 +153,16 @@ class PersonalGymLogApp extends StatelessWidget {
         builder: (context, themeProvider, _) {
           return MaterialApp(
             title: 'Personal Gym Log',
-            debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [Locale('vi', 'VN'), Locale('en', 'US')],
+            locale: const Locale('vi', 'VN'),
             home: const AuthGate(),
           );
         },

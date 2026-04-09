@@ -18,6 +18,9 @@ class ProgressPhotoRepositoryImpl implements ProgressPhotoRepository {
     required String userId,
     required List<int> imageBytes,
     required String fileName,
+    String? goal,
+    String? standard,
+    double? weight,
     String? note,
   }) async {
     final imageUrl = await _cloudinaryService.uploadImageBytes(
@@ -31,6 +34,9 @@ class ProgressPhotoRepositoryImpl implements ProgressPhotoRepository {
       userId: userId,
       imageUrl: imageUrl,
       createdAt: now,
+      goal: goal,
+      standard: standard,
+      weight: weight,
       note: note?.trim().isEmpty == true ? null : note?.trim(),
     );
 

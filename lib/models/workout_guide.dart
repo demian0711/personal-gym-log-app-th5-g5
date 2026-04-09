@@ -23,6 +23,7 @@ class GuideExercise {
   final List<String> tips;
   final String defaultSets;
   final String defaultReps;
+  final String? videoId;
 
   const GuideExercise({
     required this.id,
@@ -35,5 +36,6 @@ class GuideExercise {
     required this.tips,
     required this.defaultSets,
     required this.defaultReps,
+    this.videoId,
   });
 }

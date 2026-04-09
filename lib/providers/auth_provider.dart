@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../features/auth/data/repositories/firebase_auth_repository.dart';
@@ -21,7 +22,10 @@ class AuthProvider extends ChangeNotifier {
             authService: FirebaseAuthService(),
             userFirestoreService: UserFirestoreService(),
           ) {
-    _initialize();
+    // Load auth state asynchronously
+    Future.delayed(const Duration(milliseconds: 300)).then((_) {
+      _initialize();
+    });
   }
 
   bool get isLoading => _isLoading;
