@@ -1,9 +1,12 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, TargetPlatform;
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
+    if (kIsWeb) {
+      return web;
+    }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
@@ -17,20 +20,29 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBP5eoed3h79RF6U1fJWvK7QWMiVu84UN4',
-    appId: '1:158847912768:android:31a2d03095aedf993588a5',
-    messagingSenderId: '158847912768',
-    projectId: 'personal-gym-log',
-    storageBucket: 'personal-gym-log.firebasestorage.app',
+    apiKey: 'AIzaSyCtih01ZNkkmlOLDMiioRgi64oswkGutBo',
+    appId: '1:972551890881:android:3b5ed496663613abe67140',
+    messagingSenderId: '972551890881',
+    projectId: 'th5thi',
+    storageBucket: 'th5thi.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: '1:YOUR_PROJECT_NUMBER:ios:YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
-    projectId: 'YOUR_PROJECT_ID',
-    databaseURL: 'https://YOUR_PROJECT_ID.firebasedatabase.app',
-    storageBucket: 'YOUR_PROJECT_ID.appspot.com',
-    iosBundleId: 'com.example.personalGymLogApp',
+    apiKey: 'AIzaSyCtih01ZNkkmlOLDMiioRgi64oswkGutBo',
+    appId: '1:972551890881:ios:3b5ed496663613abe67140', // Inferring consistent ID pattern
+    messagingSenderId: '972551890881',
+    projectId: 'th5thi',
+    storageBucket: 'th5thi.firebasestorage.app',
+    iosBundleId: 'com.example.personal_gym_log_app_th5_g5',
+  );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCtih01ZNkkmlOLDMiioRgi64oswkGutBo',
+    appId: '1:972551890881:web:202c558d2bc6b6e0e67140',
+    messagingSenderId: '972551890881',
+    projectId: 'th5thi',
+    authDomain: 'th5thi.firebaseapp.com',
+    storageBucket: 'th5thi.firebasestorage.app',
+    measurementId: 'G-ETZ9M8R06G',
   );
 }

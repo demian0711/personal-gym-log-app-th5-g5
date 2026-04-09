@@ -86,6 +86,7 @@ class WorkoutProvider extends ChangeNotifier {
       final userId = _userId;
       if (userId != null) {
         await _workoutRepository.saveWorkout(userId: userId, workout: workout);
+        await _firebase.uploadWorkoutLog(workout);
       }
     } catch (_) {
       _lastError = 'Không thể đồng bộ buổi tập lên Firestore.';
@@ -216,7 +217,7 @@ class WorkoutProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _firebase.syncAllToFirebase(_templates, <Workout>[]);
+      await _firebase.syncAllToFirebase(_templates, _history);
       for (final workout in _history) {
         await _workoutRepository.saveWorkout(
           userId: _userId!,

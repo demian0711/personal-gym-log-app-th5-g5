@@ -22,7 +22,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: colorScheme.surfaceContainerLow,
         elevation: 0,
-        shadowColor: colorScheme.shadow.withValues(alpha: 0.06),
+        shadowColor: colorScheme.shadow.withOpacity(0.06),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       inputDecorationTheme: InputDecorationTheme(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../features/profile/presentation/providers/profile_provider.dart';
+
 import '../providers/auth_provider.dart';
 import '../providers/utilities_provider.dart';
 import '../widgets/app_bottom_nav.dart';
@@ -58,7 +60,8 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final userName = context.watch<AuthProvider>().currentUser?.name;
+    final profile = context.watch<ProfileProvider>().profile;
+    final userName = profile?.displayName ?? context.watch<AuthProvider>().currentUser?.name;
 
     return Scaffold(
       appBar: AppBar(

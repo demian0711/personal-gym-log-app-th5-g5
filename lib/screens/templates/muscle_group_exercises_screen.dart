@@ -66,7 +66,7 @@ class _MuscleGroupExercisesScreenState
             border: Border.all(
               color: Colors
                   .primaries[exercise.id.hashCode % Colors.primaries.length]
-                  .withValues(alpha: 0.3),
+                  .withOpacity(0.3),
               width: 2,
             ),
           ),
@@ -84,7 +84,7 @@ class _MuscleGroupExercisesScreenState
                         color: Colors
                             .primaries[exercise.id.hashCode %
                                 Colors.primaries.length]
-                            .withValues(alpha: 0.1),
+                            .withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(

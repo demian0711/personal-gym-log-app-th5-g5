@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
@@ -15,6 +15,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  
+  String? _emailError;
+  String? _passwordError;
   bool _isSubmitting = false;
 
   @override
@@ -25,6 +28,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    setState(() {
+      _emailError = null;
+      _passwordError = null;
+    });
+
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _isSubmitting = true);
 
@@ -38,9 +46,16 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isSubmitting = false);
 
     if (error != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error)));
+      setState(() {
+        if (error.contains('[Email]')) {
+          _emailError = error.replaceAll('[Email] ', '').replaceAll('[Email]', '');
+        } else if (error.contains('[Mật khẩu]')) {
+          _passwordError = error.replaceAll('[Mật khẩu] ', '').replaceAll('[Mật khẩu]', '');
+        } else {
+          // Fallback
+          _emailError = error;
+        }
+      });
     }
   }
 
@@ -80,19 +95,28 @@ class _LoginScreenState extends State<LoginScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Form(
                     key: _formKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     child: Column(
                       children: [
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(labelText: 'Email'),
+                          decoration: InputDecoration(
+                            labelText: 'Email',
+                            errorText: _emailError,
+                            helperText: 'VD: example@gmail.com',
+                          ),
+                          onChanged: (_) {
+                            if (_emailError != null) {
+                              setState(() => _emailError = null);
+                            }
+                          },
                           validator: (value) {
                             final trimmed = value?.trim() ?? '';
-                            if (trimmed.isEmpty) {
-                              return 'Nhập email';
-                            }
-                            if (!trimmed.contains('@')) {
-                              return 'Email không hợp lệ';
+                            if (trimmed.isEmpty) return 'Bắt buộc nhập Email';
+                            final gmailRegex = RegExp(r'^[\w-\.]+@gmail\.com$');
+                            if (!gmailRegex.hasMatch(trimmed.toLowerCase())) {
+                              return 'Email phải có cú pháp @gmail.com';
                             }
                             return null;
                           },
@@ -101,21 +125,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextFormField(
                           controller: _passwordController,
                           obscureText: true,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Mật khẩu',
+                            errorText: _passwordError,
                           ),
+                          onChanged: (_) {
+                            if (_passwordError != null) {
+                              setState(() => _passwordError = null);
+                            }
+                          },
                           validator: (value) {
                             final trimmed = value?.trim() ?? '';
-                            if (trimmed.isEmpty) {
-                              return 'Nhập mật khẩu';
-                            }
-                            if (trimmed.length < 6) {
-                              return 'Tối thiểu 6 ký tự';
-                            }
+                            if (trimmed.isEmpty) return 'Bắt buộc nhập Mật khẩu';
+                            if (trimmed.length < 6) return 'Mật khẩu tối thiểu 6 ký tự';
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton(

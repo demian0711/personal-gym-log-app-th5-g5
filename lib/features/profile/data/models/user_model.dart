@@ -12,6 +12,12 @@ class UserModel {
   final String unit;
   final int weeklyTarget;
   final double? targetWeight;
+  final double? height;
+  final double? currentWeight;
+  final double? chest;
+  final double? waist;
+  final double? hips;
+  final Map<int, String> weeklyPlan; // Map<Ngày trong tuần (1-7), Tên bài tập/Mục tiêu>
 
   const UserModel({
     required this.userId,
@@ -22,6 +28,12 @@ class UserModel {
     required this.unit,
     required this.weeklyTarget,
     required this.targetWeight,
+    this.height,
+    this.currentWeight,
+    this.chest,
+    this.waist,
+    this.hips,
+    this.weeklyPlan = const {},
   });
 
   UserModel copyWith({
@@ -33,6 +45,12 @@ class UserModel {
     String? unit,
     int? weeklyTarget,
     double? targetWeight,
+    double? height,
+    double? currentWeight,
+    double? chest,
+    double? waist,
+    double? hips,
+    Map<int, String>? weeklyPlan,
     bool clearPhotoUrl = false,
     bool clearTargetWeight = false,
   }) {
@@ -44,9 +62,13 @@ class UserModel {
       goal: goal ?? this.goal,
       unit: unit ?? this.unit,
       weeklyTarget: weeklyTarget ?? this.weeklyTarget,
-      targetWeight: clearTargetWeight
-          ? null
-          : (targetWeight ?? this.targetWeight),
+      targetWeight: clearTargetWeight ? null : (targetWeight ?? this.targetWeight),
+      height: height ?? this.height,
+      currentWeight: currentWeight ?? this.currentWeight,
+      chest: chest ?? this.chest,
+      waist: waist ?? this.waist,
+      hips: hips ?? this.hips,
+      weeklyPlan: weeklyPlan ?? this.weeklyPlan,
     );
   }
 
@@ -59,6 +81,12 @@ class UserModel {
       'unit': unit,
       'weeklyTarget': weeklyTarget,
       'targetWeight': targetWeight,
+      'height': height,
+      'currentWeight': currentWeight,
+      'chest': chest,
+      'waist': waist,
+      'hips': hips,
+      'weeklyPlan': weeklyPlan.map((key, value) => MapEntry(key.toString(), value)),
     };
   }
 
@@ -75,7 +103,20 @@ class UserModel {
       unit: (data['unit'] ?? 'kg') as String,
       weeklyTarget: _toInt(data['weeklyTarget'], defaultValue: 3),
       targetWeight: _toDoubleOrNull(data['targetWeight']),
+      height: _toDoubleOrNull(data['height']),
+      currentWeight: _toDoubleOrNull(data['currentWeight']),
+      chest: _toDoubleOrNull(data['chest']),
+      waist: _toDoubleOrNull(data['waist']),
+      hips: _toDoubleOrNull(data['hips']),
+      weeklyPlan: _toWeeklyPlan(data['weeklyPlan']),
     );
+  }
+
+  static Map<int, String> _toWeeklyPlan(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value.map((key, val) => MapEntry(int.tryParse(key) ?? 0, val.toString()));
+    }
+    return {};
   }
 
   static int _toInt(dynamic value, {required int defaultValue}) {
