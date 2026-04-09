@@ -53,8 +53,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Card(
               child: ListTile(
                 leading: const CircleAvatar(child: Icon(Icons.person)),
-                title: Text(user?.name ?? 'Account'),
-                subtitle: Text(user?.email ?? 'No email'),
+                title: Text(user?.name ?? 'Tài khoản'),
+                subtitle: Text(user?.email ?? 'Không có email'),
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
                 onTap: () {
                   Navigator.of(context).push(
@@ -69,9 +69,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.bar_chart),
-                title: const Text('Personal Data'),
+                title: const Text('Dữ liệu cá nhân'),
                 subtitle: Text(
-                  'Templates: ${workout.templates.length} • History: ${workout.history.length}',
+                  'Mẫu tập: ${workout.templates.length} • Lịch sử: ${workout.history.length}',
                 ),
               ),
             ),
@@ -79,8 +79,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.analytics_outlined),
-                title: const Text('Analytics'),
-                subtitle: const Text('Volume và 1RM theo thời gian'),
+                title: const Text('Phân tích'),
+                subtitle: const Text('Khối lượng và 1RM theo thời gian'),
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
                 onTap: () {
                   Navigator.of(context).push(
@@ -95,9 +95,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.photo_camera_back_outlined),
-                title: const Text('Progress Photos (Cloudinary)'),
+                title: const Text('Ảnh tiến độ (Cloudinary)'),
                 subtitle: const Text(
-                  'Chụp ảnh, upload Cloudinary, lưu URL lên Firestore',
+                  'Theo dõi sự thay đổi cơ thể qua hình ảnh',
                 ),
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
                 onTap: () {
@@ -117,7 +117,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   vertical: 6,
                 ),
                 secondary: const Icon(Icons.dark_mode_outlined),
-                title: const Text('Dark Mode'),
+                title: const Text('Chế độ tối'),
                 subtitle: const Text('Giao diện tối dễ nhìn khi dùng ban đêm'),
                 value: themeProvider.isDarkMode,
                 onChanged: (value) {
@@ -132,20 +132,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context: context,
                   builder: (dialogContext) {
                     return AlertDialog(
-                      title: const Text('Delete data'),
+                      title: const Text('Xóa dữ liệu'),
                       content: const Text(
-                        'Delete all templates and workout history for this account?',
+                        'Xóa tất cả mẫu tập và lịch sử tập luyện của tài khoản này?',
                       ),
                       actions: [
                         TextButton(
                           onPressed: () =>
                               Navigator.of(dialogContext).pop(false),
-                          child: const Text('Cancel'),
+                          child: const Text('Hủy'),
                         ),
                         FilledButton(
                           onPressed: () =>
                               Navigator.of(dialogContext).pop(true),
-                          child: const Text('Delete'),
+                          child: const Text('Xóa'),
                         ),
                       ],
                     );
@@ -156,19 +156,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   await workout.clearAll();
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Data deleted.')),
+                      const SnackBar(content: Text('Đã xóa dữ liệu.')),
                     );
                   }
                 }
               },
               icon: const Icon(Icons.delete_outline),
-              label: const Text('Delete personal data'),
+              label: const Text('Xóa dữ liệu cá nhân'),
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
               onPressed: () => auth.logout(),
               icon: const Icon(Icons.logout),
-              label: const Text('Logout'),
+              label: const Text('Đăng xuất'),
             ),
             const SizedBox(height: 16),
             Card(
@@ -178,7 +178,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Rest Timer',
+                      'Hẹn giờ nghỉ',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -186,15 +186,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 12),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Auto Rest Timer'),
+                      title: const Text('Tự động hẹn giờ'),
                       subtitle: const Text(
-                        'Start timer automatically when a set is checked.',
+                        'Bắt đầu hẹn giờ tự động khi hoàn thành một hiệp.',
                       ),
                       value: utilities.autoRestTimerEnabled,
                       onChanged: utilities.setAutoRestTimerEnabled,
                     ),
                     const SizedBox(height: 8),
-                    Text('Duration: ${utilities.restDurationSeconds}s'),
+                    Text('Thời gian: ${utilities.restDurationSeconds} giây'),
                     Slider(
                       min: 15,
                       max: 300,
@@ -207,7 +207,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     if (utilities.isRestTimerRunning)
                       Text(
-                        'Remaining: ${utilities.remainingRestSeconds}s',
+                        'Còn lại: ${utilities.remainingRestSeconds} giây',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                   ],
@@ -222,7 +222,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'One Rep Max (1RM)',
+                      'Sức mạnh tối đa (1RM)',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -234,29 +234,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         decimal: true,
                       ),
                       decoration: const InputDecoration(
-                        labelText: 'Weight (kg)',
+                        labelText: 'Trọng lượng (kg)',
                       ),
                     ),
                     const SizedBox(height: 10),
                     TextField(
                       controller: _repsController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Reps'),
+                      decoration: const InputDecoration(
+                        labelText: 'Số lần (reps)',
+                      ),
                     ),
                     const SizedBox(height: 12),
                     FilledButton.icon(
                       onPressed: () => _calculateOneRm(utilities),
                       icon: const Icon(Icons.calculate),
-                      label: const Text('Calculate'),
+                      label: const Text('Tính toán'),
                     ),
                     if (_oneRmResult != null) ...[
                       const SizedBox(height: 12),
                       Text(
-                        'Estimated 1RM: ${_oneRmResult!.toStringAsFixed(1)} kg',
+                        '1RM ước tính: ${_oneRmResult!.toStringAsFixed(1)} kg',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 4),
-                      const Text('Formula: weight × (1 + reps/30)'),
+                      const Text('Công thức: Trọng lượng × (1 + reps/30)'),
                     ],
                   ],
                 ),
@@ -270,7 +272,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Local Notifications',
+                      'Thông báo nhắc nhở',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -278,7 +280,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 12),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Workout reminder (daily)'),
+                      title: const Text('Nhắc nhở tập luyện (hàng ngày)'),
                       subtitle: Text(
                         'Giờ nhắc: ${utilities.workoutReminderTime.format(context)}',
                       ),

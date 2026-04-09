@@ -41,7 +41,7 @@ class _MuscleGroupsScreenState extends State<MuscleGroupsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Training Guide',
+                  'Hướng dẫn tập luyện',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurface,
@@ -49,7 +49,7 @@ class _MuscleGroupsScreenState extends State<MuscleGroupsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Select a muscle group to view detailed exercises',
+                  'Chọn nhóm cơ để xem các bài tập chi tiết',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -260,7 +260,7 @@ class _MuscleGroupsScreenState extends State<MuscleGroupsScreen> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Expert Training Guide',
+                  'Hướng dẫn tập luyện chuyên gia',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -269,7 +269,7 @@ class _MuscleGroupsScreenState extends State<MuscleGroupsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Perfect your form with clear guides',
+                  'Hoàn thiện kỹ thuật với hướng dẫn rõ ràng',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.white.withValues(alpha: 0.9),

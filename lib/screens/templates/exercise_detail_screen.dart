@@ -41,7 +41,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildSection(
-                    'Description',
+                    'Mô tả',
                     widget.exercise.description,
                     colorScheme,
                   ),
@@ -65,7 +65,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addToTemplate(),
         icon: const Icon(Icons.add),
-        label: const Text('Add to Template'),
+        label: const Text('Thêm vào mẫu tập'),
       ),
     );
   }
@@ -100,10 +100,12 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     provider.addTemplate(template).then((_) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Added "${widget.exercise.name}" to My Templates'),
+          content: Text(
+            'Đã thêm bài tập "${widget.exercise.name}" vào mẫu tập của tôi',
+          ),
           duration: const Duration(milliseconds: 2000),
           action: SnackBarAction(
-            label: 'Back',
+            label: 'Quay lại',
             onPressed: () {
               Navigator.pop(context);
               Navigator.pop(context);
@@ -190,7 +192,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Steps to Perform',
+          'Các bước thực hiện',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: primaryTeal,
@@ -208,7 +210,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
               .map(
                 (step) => Step(
                   title: Text(
-                    'Step ${widget.exercise.steps.indexOf(step) + 1}',
+                    'Bước ${widget.exercise.steps.indexOf(step) + 1}',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   content: Text(
@@ -233,7 +235,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Benefits',
+          'Lợi ích',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: primaryTeal,
@@ -276,7 +278,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Pro Tips',
+          'Mẹo từ chuyên gia',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: primaryTeal,
@@ -320,7 +322,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Recommended Schedule',
+          'Lịch trình khuyến nghị',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: primaryTeal,
@@ -341,7 +343,8 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  widget.exercise.trainingSchedule ?? 'No specific schedule',
+                  widget.exercise.trainingSchedule ??
+                      'Không có lịch trình cụ thể',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -372,7 +375,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                 const Icon(Icons.repeat, size: 32, color: primaryTeal),
                 const SizedBox(height: 8),
                 const Text(
-                  'Sets',
+                  'Hiệp',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 Text(
@@ -404,7 +407,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Reps',
+                  'Lần',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 Text(

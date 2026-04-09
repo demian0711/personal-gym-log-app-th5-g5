@@ -101,14 +101,14 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                             ? null
                             : () => _exportExcel(sortedHistory),
                         icon: const Icon(Icons.table_chart_outlined),
-                        label: const Text('Export Excel'),
+                        label: const Text('Xuất Excel'),
                       ),
                       OutlinedButton.icon(
                         onPressed: _isExporting
                             ? null
                             : () => _exportPdf(sortedHistory),
                         icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: const Text('Export PDF'),
+                        label: const Text('Xuất PDF'),
                       ),
                     ],
                   ),
@@ -122,14 +122,14 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Workout History',
+                        'Lịch sử tập luyện',
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'No workouts have been saved yet. Go to the Workout tab and tap Finish Workout to create history.',
+                        'Chưa có dữ liệu tập luyện nào được lưu. Hãy chuyển đến tab Tập luyện và nhấn Kết thúc tập luyện để tạo lịch sử.',
                       ),
                     ],
                   ),
@@ -145,7 +145,6 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
           itemBuilder: (context, index) {
             if (index == 0) {
               return Card(
-                margin: const EdgeInsets.only(bottom: 12),
                 child: Padding(
                   padding: const EdgeInsets.all(14),
                   child: Wrap(
@@ -157,14 +156,14 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                             ? null
                             : () => _exportExcel(sortedHistory),
                         icon: const Icon(Icons.table_chart_outlined),
-                        label: const Text('Export Excel'),
+                        label: const Text('Xuất Excel'),
                       ),
                       OutlinedButton.icon(
                         onPressed: _isExporting
                             ? null
                             : () => _exportPdf(sortedHistory),
                         icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: const Text('Export PDF'),
+                        label: const Text('Xuất PDF'),
                       ),
                     ],
                   ),
@@ -179,7 +178,7 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
             );
 
             return Card(
-              margin: const EdgeInsets.only(bottom: 12),
+              margin: const EdgeInsets.only(top: 12),
               child: ListTile(
                 contentPadding: const EdgeInsets.all(14),
                 title: Text(
@@ -191,7 +190,7 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                 subtitle: Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    '${_formatDate(workout.date)} • ${workout.durationInMinutes} min • ${workout.exercises.length} exercises • $totalSets sets',
+                    '${_formatDate(workout.date)} • ${workout.durationInMinutes} phút • ${workout.exercises.length} bài tập • $totalSets hiệp',
                   ),
                 ),
                 trailing: const Icon(Icons.chevron_right),
@@ -229,7 +228,7 @@ void _showWorkoutDetail(BuildContext context, Workout workout) {
               ),
               const SizedBox(height: 4),
               Text(
-                '${_formatDate(workout.date)} • ${workout.durationInMinutes} min',
+                '${_formatDate(workout.date)} • ${workout.durationInMinutes} phút',
               ),
               const SizedBox(height: 14),
               for (final exercise in workout.exercises)
@@ -253,7 +252,7 @@ void _showWorkoutDetail(BuildContext context, Workout workout) {
                           Padding(
                             padding: const EdgeInsets.only(bottom: 4),
                             child: Text(
-                              'Set ${set.order}: ${set.weight} kg × ${set.reps} reps',
+                              'Hiệp ${set.order}: ${set.weight} kg × ${set.reps} lần',
                             ),
                           ),
                       ],

@@ -42,7 +42,7 @@ class _MuscleGroupExercisesScreenState
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No exercises available',
+                    'Không có bài tập nào',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -166,9 +166,9 @@ class _MuscleGroupExercisesScreenState
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      _buildInfoTag('Sets', exercise.defaultSets, colorScheme),
+                      _buildInfoTag('Hiệp', exercise.defaultSets, colorScheme),
                       const SizedBox(width: 8),
-                      _buildInfoTag('Reps', exercise.defaultReps, colorScheme),
+                      _buildInfoTag('Lần', exercise.defaultReps, colorScheme),
                     ],
                   ),
                 ],

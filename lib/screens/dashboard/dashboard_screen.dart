@@ -45,7 +45,7 @@ class DashboardScreen extends StatelessWidget {
               _buildWeeklyProgress(context, weeklyCount, weeklyTarget),
               const SizedBox(height: 16),
               Text(
-                'Quick Overview',
+                'Tổng quan nhanh',
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -55,7 +55,7 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _DashboardStatCard(
-                      title: 'Recent workouts',
+                      title: 'Buổi tập gần đây',
                       value: '$recentCount',
                       icon: Icons.calendar_month,
                     ),
@@ -63,7 +63,7 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _DashboardStatCard(
-                      title: 'Total volume',
+                      title: 'Tổng khối lượng',
                       value: totalVolume.toStringAsFixed(0),
                       icon: Icons.timer,
                     ),
@@ -71,7 +71,7 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _DashboardStatCard(
-                      title: 'PR (kg)',
+                      title: 'Kỷ lục (kg)',
                       value: personalRecord.toStringAsFixed(1),
                       icon: Icons.local_fire_department,
                     ),
@@ -148,13 +148,13 @@ Widget _buildWeeklyProgress(BuildContext context, int current, int target) {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Weekly Goal Progress',
+                'Mục tiêu hàng tuần',
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               Text(
-                '$current / $target sessions',
+                '$current / $target buổi',
                 style: textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: colorScheme.primary,
@@ -175,8 +175,8 @@ Widget _buildWeeklyProgress(BuildContext context, int current, int target) {
           const SizedBox(height: 8),
           Text(
             progress >= 1.0
-                ? 'Goal achieved! Amazing work this week.'
-                : 'You are ${target - current} sessions away from your weekly goal.',
+                ? 'Đã đạt mục tiêu! Tuần này thật tuyệt vời.'
+                : 'Bạn còn thiếu ${target - current} buổi nữa để đạt mục tiêu tuần.',
             style: textTheme.bodySmall,
           ),
         ],
@@ -216,7 +216,7 @@ Widget _buildWelcomeCard(BuildContext context) {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Workout Dashboard',
+                'Bảng điều khiển',
                 style: textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -227,7 +227,7 @@ Widget _buildWelcomeCard(BuildContext context) {
         ),
         const SizedBox(height: 10),
         Text(
-          'Track your strength progress and get a quick summary of your latest workout.',
+          'Theo dõi tiến trình sức mạnh và xem tóm tắt buổi tập gần nhất của bạn.',
           style: textTheme.bodyMedium?.copyWith(
             color: Colors.white.withValues(alpha: 0.94),
           ),
